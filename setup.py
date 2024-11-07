@@ -10,7 +10,7 @@ setup(
     author_email="zhangtec@foxmail.com",
     url="https://github.com/MrzhangF1ghter/smartusbhub",
     packages=find_packages(),
-    package_dir={'custom_serial': 'custom_serial'},  # patch for Windows 10
+    package_dir={'custom_modules': 'serial'},  # patch for Windows 10
     install_requires=[],
     classifiers=[
         "Programming Language :: Python :: 3",

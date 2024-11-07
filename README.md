@@ -1,72 +1,92 @@
-# SmartUSBHub
-Control your usb devices connect or disconnect to the host using simple command.   
+# SmartUSBHub python library
+Control your usb devices connect or disconnect to the host using simple command.
 For more details, please read project's [wiki page](https://github.com/MrzhangF1ghter/smartusbhub/wiki)
+
+> [!NOTE]
+>
+> This smartusbhub python library is FOR TESTING PURPOSES ONLY and may contain bugs. If using it in a production environment, please refer to the [protocol documentation](https://github.com/MrzhangF1ghter/smartusbhub/wiki/protocol) to implement by your self.
 
 ## How to use
 
 1. Clone this repository to your computer
+   `git clone https://github.com/MrzhangF1ghter/smartusbhub.git`
 
-   - For Windows10 users:
+2. Setup python virtual environment (recommend)
+   `cd ./smartusbhub
+   python -m venv venv`
 
-     ```shell
-     git clone -b windows_patch https://github.com/MrzhangF1ghter/smartusbhub.git
-     ```
-
-     or download release [here](https://github.com/MrzhangF1ghter/smartusbhub/releases/tag/V1.0_windows)
-
-   - For other OS version users:
-
-     ```shell
-     git clone https://github.com/MrzhangF1ghter/smartusbhub.git
-     ```
-
-     or download release [here](https://github.com/MrzhangF1ghter/smartusbhub/releases/tag/V1.0)
-
-2. Install python3 environment [here](https://www.python.org/downloads/)
-
-3. Setup python virtual environment
-
-   ```shell
-   cd ./smartusbhub
-   python -m venv venv
-   ```
-
-4. Enter virtual environments
+3. Enter virtual environments
 
    - For Windows users:
 
-     ```bat
-     .\venv\Scripts\activate.bat
-     ```
+     `.\venv\Scripts\activate.bat`
 
    - For Linux and MacOS users:
 
-     ```shell
-     source ./venv/bin/activate
-     ```
+     `source ./venv/bin/activate`
 
-   - Install `pyserial` library (Windows users skip this step)
+   - Install `pyserial` library 
 
-     ```shell
-     pip install pyserial
-     ```
+     `pip install pyserial`
 
-5. Connect your smartusbhub comunication port (left-side) to your computer
-
-6. Look up device comunication port name:
+4. Connect your smartusbhub comunication port (left-side) to your computer and Look up device comunication port name:
 
    - for windows users:  `COMx`
    - For linux users: `/dev/ttyACMx`
    - For macOS users: `/dev/cu.usbmodemx`
 
-7. Run test.py for fun! 
+5. Run test.py for fun! 
 
-   ```bat
-    python .\test.py -p COM3
-   ```
+   `python .\test.py -p COM3`
+   
+   **Command-Line Arguments**:
+   
+   --port: Specify the serial port for connecting to the USB hub (e.g., /dev/ttyUSB0).
+   
+   The script will:
+   
+   - Continuously toggle each channel, check its state, and print it.
+   
+   - Demonstrate multi-channel control by toggling groups of channels.
 
 
 ## Integrate to your project
 
 You can intergrate in your project by importing smartusbhub library.
+
+1. Enter your project directory.
+
+2. Follow chapter *How to use*: step 1 to 3.
+
+3. Install smartusbhub library
+
+    `pip install ./smartusbhub` 
+
+4. Import smartusbhub into your project.
+
+   ```python
+   from smartusbhub import *
+   ```
+
+5. Initialize SmartUSBhub instance:
+
+   ```python
+   hub = SmartUSBHub(port="/dev/cu.usbmodemxxx")
+   ```
+
+6. now you can control your smartusbhub!
+
+**key Methods:**
+
+`control_channel(state, *channels)`: Turn specified channels ON or OFF.
+
+`get_channel_status(*channels)`: Retrieve the status of specified channels (ON/OFF).
+
+`interlock_control(state, channel)`: Set a specific channel in interlock mode.
+
+`set_mode_normal() and set_mode_interlock()`: Switch between normal and interlock modes.
+
+`get_mode()`: Retrieve the current mode of the device.
+
+`close()`: Close the serial connection.
 
