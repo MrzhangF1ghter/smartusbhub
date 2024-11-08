@@ -47,11 +47,12 @@ import time
 import glob
 
 # Command constants
-CMD_GET_CHANNEL_STATUS = 0x00
-CMD_CONTROL_CHANNEL = 0x01
-CMD_INTERLOCK_CONTROL = 0x02
-CMD_SET_MODE = 0x06
-CMD_GET_MODE = 0x07
+CMD_GET_CHANNEL_STATUS  = 0x00
+CMD_CONTROL_CHANNEL     = 0x01
+CMD_INTERLOCK_CONTROL   = 0x02
+CMD_GET_CHANNEL_VOLTAGE = 0x03
+CMD_SET_MODE            = 0x06
+CMD_GET_MODE            = 0x07
 
 # Channel value definitions
 CHANNEL_1 = 0x01
@@ -114,8 +115,8 @@ class SmartUSBHub:
         print("[ERROR] No available device found. Please specify a serial port or check the device.")
         return None
 
-    def _send_command(self, cmd, channel, value=0x00, ser=None):
-        """Send a command to the device and read the response."""
+    def _send_command(self, cmd, channel, value=0x00,ser=None):
+        """Send a command to the device and handle response with frame check and checksum validation."""
         ser = ser or self.ser
         if not ser:
             print("[ERROR] Serial port is not open. Cannot send command.")
@@ -131,25 +132,109 @@ class SmartUSBHub:
             ser.write(bytearray(frame))
             if self.debug:
                 print(f"[DEBUG] Sent data: {' '.join(f'{byte:02X}' for byte in frame)}")
-            time.sleep(0.001)  # Wait to ensure device has time to respond
+            time.sleep(0.01)  # 延迟以确保设备有时间响应
         except serial.SerialException as e:
             print(f"[ERROR] Failed to send data: {e}")
             return None
 
-        # Read device response and print debug info
+        # Read device response with frame check and checksum validation
         try:
-            response = ser.read(6)
-            if self.debug:
-                print(f"[DEBUG] Recv data: {' '.join(f'{byte:02X}' for byte in response)}")
-            if len(response) == 6:
-                return response
-            else:
-                print("[ERROR] Incomplete data received, device may not be responding.")
-                return None
+            buffer = bytearray()
+            start_time = time.time()
+            
+            while True:
+                # 等待数据并将其添加到缓冲区
+                if ser.in_waiting > 0:
+                    buffer.extend(ser.read(ser.in_waiting))
+
+                # 检查缓冲区是否包含至少一个完整帧（7字节）
+                while len(buffer) >= 6:
+                    # 找到帧头
+                    if buffer[0] == 0x55 and buffer[1] == 0x5A:
+                        # 提取帧数据并验证校验和
+                        frame_data = buffer[:6]
+                        received_checksum = frame_data[-1]
+                        calculated_checksum = sum(frame_data[2:5]) & 0xFF
+
+                        # 校验和比对
+                        if received_checksum == calculated_checksum:
+                            if self.debug:
+                                print(f"[DEBUG] Recv data: {' '.join(f'{byte:02X}' for byte in frame_data)}")
+                            return frame_data  # 返回有效帧
+                        else:
+                            print("[ERROR] Checksum mismatch, discarding frame.")
+                            print(f"[DEBUG] Recv data: {' '.join(f'{byte:02X}' for byte in frame_data)}")
+                    # 如果帧头不匹配或校验失败，移除第一个字节继续寻找
+                    buffer.pop(0)
+
+                # 超时处理
+                if time.time() - start_time > 0.1:  # 超时时间为1秒
+                    print("[ERROR] Timeout waiting for device response.")
+                    return None
         except serial.SerialException as e:
             print(f"[ERROR] Failed to read data: {e}")
             return None
+        
+    def _send_command_v2(self, cmd, channel, value=0x00,ser=None):
+        """Send a command to the device and handle response with frame check and checksum validation."""
+        ser = ser or self.ser
+        if not ser:
+            print("[ERROR] Serial port is not open. Cannot send command.")
+            return None
 
+        # Construct command frame
+        frame = [0x55, 0x5A, cmd, channel, value]
+        checksum = (cmd + channel + value) & 0xFF
+        frame.append(checksum)
+        
+        # Send data and print debug info
+        try:
+            ser.write(bytearray(frame))
+            if self.debug:
+                print(f"[DEBUG] Sent data: {' '.join(f'{byte:02X}' for byte in frame)}")
+            time.sleep(0.01)  # 延迟以确保设备有时间响应
+        except serial.SerialException as e:
+            print(f"[ERROR] Failed to send data: {e}")
+            return None
+
+        # Read device response with frame check and checksum validation
+        try:
+            buffer = bytearray()
+            start_time = time.time()
+            
+            while True:
+                # 等待数据并将其添加到缓冲区
+                if ser.in_waiting > 0:
+                    buffer.extend(ser.read(ser.in_waiting))
+
+                # 检查缓冲区是否包含至少一个完整帧（7字节）
+                while len(buffer) >= 7:
+                    # 找到帧头
+                    if buffer[0] == 0x55 and buffer[1] == 0x5A:
+                        # 提取帧数据并验证校验和
+                        frame_data = buffer[:7]
+                        received_checksum = frame_data[-1]
+                        calculated_checksum = sum(frame_data[2:6]) & 0xFF
+
+                        # 校验和比对
+                        if received_checksum == calculated_checksum:
+                            if self.debug:
+                                print(f"[DEBUG] Recv data: {' '.join(f'{byte:02X}' for byte in frame_data)}")
+                            return frame_data  # 返回有效帧
+                        else:
+                            print("[ERROR] Checksum mismatch, discarding frame.")
+
+                    # 如果帧头不匹配或校验失败，移除第一个字节继续寻找
+                    buffer.pop(0)
+
+                # 超时处理
+                if time.time() - start_time > 0.01:  # 超时时间为10ms
+                    print("[ERROR] Timeout waiting for device response.")
+                    return None
+        except serial.SerialException as e:
+            print(f"[ERROR] Failed to read data: {e}")
+            return None
+    
     def _convert_channel(self, *channels):
         """Convert channel numbers (1, 2, 3, 4) to corresponding bitmask values."""
         channel_map = {1: CHANNEL_1, 2: CHANNEL_2, 3: CHANNEL_3, 4: CHANNEL_4}
@@ -178,6 +263,15 @@ class SmartUSBHub:
             return response[3]
         return None
 
+    def get_channel_voltage(self, *channels):
+        """Get the voltage(mv) of specified channels."""
+        channel_value = self._convert_channel(*channels)
+        response = self._send_command_v2(CMD_GET_CHANNEL_VOLTAGE, channel_value)
+        if response and len(response) > 5:
+            voltage = (response[4] << 8) | response[5]
+            return voltage
+        return None
+    
     def interlock_control(self, state, channel):
         """Control a single channel in interlock mode."""
         if state not in [ON, OFF]:

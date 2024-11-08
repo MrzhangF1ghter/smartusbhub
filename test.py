@@ -10,13 +10,19 @@ args = parser.parse_args()
 # Initialize SmartUSBHub instance
 hub = SmartUSBHub(port=args.port)
 
-delay_interval = 0.1
+delay_interval = 1
 channels = [1, 2, 3, 4]
+voltage = [0] * len(channels)
 
 if hub.ser is None:
     print("[ERROR] Could not connect to the device. Please check the connection and try again.")
 else:
     while True:
+        #get channel voltage
+        for i, channel in enumerate(channels):
+            voltage[i] = hub.get_channel_voltage(channel)  # 使用 i 作为 voltage 的索引
+        print(f"{voltage[0]},{voltage[1]},{voltage[2]},{voltage[3]}")
+
         # Retrieve current device mode
         current_mode = hub.get_mode()
         print(f"device mode: {'normal' if current_mode == MODE_NORMAL else 'interlock'}")
