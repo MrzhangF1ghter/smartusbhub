@@ -1,3 +1,6 @@
+import sys
+sys.path.append('./..')
+sys.path.append('../')
 from smartusbhub import *
 import time
 import argparse

@@ -1,92 +1,102 @@
 # SmartUSBHub python library
-Control your usb devices connect or disconnect to the host using simple command.
-For more details, please read project's [wiki page](https://github.com/MrzhangF1ghter/smartusbhub/wiki)
+smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
+详情请阅读项目wiki [wiki page](https://github.com/MrzhangF1ghter/smartusbhub/wiki)
 
 > [!NOTE]
 >
-> This smartusbhub python library is FOR TESTING PURPOSES ONLY and may contain bugs. If using it in a production environment, please refer to the [protocol documentation](https://github.com/MrzhangF1ghter/smartusbhub/wiki/protocol) to implement by your self.
+> 此smartusbhub python库只是用于测试用途，如果要集成到生产环境，建议自行实现通信控制，协议文档请查阅： [protocol documentation](https://github.com/MrzhangF1ghter/smartusbhub/wiki/protocol)
 
-## How to use
+## 使用方法
 
-1. Clone this repository to your computer
+1. 把此代码仓库克隆到本地
    `git clone https://github.com/MrzhangF1ghter/smartusbhub.git`
 
-2. Setup python virtual environment (recommend)
+2. 设置python虚拟环境（推荐）
    `cd ./smartusbhub
    python -m venv venv`
 
-3. Enter virtual environments
+3. 进入python虚拟环境
 
-   - For Windows users:
+   - 对于Windows平台:
 
-     `.\venv\Scripts\activate.bat`
+    `.\venv\Scripts\activate.bat`
 
-   - For Linux and MacOS users:
+   - 对于unix平台:
 
-     `source ./venv/bin/activate`
+    `source ./venv/bin/activate`
 
-   - Install `pyserial` library 
+4. 安装依赖库
+    `pip install -r requirements.txt`
 
-     `pip install pyserial`
+5. 将随附的数据线接到设备短边侧的USB-C接口，另外一端接到主机的USB端口上，连接后主机将会把设备识别成:
 
-4. Connect your smartusbhub comunication port (left-side) to your computer and Look up device comunication port name:
+   - Windows平台:  `COMx`
+   - Linux平台: `/dev/ttyACMx`
+   - mac平台: `/dev/cu.usbmodemx`
 
-   - for windows users:  `COMx`
-   - For linux users: `/dev/ttyACMx`
-   - For macOS users: `/dev/cu.usbmodemx`
-
-5. Run test.py for fun! 
+6. 运行test.py demo
 
    `python .\test.py -p COM3`
    
    **Command-Line Arguments**:
    
-   --port: Specify the serial port for connecting to the USB hub (e.g., /dev/ttyUSB0).
+   --port: 指定端口号 (e.g., /dev/ttyUSB0).
    
-   The script will:
+   该demo将会:
    
-   - Continuously toggle each channel, check its state, and print it.
+   - 控制各通道开/关，获取其状态并打印出来.
    
-   - Demonstrate multi-channel control by toggling groups of channels.
+   - 展示如何组合控制通道。
 
 
-## Integrate to your project
+## 集成到你的项目中
 
-You can intergrate in your project by importing smartusbhub library.
+通过导入smartusbhub库即可即成到你的项目之中。
 
-1. Enter your project directory.
+1. 按照前面的章节 *使用方法*配置: 步骤 1 到 3.
 
-2. Follow chapter *How to use*: step 1 to 3.
-
-3. Install smartusbhub library
+2. 安装`smartusbhub`库
 
     `pip install ./smartusbhub` 
 
-4. Import smartusbhub into your project.
+3. 导入`smartusbhub`库到你的工程.
 
    ```python
    from smartusbhub import *
    ```
 
-5. Initialize SmartUSBhub instance:
+4. 初始化`SmartUSBhub`实例:
 
    ```python
    hub = SmartUSBHub(port="/dev/cu.usbmodemxxx")
    ```
 
-6. now you can control your smartusbhub!
+5. 通过以下方法控制设备
 
-**key Methods:**
+**方法:**
 
-`control_channel(state, *channels)`: Turn specified channels ON or OFF.
+`control_channel(state, *channels)`: 打开或者关闭指定通道。
 
-`get_channel_status(*channels)`: Retrieve the status of specified channels (ON/OFF).
+`get_channel_status(*channels)`: 获取指定通道的开关值。
 
-`interlock_control(state, channel)`: Set a specific channel in interlock mode.
+`interlock_control(state, channel)`: 互锁控制，打开指定通道，其余通道关闭。
 
-`set_mode_normal() and set_mode_interlock()`: Switch between normal and interlock modes.
+`get_channel_voltage(self, *channels)`: 获取指定通道的电压值 单位：毫伏。
 
-`get_mode()`: Retrieve the current mode of the device.
+`set_mode_normal() and set_mode_interlock()`: 设置设备模式为普通还是互锁模式（断电仍然保存）。
 
-`close()`: Close the serial connection.
+`get_mode()`: Retrieve the current mode of the device.: 获取设备当前模式为普通还是互锁模式。
 
+`close()`: 关闭设备。
+
+## demos
+
+### 示波器
+
+smartusbhub包含了一个示波器应用，该应用可以直观的查看每一个通道的电压值以及控制通道的开关。
+
+```shell
+python oscilloscope.py -p /dev/cu.usbmodemxxx
+```
+
+![oscilloscope](./assets/oscilloscope.png)

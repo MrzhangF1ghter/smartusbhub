@@ -115,7 +115,7 @@ class SmartUSBHub:
         print("[ERROR] No available device found. Please specify a serial port or check the device.")
         return None
 
-    def _send_command(self, cmd, channel, value=0x00,ser=None):
+    def _send_command(self, cmd, channel, value=0x00,ack_len=1,ser=None):
         """Send a command to the device and handle response with frame check and checksum validation."""
         ser = ser or self.ser
         if not ser:
@@ -132,7 +132,7 @@ class SmartUSBHub:
             ser.write(bytearray(frame))
             if self.debug:
                 print(f"[DEBUG] Sent data: {' '.join(f'{byte:02X}' for byte in frame)}")
-            time.sleep(0.01)  # 延迟以确保设备有时间响应
+            time.sleep(0.01)
         except serial.SerialException as e:
             print(f"[ERROR] Failed to send data: {e}")
             return None
@@ -143,18 +143,16 @@ class SmartUSBHub:
             start_time = time.time()
             
             while True:
-                # 等待数据并将其添加到缓冲区
                 if ser.in_waiting > 0:
                     buffer.extend(ser.read(ser.in_waiting))
-
-                # 检查缓冲区是否包含至少一个完整帧（7字节）
-                while len(buffer) >= 6:
+                # 检查缓冲区是否包含至少一个完整帧（6字节）
+                while len(buffer) >= 5+ack_len:
                     # 找到帧头
                     if buffer[0] == 0x55 and buffer[1] == 0x5A:
                         # 提取帧数据并验证校验和
-                        frame_data = buffer[:6]
+                        frame_data = buffer[:5+ack_len]
                         received_checksum = frame_data[-1]
-                        calculated_checksum = sum(frame_data[2:5]) & 0xFF
+                        calculated_checksum = sum(frame_data[2:4+ack_len]) & 0xFF
 
                         # 校验和比对
                         if received_checksum == calculated_checksum:
@@ -174,67 +172,7 @@ class SmartUSBHub:
         except serial.SerialException as e:
             print(f"[ERROR] Failed to read data: {e}")
             return None
-        
-    def _send_command_v2(self, cmd, channel, value=0x00,ser=None):
-        """Send a command to the device and handle response with frame check and checksum validation."""
-        ser = ser or self.ser
-        if not ser:
-            print("[ERROR] Serial port is not open. Cannot send command.")
-            return None
 
-        # Construct command frame
-        frame = [0x55, 0x5A, cmd, channel, value]
-        checksum = (cmd + channel + value) & 0xFF
-        frame.append(checksum)
-        
-        # Send data and print debug info
-        try:
-            ser.write(bytearray(frame))
-            if self.debug:
-                print(f"[DEBUG] Sent data: {' '.join(f'{byte:02X}' for byte in frame)}")
-            time.sleep(0.01)  # 延迟以确保设备有时间响应
-        except serial.SerialException as e:
-            print(f"[ERROR] Failed to send data: {e}")
-            return None
-
-        # Read device response with frame check and checksum validation
-        try:
-            buffer = bytearray()
-            start_time = time.time()
-            
-            while True:
-                # 等待数据并将其添加到缓冲区
-                if ser.in_waiting > 0:
-                    buffer.extend(ser.read(ser.in_waiting))
-
-                # 检查缓冲区是否包含至少一个完整帧（7字节）
-                while len(buffer) >= 7:
-                    # 找到帧头
-                    if buffer[0] == 0x55 and buffer[1] == 0x5A:
-                        # 提取帧数据并验证校验和
-                        frame_data = buffer[:7]
-                        received_checksum = frame_data[-1]
-                        calculated_checksum = sum(frame_data[2:6]) & 0xFF
-
-                        # 校验和比对
-                        if received_checksum == calculated_checksum:
-                            if self.debug:
-                                print(f"[DEBUG] Recv data: {' '.join(f'{byte:02X}' for byte in frame_data)}")
-                            return frame_data  # 返回有效帧
-                        else:
-                            print("[ERROR] Checksum mismatch, discarding frame.")
-
-                    # 如果帧头不匹配或校验失败，移除第一个字节继续寻找
-                    buffer.pop(0)
-
-                # 超时处理
-                if time.time() - start_time > 0.01:  # 超时时间为10ms
-                    print("[ERROR] Timeout waiting for device response.")
-                    return None
-        except serial.SerialException as e:
-            print(f"[ERROR] Failed to read data: {e}")
-            return None
-    
     def _convert_channel(self, *channels):
         """Convert channel numbers (1, 2, 3, 4) to corresponding bitmask values."""
         channel_map = {1: CHANNEL_1, 2: CHANNEL_2, 3: CHANNEL_3, 4: CHANNEL_4}
@@ -266,7 +204,7 @@ class SmartUSBHub:
     def get_channel_voltage(self, *channels):
         """Get the voltage(mv) of specified channels."""
         channel_value = self._convert_channel(*channels)
-        response = self._send_command_v2(CMD_GET_CHANNEL_VOLTAGE, channel_value)
+        response = self._send_command(CMD_GET_CHANNEL_VOLTAGE, channel_value,ack_len=2)
         if response and len(response) > 5:
             voltage = (response[4] << 8) | response[5]
             return voltage
