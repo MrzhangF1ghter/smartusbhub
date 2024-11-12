@@ -8,13 +8,18 @@ smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 
 ## 使用方法
 
-1. 把此代码仓库克隆到本地,假设你的工程名字为`my_project`
-   `cd my_project 
-    git clone https://github.com/MrzhangF1ghter/smartusbhub.git`
+1. 把此代码仓库克隆到本地,假设你的工程名字为`my_project`  
+
+   ```shell
+   cd my_project
+   git clone https://github.com/MrzhangF1ghter/smartusbhub.git
+   ```
+
+   
 
 2. 设置python虚拟环境（推荐）
    `python -m venv venv`
-   
+
 3. 进入python虚拟环境
 
    - 对于Windows平台:
@@ -37,15 +42,15 @@ smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 6. 运行test.py demo
 
    `python smartusbhub/app/test.py -p COMx`
-   
+
    **传入参数**:
-   
+
    --port: 指定端口号 (e.g., /dev/ttyUSB0).
-   
+
    该demo将会:
-   
+
    - 控制各通道开/关，获取其状态并打印出来.
-   
+
    - 展示如何组合控制通道。
 
 
