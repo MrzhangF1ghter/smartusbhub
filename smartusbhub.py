@@ -85,7 +85,6 @@ class SmartUSBHub:
         else:  # Linux and others
             device_pattern = "/dev/ttyACM*"
 
-
         while retries < self.max_retries:
             if not port:
                 print(f"[INFO] No port specified, searching for {device_pattern} devices...")
@@ -104,6 +103,8 @@ class SmartUSBHub:
                 try:
                     ser = serial.Serial(port, baudrate, timeout=1)
                     print(f"[DEBUG] Serial port {port} opened successfully at {baudrate} baud.")
+                    self._send_command(CMD_GET_MODE, 0x00, ser=ser)
+                    time.sleep(0.1)
                     return ser
                 except serial.SerialException as e:
                     print(f"[ERROR] Failed to open serial port: {e}")
