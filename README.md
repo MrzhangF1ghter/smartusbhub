@@ -8,13 +8,13 @@ smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 
 ## 使用方法
 
-1. 把此代码仓库克隆到本地
-   `git clone https://github.com/MrzhangF1ghter/smartusbhub.git`
+1. 把此代码仓库克隆到本地,假设你的工程名字为`my_project`
+   `cd my_project 
+    git clone https://github.com/MrzhangF1ghter/smartusbhub.git`
 
 2. 设置python虚拟环境（推荐）
-   `cd ./smartusbhub
-   python -m venv venv`
-
+   `python -m venv venv`
+   
 3. 进入python虚拟环境
 
    - 对于Windows平台:
@@ -26,7 +26,7 @@ smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
     `source ./venv/bin/activate`
 
 4. 安装依赖库
-    `pip install -r requirements.txt`
+    `pip install -r ./smartusbhub/requirements.txt`
 
 5. 将随附的数据线接到设备短边侧的USB-C接口，另外一端接到主机的USB端口上，连接后主机将会把设备识别成:
 
@@ -36,9 +36,9 @@ smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 
 6. 运行test.py demo
 
-   `python .\test.py -p COM3`
+   `python smartusbhub/app/test.py -p COMx`
    
-   **Command-Line Arguments**:
+   **传入参数**:
    
    --port: 指定端口号 (e.g., /dev/ttyUSB0).
    
@@ -53,15 +53,14 @@ smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 
 通过导入smartusbhub库即可即成到你的项目之中。
 
-1. 按照前面的章节 *使用方法*配置: 步骤 1 到 3.
+1. 按照前面的章节 *使用方法*配置: 步骤 1 到 5.
 
-2. 安装`smartusbhub`库
-
-    `pip install ./smartusbhub` 
-
-3. 导入`smartusbhub`库到你的工程.
+2. 导入`smartusbhub`库到你的工程.
 
    ```python
+   import sys
+   sys.path.append('./..')
+   sys.path.append('../')
    from smartusbhub import *
    ```
 
@@ -96,7 +95,7 @@ smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 smartusbhub包含了一个示波器应用，该应用可以直观的查看每一个通道的电压值以及控制通道的开关。
 
 ```shell
-python oscilloscope.py -p /dev/cu.usbmodemxxx
+python smartusbhub/app/oscilloscope.py -p /dev/cu.usbmodemxxx
 ```
 
 ![oscilloscope](./assets/oscilloscope.png)
