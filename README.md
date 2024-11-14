@@ -1,5 +1,8 @@
 # SmartUSBHub python library
 smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
+
+使用前请先了解smartusbhub，详情请阅读[设备简介]()
+
 详情请阅读项目wiki [wiki page](https://github.com/MrzhangF1ghter/smartusbhub/wiki)
 
 > [!NOTE]
@@ -8,14 +11,14 @@ smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 
 ## 使用方法
 
+[视频演示及教程](https://www.bilibili.com/video/BV1R5meY7EkQ/)
+
 1. 把此代码仓库克隆到本地,假设你的工程名字为`my_project`  
 
    ```shell
    cd my_project
    git clone https://github.com/MrzhangF1ghter/smartusbhub.git
    ```
-
-   
 
 2. 设置python虚拟环境（推荐）
    `python -m venv venv`
@@ -33,7 +36,7 @@ smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 4. 安装依赖库
     `pip install -r ./smartusbhub/requirements.txt`
 
-5. 将随附的数据线接到设备短边侧的USB-C接口，另外一端接到主机的USB端口上，连接后主机将会把设备识别成:
+5. 将随附的数据线接到设备短边侧的设备通信口USB-C，另外一端接到主机的USB端口上，连接后主机将会把设备识别成:
 
    - Windows平台:  `COMx`
    - Linux平台: `/dev/ttyACMx`
