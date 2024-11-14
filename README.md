@@ -1,7 +1,7 @@
 # SmartUSBHub python library
 smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 
-使用前请先了解smartusbhub，详情请阅读[设备简介]()
+使用前请先了解smartusbhub，详情请阅读[设备简介](https://github.com/MrzhangF1ghter/smartusbhub/wiki/quickstart)
 
 详情请阅读项目wiki [wiki page](https://github.com/MrzhangF1ghter/smartusbhub/wiki)
 
