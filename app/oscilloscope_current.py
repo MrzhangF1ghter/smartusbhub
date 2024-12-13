@@ -35,72 +35,47 @@ class SerialPortSelector(QtWidgets.QDialog):
         return self.port_combobox.currentText()
     
 class OscilloscopeApp(QtWidgets.QWidget):
-    def __init__(self, hub, delay_interval=1, *args, **kwargs):
+    def __init__(self, hub, delay_interval=0.001, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.hub = hub
         self.delay_interval = delay_interval
         self.channels = [1, 2, 3, 4]
-        self.data = {
-            'current': np.zeros((len(self.channels), 100)),
-            'voltage': np.zeros((len(self.channels), 100))
-        }
-        # 设置window title
+        self.current = np.zeros((len(self.channels), 100))  # 初始化4个通道的电流数据，每通道100个点
+
+        # 设置窗口
         self.setWindowTitle("Smart USB Hub Oscilloscope")
         self.layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.layout)
 
+        # 创建4条曲线、按钮和电流标签
         self.plots = []
-        self.curves = {'voltage': [],'current': []}
-        self.labels = {'voltage': [],'current': []}
+        self.curves = []
+        self.current_labels = []
         self.buttons = []
-        self.checkboxes = {'voltage': [],'current': []}
-        colors = {'voltage': (255, 255, 0),'current': (218, 0, 102)}
+        colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
         
         for i in range(len(self.channels)):
-            # Create sub-layout for each channel
+            # 创建子布局来放置绘图和按钮
             row_layout = QtWidgets.QHBoxLayout()
 
-            # Create PlotWidget and add to layout
+            # 创建PlotWidget并添加到布局
             plot_widget = pg.PlotWidget()
-            plot_widget.setYRange(0, 5500)  # 电压范围 0 - 5500 mV
+            plot_widget.setYRange(0, 4000)  # 电流范围 0 - 5000 mV
             plot_widget.setLabel("left", f"Channel {self.channels[i]}")
-
-            # Create label
-            label = pg.TextItem("", color=colors['voltage'], anchor=(0, 1))
-            plot_widget.addItem(label)
-            self.labels['voltage'].append(label)
-
-            label = pg.TextItem("", color=colors['current'], anchor=(0, 1))
-            plot_widget.addItem(label)
-            self.labels['current'].append(label)
-
+            curve = plot_widget.plot(pen=pg.mkPen(color=colors[i], width=1))
             self.plots.append(plot_widget)
+            self.curves.append(curve)
 
-            # Create curves
-            for key in ['voltage', 'current']:
-                curve = plot_widget.plot(pen=pg.mkPen(color=colors[key], width=1))
-                self.curves[key].append(curve)
+            label = pg.TextItem("", color=colors[i], anchor=(0, 1))
+            plot_widget.addItem(label)
+            self.current_labels.append(label)
 
-            # Create a vertical layout for checkboxes
-            checkbox_layout = QtWidgets.QVBoxLayout()
-            checkbox_layout.insertSpacing(0,50)
-
-            # Create button for channels toggle
+            # 创建通道开关按钮
             button = QtWidgets.QPushButton(f"Channel {self.channels[i]}")
             button.setCheckable(True)
             button.setChecked(True)
             button.clicked.connect(lambda _, idx=i: self.toggle_channel(idx))
             self.buttons.append(button)
-            checkbox_layout.addWidget(button)
-
-            # Create checkboxes for toggling visibility
-            for key in ['voltage', 'current']:
-                checkbox = QtWidgets.QCheckBox(f"{key.capitalize()}")
-                checkbox.setChecked(True)
-                checkbox.stateChanged.connect(lambda _, idx=i, k=key: self.toggle_curve(idx, k))
-                self.checkboxes[key].append(checkbox)
-                checkbox_layout.addWidget(checkbox)
-
 
             # 设置样式表，使按钮在选中状态变为黄色
             button.setStyleSheet("""
@@ -112,9 +87,8 @@ class OscilloscopeApp(QtWidgets.QWidget):
                 }
             """)
 
-            # add layout
-            # row_layout.addWidget(button)
-            row_layout.addLayout(checkbox_layout)
+            # 将绘图和按钮添加到布局
+            row_layout.addWidget(button)
             row_layout.addWidget(plot_widget)
             self.layout.addLayout(row_layout)
 
@@ -122,9 +96,8 @@ class OscilloscopeApp(QtWidgets.QWidget):
         self.initialize_channel_status()
         # 启动定时器，定时更新数据
         self.timer = QtCore.QTimer()
-        self.timer.setTimerType(QtCore.Qt.PreciseTimer)
         self.timer.timeout.connect(self.update_data)
-        self.timer.start(int(self.delay_interval))
+        self.timer.start(int(self.delay_interval * 1000))
 
     def initialize_channel_status(self):
         """获取各通道的初始状态并设置复选框。"""
@@ -134,47 +107,28 @@ class OscilloscopeApp(QtWidgets.QWidget):
             if status is not None:
                 # 设置复选框的状态
                 self.buttons[i].setChecked(status == 1)
-    
-    def toggle_curve(self, channel_idx, data_type):
-        # Toggle the visibility of the selected curve
-        visible = self.checkboxes[data_type][channel_idx].isChecked()
-        self.curves[data_type][channel_idx].setVisible(visible)
-        self.labels[data_type][channel_idx].setVisible(visible)
-
+        
     def toggle_channel(self, channel_idx):
         # 根据按钮的状态控制通道的开关
         state = ON if self.buttons[channel_idx].isChecked() else OFF
         self.hub.control_channel(state, self.channels[channel_idx])
 
     def update_data(self):
-        # 获取电压数据并更新曲线和标签
+        # 获取电流数据并更新曲线和标签
         for i, channel in enumerate(self.channels):
-            # Fetch new data
-            new_voltage = self.hub.get_channel_voltage(channel) or 0
-            # Update data arrays
-            self.data['voltage'][i]= np.roll(self.data['voltage'][i], -1)
-            self.data['voltage'][i, -1] = new_voltage
-            # Update curves
-            self.curves['voltage'][i].setData(self.data['voltage'][i])
+            new_current = self.hub.get_channel_current(channel) or 0  # 获取电流值
+            self.current[i] = np.roll(self.current[i], -1)  # 左移一位
+            self.current[i, -1] = new_current  # 更新最新值到数组末尾
 
-            # Fetch new data
-            new_current = self.hub.get_channel_current(channel) or 0
-            # Update data arrays
-            self.data['current'][i] = np.roll(self.data['current'][i], -1)
-            self.data['current'][i, -1] = new_current
-            # Update curves
-            self.curves['current'][i].setData(self.data['current'][i])
+            # 更新曲线数据
+            self.curves[i].setData(self.current[i])
 
-            # update voltage label
-            voltage_in_volts = new_voltage / 1000.0
-            self.labels['voltage'][i].setText(f"{voltage_in_volts:.3f} V")
-            self.labels['voltage'][i].setPos(0, new_voltage-300)
-
-            # update current label
-            current_in_ma = new_current / 1000.0
-            self.labels['current'][i].setText(f"{current_in_ma:.3f} A")
-            self.labels['current'][i].setPos(0, new_current-300)
-
+            # 更新电流标签，显示安培并保留两位小数
+            current_in_amps = new_current/1000
+            round(current_in_amps,2)
+            self.current_labels[i].setText(f"{current_in_amps:.2f} A")
+            self.current_labels[i].setPos(0, new_current-300)
+            
 def main():
     # Create and show the oscilloscope application
     app = QtWidgets.QApplication(sys.argv)

@@ -47,12 +47,14 @@ import time
 import glob
 
 # Command constants
-CMD_GET_CHANNEL_STATUS  = 0x00
-CMD_CONTROL_CHANNEL     = 0x01
-CMD_INTERLOCK_CONTROL   = 0x02
-CMD_GET_CHANNEL_VOLTAGE = 0x03
-CMD_SET_MODE            = 0x06
-CMD_GET_MODE            = 0x07
+CMD_GET_CHANNEL_STATUS      = 0x00
+CMD_CONTROL_CHANNEL         = 0x01
+CMD_INTERLOCK_CONTROL       = 0x02
+CMD_GET_CHANNEL_VOLTAGE     = 0x03
+CMD_GET_CHANNEL_CURRENT     = 0x04
+CMD_SET_CHANNEL_DATALINE    = 0x05
+CMD_SET_MODE                = 0x06
+CMD_GET_MODE                = 0x07
 
 # Channel value definitions
 CHANNEL_1 = 0x01
@@ -206,6 +208,15 @@ class SmartUSBHub:
         """Get the voltage(mv) of specified channels."""
         channel_value = self._convert_channel(*channels)
         response = self._send_command(CMD_GET_CHANNEL_VOLTAGE, channel_value,ack_len=2)
+        if response and len(response) > 5:
+            voltage = (response[4] << 8) | response[5]
+            return voltage
+        return None
+    
+    def get_channel_current(self, *channels):
+        """Get the current(ma) of specified channels."""
+        channel_value = self._convert_channel(*channels)
+        response = self._send_command(CMD_GET_CHANNEL_CURRENT, channel_value,ack_len=2)
         if response and len(response) > 5:
             voltage = (response[4] << 8) | response[5]
             return voltage

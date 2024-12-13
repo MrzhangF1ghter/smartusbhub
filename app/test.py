@@ -13,7 +13,7 @@ args = parser.parse_args()
 # Initialize SmartUSBHub instance
 hub = SmartUSBHub(port=args.port)
 
-delay_interval = 1
+delay_interval = 0.001
 channels = [1, 2, 3, 4]
 
 if hub.ser is None:
