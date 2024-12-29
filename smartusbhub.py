@@ -1,4 +1,5 @@
-# [Protocol Example]
+# Description: Python class to control Smart USB Hub with serial communication.
+# copyright: (c) 2024 by zhangtec studio, embedded tec
 
 # Single Channel ON/OFF   send                ack                
 #     ch1_on              55 5A 01 01 01 03   55 5A 01 01 01 03 
@@ -33,12 +34,54 @@
 #     interlock_set_ch3   55 5A 02 04 01 07   55 5A 02 04 01 07
 #     interlock_set_ch4   55 5A 02 08 01 0B   55 5A 02 08 01 0B
 
+# Get Channel Voltage
+#     ch1_get_voltage     55 5A 03 01 00 04   55 5A 03 01 00 00 04
+#     ch2_get_voltage     55 5A 03 02 00 05   55 5A 03 02 00 00 05 
+#     ch3_get_voltage     55 5A 03 04 00 07   55 5A 03 04 00 00 07 
+#     ch4_get_voltage     55 5A 03 08 00 0B   55 5A 03 08 00 00 0B 
+
+# Get Channel Current
+#     ch1_get_current     55 5A 04 01 00 05   55 5A 04 01 00 00 05
+#     ch2_get_current     55 5A 04 02 00 06   55 5A 04 02 00 00 06
+#     ch3_get_current     55 5A 04 04 00 08   55 5A 04 04 00 00 08
+#     ch4_get_current     55 5A 04 08 00 0C   55 5A 04 08 00 00 0C
+
+# Set Channel Dataline
+#     ch1_set_data_on     55 5A 05 01 01 07   55 5A 05 01 01 07
+#     ch1_set_data_off    55 5A 05 01 00 06   55 5A 05 01 00 06
+
+#     ch2_set_data_on     55 5A 05 02 01 08   55 5A 05 02 01 08
+#     ch2_set_data_off    55 5A 05 02 00 07   55 5A 05 02 00 07
+
+#     ch3_set_data_on     55 5A 05 04 01 0A   55 5A 05 02 01 0A
+#     ch3_set_data_off    55 5A 05 04 00 09   55 5A 05 02 00 09
+
+#     ch4_set_data_on     55 5A 05 08 01 0E   55 5A 05 08 01 0E
+#     ch4_set_data_off    55 5A 05 08 00 0D   55 5A 05 08 00 0D
+
+# All Channel
+#     ch_dataline_all_on  55 5A 05 0F 01 15   55 5A 05 0F 01 15  
+#     ch_dataline_all_off 55 5A 05 0F 00 14   55 5A 05 0F 00 14 
+
+# Get Channel Dataline
+#     ch1_get_data_status 55 5A 08 01 00 09   55 5A 08 01 00 09[disconnect]   55 5A 08 01 01 0A[connected]
+#     ch2_get_data_status 55 5A 08 02 00 0A   55 5A 08 02 00 0A[disconnect]   55 5A 08 02 01 0B[connected]
+#     ch3_get_data_status 55 5A 08 04 00 0C   55 5A 08 04 00 0C[disconnect]   55 5A 08 04 01 0D[connected]
+#     ch4_get_data_status 55 5A 08 08 00 10   55 5A 08 08 00 10[disconnect]   55 5A 08 08 01 11[connected]
+
+#     All Channel
+#     ch_all_get_dataline 55 5A 08 0F 00 17   
+
+# Set Operate Mode
 #     oper_mode_normal    55 5A 06 00 00 06   55 5A 06 00 00 06
 #     oper_mode_interlock 55 5A 06 00 01 07   55 5A 06 00 01 07
 
 # Get Operate Mode        55 5A 07 00 00 07
 #     oper_mode_normal                        55 5A 07 00 00 07
 #     oper_mode_interlock                     55 5A 07 00 01 08
+
+# Get software version    55 5A FD 00 00 FD   55 5A FD 00 0F 0C //SW_VERSION
+# Get hardware version    55 5A FE 00 00 FE   55 5A FE 00 03 01 //HW_VERSION
 
 import os
 import platform
@@ -74,6 +117,7 @@ class SmartUSBHub:
         self.debug = debug
         self.max_retries = max_retries
         self.ser = self._open_serial_port(port, baudrate)
+        self.device_mode = self.get_mode()
 
     def _open_serial_port(self, port, baudrate):
         """Attempt to open a specified or automatically detected serial port with retries."""
@@ -117,12 +161,18 @@ class SmartUSBHub:
 
         print("[ERROR] No available device found. Please specify a serial port or check the device.")
         return None
-
+    
+    def is_connected(self):
+        try:
+            return self.ser is not None and self.ser.is_open
+        except Exception:
+            return False
+    
     def _send_command(self, cmd, channel, value=0x00,ack_len=1,ser=None):
         """Send a command to the device and handle response with frame check and checksum validation."""
         ser = ser or self.ser
         if not ser:
-            print("[ERROR] Serial port is not open. Cannot send command.")
+            # print("[ERROR] Serial port is not open. Cannot send command.")
             return None
 
         # Construct command frame
@@ -138,6 +188,7 @@ class SmartUSBHub:
             time.sleep(0.01)
         except serial.SerialException as e:
             print(f"[ERROR] Failed to send data: {e}")
+            self.ser = None
             return None
 
         # Read device response with frame check and checksum validation
@@ -148,28 +199,26 @@ class SmartUSBHub:
             while True:
                 if ser.in_waiting > 0:
                     buffer.extend(ser.read(ser.in_waiting))
-                # 检查缓冲区是否包含至少一个完整帧（6字节）
+                # chenck if buffer contains at least one complete frame (6 bytes)
                 while len(buffer) >= 5+ack_len:
-                    # 找到帧头
+                    # header match
                     if buffer[0] == 0x55 and buffer[1] == 0x5A:
-                        # 提取帧数据并验证校验和
+                        # calculate checksum
                         frame_data = buffer[:5+ack_len]
                         received_checksum = frame_data[-1]
                         calculated_checksum = sum(frame_data[2:4+ack_len]) & 0xFF
 
-                        # 校验和比对
+                        # verify checksum
                         if received_checksum == calculated_checksum:
                             if self.debug:
                                 print(f"[DEBUG] Recv data: {' '.join(f'{byte:02X}' for byte in frame_data)}")
-                            return frame_data  # 返回有效帧
+                            return frame_data
                         else:
                             print("[ERROR] Checksum mismatch, discarding frame.")
                             print(f"[DEBUG] Recv data: {' '.join(f'{byte:02X}' for byte in frame_data)}")
-                    # 如果帧头不匹配或校验失败，移除第一个字节继续寻找
                     buffer.pop(0)
 
-                # 超时处理
-                if time.time() - start_time > 0.1:  # 超时时间为1秒
+                if time.time() - start_time > 0.1:
                     print("[ERROR] Timeout waiting for device response.")
                     return None
         except serial.SerialException as e:
@@ -199,7 +248,17 @@ class SmartUSBHub:
             return None
 
         channel_value = self._convert_channel(*channels)
-        response = self._send_command(CMD_CONTROL_CHANNEL, channel_value, state)
+        if self.device_mode == MODE_NORMAL:
+            response = self._send_command(CMD_CONTROL_CHANNEL, channel_value, state)
+        else:
+            print(self.device_mode)
+            if state == ON:
+                print(" Interlock mode is active. channel %d will be turned on." % channel_value)
+                response = self._send_command(CMD_INTERLOCK_CONTROL, channel_value, state)
+            else:
+                print(" Interlock mode is active. channel %d will be turned off." % channel_value)
+                response = self._send_command(CMD_INTERLOCK_CONTROL, 0xff, 0)
+
         if response:
             return response[3]
         return None

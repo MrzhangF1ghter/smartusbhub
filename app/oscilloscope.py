@@ -9,6 +9,8 @@ import numpy as np
 import sys
 from PyQt5 import QtWidgets, QtCore, QtSerialPort
 
+#pack app: pyinstaller --hidden-import=smartusbhub --paths=.. oscilloscope.py --onefile
+
 class SerialPortSelector(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -101,16 +103,14 @@ class OscilloscopeApp(QtWidgets.QWidget):
                 self.checkboxes[key].append(checkbox)
                 checkbox_layout.addWidget(checkbox)
 
-
-            # 设置样式表，使按钮在选中状态变为黄色
-            button.setStyleSheet("""
-                QPushButton {
-                    background-color: darkgray;  /* 默认颜色 */
-                }
-                QPushButton:checked {
-                    background-color: yellow;  /* 选中时的颜色 */
-                }
-            """)
+            # button.setStyleSheet("""
+            #     QPushButton {
+            #         background-color: darkgray;  /* 默认颜色 */
+            #     }
+            #     QPushButton:checked {
+            #         background-color: yellow;  /* 选中时的颜色 */
+            #     }
+            # """)
 
             # add layout
             # row_layout.addWidget(button)
@@ -118,21 +118,47 @@ class OscilloscopeApp(QtWidgets.QWidget):
             row_layout.addWidget(plot_widget)
             self.layout.addLayout(row_layout)
 
-        # 初始化通道状态
-        self.initialize_channel_status()
-        # 启动定时器，定时更新数据
+        # get channels status
+        self.get_channels_status()
+        # enable timer for data update
         self.timer = QtCore.QTimer()
         self.timer.setTimerType(QtCore.Qt.PreciseTimer)
         self.timer.timeout.connect(self.update_data)
         self.timer.start(int(self.delay_interval))
 
-    def initialize_channel_status(self):
-        """获取各通道的初始状态并设置复选框。"""
+
+    def on_connection_lost(self):
+        """Handle device disconnection."""
+        if not hasattr(self, 'alert_box') or self.alert_box is None:
+            self.alert_box = QtWidgets.QMessageBox(self)
+            self.alert_box.setIcon(QtWidgets.QMessageBox.Warning)
+            self.alert_box.setWindowTitle("设备已断开")
+            self.alert_box.setText("设备已断开，请检查连接。")
+            self.alert_box.setStandardButtons(QtWidgets.QMessageBox.Close)
+            self.alert_box.button(QtWidgets.QMessageBox.Close).clicked.connect(self.close_application)
+            self.alert_box.show()
+
+    def on_connection_restored(self):
+        """Handle device reconnection."""
+        if hasattr(self, 'alert_box') and self.alert_box is not None:
+            self.alert_box.close()
+            self.alert_box = None
+
+    def close_application(self):
+        """Handle application close action."""
+        QtWidgets.QApplication.quit()
+
+    def get_channels_status(self):
+        # Get the status of each channel and update the buttons
         for i, channel in enumerate(self.channels):
             status = self.hub.get_channel_status(channel)
-            print(f"{channel} is {status}")
+
+            if status:
+                print(f"Channel {channel} is on")
+            else:
+                print(f"Channel {channel} is off")
+
             if status is not None:
-                # 设置复选框的状态
                 self.buttons[i].setChecked(status == 1)
     
     def toggle_curve(self, channel_idx, data_type):
@@ -142,12 +168,16 @@ class OscilloscopeApp(QtWidgets.QWidget):
         self.labels[data_type][channel_idx].setVisible(visible)
 
     def toggle_channel(self, channel_idx):
-        # 根据按钮的状态控制通道的开关
+        # Toggle the state of the selected channel
         state = ON if self.buttons[channel_idx].isChecked() else OFF
         self.hub.control_channel(state, self.channels[channel_idx])
+        self.get_channels_status()
 
     def update_data(self):
-        # 获取电压数据并更新曲线和标签
+        if not self.hub.is_connected():
+            self.on_connection_lost()
+            return
+        # get voltage data and update curve and label
         for i, channel in enumerate(self.channels):
             # Fetch new data
             new_voltage = self.hub.get_channel_voltage(channel) or 0
