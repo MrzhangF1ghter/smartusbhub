@@ -98,8 +98,8 @@ CMD_INTERLOCK_CONTROL = 0x02
 CMD_GET_CHANNEL_VOLTAGE = 0x03
 CMD_GET_CHANNEL_CURRENT = 0x04
 
-CMD_SET_CHANNEL_DATA = 0x05
-CMD_GET_CHANNEL_DATA = 0x08
+CMD_SET_CHANNEL_DATALINE = 0x05
+CMD_GET_CHANNEL_DATALINE = 0x08
 
 CMD_DISABLE_BUTTON_CONTROL = 0x09
 CMD_QUERY_BUTTON_CONTROL = 0x0A
@@ -125,12 +125,15 @@ class SmartUSBHub:
             CMD_SET_CHANNEL_POWER: threading.Event(),
             CMD_GET_CHANNEL_POWER: threading.Event(),
             CMD_GET_CHANNEL_VOLTAGE: threading.Event(),
-            CMD_GET_CHANNEL_CURRENT: threading.Event()
+            CMD_GET_CHANNEL_CURRENT: threading.Event(),
+            CMD_SET_CHANNEL_DATALINE: threading.Event(),
+            CMD_GET_CHANNEL_DATALINE: threading.Event()
             # Add other commands if needed
         }
 
         self.channel_voltages = {}
         self.channel_currents = {}
+        self.channel_dataline = {}  # Store custom channel data
 
         self.protocol_thread = threading.Thread(target=self.protocol_task, args=(self.stop_event,), daemon=True)
         self.uart_recv_thread = threading.Thread(target=self.uart_recv_task, args=(self.stop_event,), daemon=True)
@@ -190,6 +193,10 @@ class SmartUSBHub:
                             self.handle_get_channel_voltage(channel, value)
                         elif cmd == CMD_GET_CHANNEL_CURRENT:
                             self.handle_get_channel_current(channel, value)
+                        elif cmd == CMD_SET_CHANNEL_DATALINE:
+                            self.handle_set_channel_dataline(channel, value)
+                        elif cmd == CMD_GET_CHANNEL_DATALINE:
+                            self.handle_get_channel_dataline(channel, value)
                         elif cmd in self.ack_events:
                             self.ack_events[cmd].set()
                         del buffer[:length]
@@ -226,7 +233,7 @@ class SmartUSBHub:
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_SET_CHANNEL_POWER]
         ack_event.clear()
-        if ack_event.wait(timeout=1):  # Timeout after 1 second
+        if ack_event.wait(timeout=0.01):  # Timeout after 1 second
             if self.debug:
                 print("set_channel_power ack received")
             return True
@@ -256,7 +263,22 @@ class SmartUSBHub:
             if self.debug:
                 print(f"Get Channel Current: ch{ch} = {value}")
         self.ack_events[CMD_GET_CHANNEL_CURRENT].set()
-        
+
+    def handle_set_channel_dataline(self, channel, data_value):
+        ch_list = self._convert_channel(channel)
+        for ch in ch_list:
+            self.channel_dataline[ch] = data_value
+            if self.debug:
+                print(f"Set Channel Data: ch{ch} = {data_value}")
+        self.ack_events[CMD_SET_CHANNEL_DATALINE].set()
+
+    def handle_get_channel_dataline(self, channel, data_value):
+        ch_list = self._convert_channel(channel)
+        for ch in ch_list:
+            self.channel_dataline[ch] = data_value
+            if self.debug:
+                print(f"Get Channel Data: ch{ch} = {data_value}")
+        self.ack_events[CMD_GET_CHANNEL_DATALINE].set()
     
     def get_channel_power_status(self, *channels):
         channel_mask = 0
@@ -286,28 +308,60 @@ class SmartUSBHub:
         self.ser.write(command)
         if self.debug:
             print(f"Sent get_channel_current cmd: {command.hex()}")
-        if self.ack_events[CMD_GET_CHANNEL_CURRENT].wait(timeout=1):
+        if self.ack_events[CMD_GET_CHANNEL_CURRENT].wait(timeout=0.01):
             return {ch: self.channel_currents.get(ch) for ch in channels}
         return None
     
+    def set_channel_dataline(self, data_value, *channels,state):
+        channel_mask = sum([1 << (ch - 1) for ch in channels])
+        command = bytearray([0x55, 0x5A, CMD_SET_CHANNEL_DATALINE, channel_mask, state, (CMD_SET_CHANNEL_DATALINE + channel_mask + state) & 0xFF])
+        self.ser.write(command)
+        if self.debug:
+            print(f"Sent command: {command.hex()}")
+        # Wait for acknowledgment
+        ack_event = self.ack_events[CMD_SET_CHANNEL_DATALINE]
+        ack_event.clear()
+        if ack_event.wait(timeout=0.01):  # Timeout after 1 second
+            if self.debug:
+                print("set_channel_dataline ack received")
+            return True
+        else:
+            print("[Error]No set_channel_dataline ack received")
+            if self.debug:
+                print("No acknowledgment received")
+            return False
 
+    def get_channel_dataline(self, *channels):
+        channel_mask = sum([1 << (ch - 1) for ch in channels])
+        cmd_sum = (CMD_GET_CHANNEL_DATALINE + channel_mask) & 0xFF
+        command = bytearray([0x55, 0x5A, CMD_GET_CHANNEL_DATALINE, channel_mask, 0x00, cmd_sum])
+        self.ack_events[CMD_GET_CHANNEL_DATALINE].clear()
+        self.ser.write(command)
+        if self.debug:
+            print(f"Sent get_channel_dataline cmd: {command.hex()}")
+        if self.ack_events[CMD_GET_CHANNEL_DATALINE].wait(timeout=0.01):
+            return {ch: self.channel_dataline.get(ch) for ch in channels}
+        return None
+    
 if __name__ == "__main__":
     hub = SmartUSBHub('/dev/cu.usbmodem132301', debug=False)
 
     try:
         # Example usage
         while True:
-            hub.get_channel_power_status(1, 2, 3, 4)
-            hub.set_channel_power(1,2,3,4, state=1)
-            time.sleep(0.1)
-            hub.set_channel_power(1,2,3,4, state=0)
-            time.sleep(0.1)
+            # hub.get_channel_power_status(1, 2, 3, 4)
+            # hub.set_channel_power(1,2,3,4, state=1)
+            # time.sleep(0.01)
+            # hub.set_channel_power(1,2,3,4, state=0)
+            # time.sleep(0.01)
             # for i in range(1, 5):
             #     hub.get_channel_voltage(i)
             #     hub.get_channel_current(i)
             #     print(f"ch{i} voltage: {hub.channel_voltages.get(i)/1000} V, current: {hub.channel_currents.get(i)/1000} A")
             # time.sleep(0.01)
-
+            channel_data =  hub.get_channel_dataline(1,2,3,4)
+            print(channel_data)
+            time.sleep(1)
         # Keep main thread running
         hub.protocol_thread.join()
         hub.uart_recv_thread.join()
