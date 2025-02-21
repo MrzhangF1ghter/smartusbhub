@@ -92,13 +92,18 @@ import threading
 # Command definitions
 CMD_GET_CHANNEL_POWER = 0x00
 CMD_SET_CHANNEL_POWER = 0x01
+
 CMD_INTERLOCK_CONTROL = 0x02
+
 CMD_GET_CHANNEL_VOLTAGE = 0x03
 CMD_GET_CHANNEL_CURRENT = 0x04
+
 CMD_SET_CHANNEL_DATA = 0x05
 CMD_GET_CHANNEL_DATA = 0x08
+
 CMD_DISABLE_BUTTON_CONTROL = 0x09
 CMD_QUERY_BUTTON_CONTROL = 0x0A
+
 CMD_SET_OPERATE_MODE = 0x06
 CMD_GET_OPERATE_MODE = 0x07
 CMD_GET_FIRMWARE_VERSION = 0xFD
@@ -119,8 +124,13 @@ class SmartUSBHub:
         self.ack_events = {
             CMD_SET_CHANNEL_POWER: threading.Event(),
             CMD_GET_CHANNEL_POWER: threading.Event(),
+            CMD_GET_CHANNEL_VOLTAGE: threading.Event(),
+            CMD_GET_CHANNEL_CURRENT: threading.Event()
             # Add other commands if needed
         }
+
+        self.channel_voltages = {}
+        self.channel_currents = {}
 
         self.protocol_thread = threading.Thread(target=self.protocol_task, args=(self.stop_event,), daemon=True)
         self.uart_recv_thread = threading.Thread(target=self.uart_recv_task, args=(self.stop_event,), daemon=True)
@@ -132,21 +142,60 @@ class SmartUSBHub:
             time.sleep(0.1)
 
     def parse_protocol_frame(self, data):
+        # Ensure at least 6 bytes are present for older commands
         if len(data) < 6:
             return None
 
-        frame_header1, frame_header2, cmd, channel, value, checksum = data[:6]
-
+        frame_header1, frame_header2 = data[0], data[1]
         if frame_header1 != 0x55 or frame_header2 != 0x5A:
             return None
 
-        if (cmd + channel + value) & 0xFF != checksum:
-            return None
+        cmd = data[2]
+        channel = data[3]
 
-        if self.debug:
-            print(f"Received frame: {data.hex()}")
+        # New voltage/current frames have 7 bytes total (two bytes for value)
+        if cmd in [CMD_GET_CHANNEL_VOLTAGE, CMD_GET_CHANNEL_CURRENT]:
+            if len(data) < 7:
+                return None
+            value_hi = data[4]
+            value_lo = data[5]
+            checksum = data[6]
+            if ((cmd + channel + value_hi + value_lo) & 0xFF) != checksum:
+                return None
+            # Combine two bytes into a single value
+            value_combined = (value_hi << 8) | value_lo
+            return (cmd, channel, value_combined, 7)
+        else:
+            value = data[4]
+            checksum = data[5]
+            if ((cmd + channel + value) & 0xFF) != checksum:
+                return None
+            return (cmd, channel, value, 6)
 
-        return cmd, channel, value
+    def uart_recv_task(self, stop_event):
+        buffer = bytearray()
+        while not stop_event.is_set():
+            if self.ser.in_waiting > 0:
+                buffer.extend(self.ser.read(self.ser.in_waiting))
+                # Try to parse frames of either 6 or 7 bytes
+                while len(buffer) >= 6:
+                    result = self.parse_protocol_frame(buffer)
+                    if result is not None:
+                        cmd, channel, value, length = result
+                        if self.debug:
+                            print(f"Parsed CMD: {cmd}, Channel: {channel}, Value: {value}")
+                        if cmd == CMD_GET_CHANNEL_POWER:
+                            self.handle_get_channel_power(channel, value)
+                        elif cmd == CMD_GET_CHANNEL_VOLTAGE:
+                            self.handle_get_channel_voltage(channel, value)
+                        elif cmd == CMD_GET_CHANNEL_CURRENT:
+                            self.handle_get_channel_current(channel, value)
+                        elif cmd in self.ack_events:
+                            self.ack_events[cmd].set()
+                        del buffer[:length]
+                    else:
+                        buffer.pop(0)
+            time.sleep(0.001)
 
     def _convert_channel(self, channel_mask):
         """Convert channel bitmask to corresponding channel numbers."""
@@ -160,32 +209,7 @@ class SmartUSBHub:
         if channel_mask & CHANNEL_4:
             channels.append(4)
         return channels
-
-    def handle_get_channel_power(self, channel, value):
-        channels = self._convert_channel(channel)
-        if self.debug:
-            print(f"Get Channel Power: Channels={channels}, Value={value}")
-
-    def uart_recv_task(self, stop_event):
-        buffer = bytearray()
-        while not stop_event.is_set():
-            if self.ser.in_waiting > 0:
-                buffer.extend(self.ser.read(self.ser.in_waiting))
-                while len(buffer) >= 6:
-                    result = self.parse_protocol_frame(buffer[:6])
-                    if result is not None:
-                        cmd, channel, value = result
-                        if self.debug:
-                            print(f"Parsed CMD: {cmd}")
-                        if cmd == CMD_GET_CHANNEL_POWER:#设备主动反馈
-                            self.handle_get_channel_power(channel, value)
-                        elif cmd in self.ack_events:
-                            self.ack_events[cmd].set()
-                        buffer = buffer[6:]
-                    else:
-                        buffer.pop(0)
-            time.sleep(0.001)
-
+    
     def set_channel_power(self, *channels, state):
         """
         Set the power state of specified channels and wait for acknowledgment.
@@ -212,35 +236,77 @@ class SmartUSBHub:
             #     print("No acknowledgment received")
             return False
         
+    def handle_get_channel_power(self, channel, value):
+        channels = self._convert_channel(channel)
+        if self.debug:
+            print(f"Get Channel Power: Channels={channels}, Value={value}")
+
+    def handle_get_channel_voltage(self, channel, value):
+        ch_list = self._convert_channel(channel)
+        for ch in ch_list:
+            self.channel_voltages[ch] = value
+            if self.debug:
+                print(f"Get Channel Voltage: ch{ch} = {value}")
+        self.ack_events[CMD_GET_CHANNEL_VOLTAGE].set()
+
+    def handle_get_channel_current(self, channel, value):
+        ch_list = self._convert_channel(channel)
+        for ch in ch_list:
+            self.channel_currents[ch] = value
+            if self.debug:
+                print(f"Get Channel Current: ch{ch} = {value}")
+        self.ack_events[CMD_GET_CHANNEL_CURRENT].set()
+        
+    
     def get_channel_power_status(self, *channels):
         channel_mask = 0
-        for channel in channels:
-            if channel == 1:
-                channel_mask |= CHANNEL_1
-            elif channel == 2:
-                channel_mask |= CHANNEL_2
-            elif channel == 3:
-                channel_mask |= CHANNEL_3
-            elif channel == 4:
-                channel_mask |= CHANNEL_4
+        channel_mask = sum([1 << (ch - 1) for ch in channels])
         command = bytearray([0x55, 0x5A, CMD_GET_CHANNEL_POWER, channel_mask, 0x00, (CMD_GET_CHANNEL_POWER + channel_mask) & 0xFF])
         self.ser.write(command)
         if self.debug:
             print(f"Sent command: {command.hex()}")
 
+    def get_channel_voltage(self, *channels):
+        channel_mask = sum([1 << (ch - 1) for ch in channels])
+        cmd_sum = (CMD_GET_CHANNEL_VOLTAGE + channel_mask) & 0xFF
+        command = bytearray([0x55, 0x5A, CMD_GET_CHANNEL_VOLTAGE, channel_mask, 0x00, cmd_sum])
+        self.ack_events[CMD_GET_CHANNEL_VOLTAGE].clear()
+        self.ser.write(command)
+        if self.debug:
+            print(f"Sent get_channel_voltage cmd: {command.hex()}")
+        if self.ack_events[CMD_GET_CHANNEL_VOLTAGE].wait(timeout=0.01):
+            return {ch: self.channel_voltages.get(ch) for ch in channels}
+        return None
+
+    def get_channel_current(self, *channels):
+        channel_mask = sum([1 << (ch - 1) for ch in channels])
+        cmd_sum = (CMD_GET_CHANNEL_CURRENT + channel_mask) & 0xFF
+        command = bytearray([0x55, 0x5A, CMD_GET_CHANNEL_CURRENT, channel_mask, 0x00, cmd_sum])
+        self.ack_events[CMD_GET_CHANNEL_CURRENT].clear()
+        self.ser.write(command)
+        if self.debug:
+            print(f"Sent get_channel_current cmd: {command.hex()}")
+        if self.ack_events[CMD_GET_CHANNEL_CURRENT].wait(timeout=1):
+            return {ch: self.channel_currents.get(ch) for ch in channels}
+        return None
     
 
 if __name__ == "__main__":
-    hub = SmartUSBHub('/dev/cu.usbmodem132201', debug=False)
+    hub = SmartUSBHub('/dev/cu.usbmodem132301', debug=False)
 
     try:
         # Example usage
         while True:
-            # hub.get_channel_power_status(1, 2, 3, 4)
+            hub.get_channel_power_status(1, 2, 3, 4)
             hub.set_channel_power(1,2,3,4, state=1)
             time.sleep(0.1)
             hub.set_channel_power(1,2,3,4, state=0)
             time.sleep(0.1)
+            # for i in range(1, 5):
+            #     hub.get_channel_voltage(i)
+            #     hub.get_channel_current(i)
+            #     print(f"ch{i} voltage: {hub.channel_voltages.get(i)/1000} V, current: {hub.channel_currents.get(i)/1000} A")
+            # time.sleep(0.01)
 
         # Keep main thread running
         hub.protocol_thread.join()
