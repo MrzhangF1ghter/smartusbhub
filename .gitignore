@@ -1,1 +1,4 @@
 .venv
+.DS_Store
+*.pyc
+*.pyo
