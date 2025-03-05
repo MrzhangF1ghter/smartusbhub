@@ -131,7 +131,7 @@ class SmartUSBHub:
             CMD_GET_CHANNEL_DATALINE: threading.Event()
             # Add other commands if needed
         }
-
+        self.channel_power_status = {}
         self.channel_voltages = {}
         self.channel_currents = {}
         self.channel_dataline = {}  # Store custom channel data
@@ -220,7 +220,7 @@ class SmartUSBHub:
                         if self.debug:
                             print(f"Parsed CMD: {cmd}, Channel: {channel}, Value: {value}")
                         if cmd == CMD_GET_CHANNEL_POWER:
-                            self.handle_get_channel_power(channel, value)
+                            self.handle_get_channel_power_status(channel, value)
                         elif cmd == CMD_GET_CHANNEL_VOLTAGE:
                             self.handle_get_channel_voltage(channel, value)
                         elif cmd == CMD_GET_CHANNEL_CURRENT:
@@ -249,36 +249,54 @@ class SmartUSBHub:
             channels.append(4)
         return channels
     
-    def set_channel_power(self, *channels, state):
+    def _send_packet(self, cmd, channels, data=None):
         """
-        Set the power state of specified channels and wait for acknowledgment.
+        Create a command packet and send it via serial port.
         
-        :param channels: List of channels to control (1, 2, 3, 4)
-        :param state: Desired state (1 for ON, 0 for OFF)
+        :param cmd: Command byte
+        :param channels: List or tuple of channel numbers (1-4) to convert to mask
+        :param data: List or tuple of additional data bytes, defaults to 0 if None
+        :return: Bytearray containing the complete packet that was sent
         """
+        # Convert channels to channel mask
         channel_mask = sum([1 << (ch - 1) for ch in channels])
-        command = bytearray([0x55, 0x5A, CMD_SET_CHANNEL_POWER, channel_mask, state, (CMD_SET_CHANNEL_POWER + channel_mask + state) & 0xFF])
-        self.ser.write(command)
-        if self.debug:
-            print(f"Sent command: {command.hex()}")
-
-        # Wait for acknowledgment
-        ack_event = self.ack_events[CMD_SET_CHANNEL_POWER]
-        ack_event.clear()
-        if ack_event.wait(timeout=0.01):  # Timeout after 1 second
-            if self.debug:
-                print("set_channel_power ack received")
-            return True
-        else:
-            print("[Error]No set_channel_power ack received")
-            # if self.debug:
-            #     print("No acknowledgment received")
-            return False
         
-    def handle_get_channel_power(self, channel, value):
-        channels = self._convert_channel(channel)
+        # Handle data parameter - use 0 if data is None
+        if data is None:
+            data = 0
+            
+        data = [channel_mask] + (data if isinstance(data, list) else [data])
+        
+        # Start with header bytes
+        packet = bytearray([0x55, 0x5A, cmd])
+        
+        # Add data bytes
+        packet.extend(data)
+        
+        # Calculate checksum (cmd + all data bytes) & 0xFF
+        checksum = cmd
+        for byte in data:
+            checksum += byte
+        checksum &= 0xFF
+        
+        # Add checksum to packet
+        packet.append(checksum)
+        
+        # Send the packet
+        self.ser.write(packet)
+        
         if self.debug:
-            print(f"Get Channel Power: Channels={channels}, Value={value}")
+            print(f"Sent command: {packet.hex()}")
+            
+        return packet
+        
+    def handle_get_channel_power_status(self, channel, value):
+        channels = self._convert_channel(channel)
+        for ch in channels:
+            self.channel_power_status[ch] = value
+            if self.debug:
+                print(f"Get Channel Power: ch{ch} = {value}")
+        self.ack_events[CMD_GET_CHANNEL_POWER].set()
 
     def handle_get_channel_voltage(self, channel, value):
         ch_list = self._convert_channel(channel)
@@ -312,13 +330,33 @@ class SmartUSBHub:
                 print(f"Get Channel Data: ch{ch} = {data_value}")
         self.ack_events[CMD_GET_CHANNEL_DATALINE].set()
     
+    def set_channel_power(self, *channels, state):
+        command = self._send_packet(CMD_SET_CHANNEL_POWER, channels, state)
+        # Wait for acknowledgment
+        ack_event = self.ack_events[CMD_SET_CHANNEL_POWER]
+        ack_event.clear()
+        if ack_event.wait(timeout=0.01):  # Timeout after 1 second
+            if self.debug:
+                print("set_channel_power ACK")
+            return True
+        else:
+            if self.debug:
+                print("set_channel_power No ACK!")
+            return False
+        
     def get_channel_power_status(self, *channels):
-        channel_mask = 0
-        channel_mask = sum([1 << (ch - 1) for ch in channels])
-        command = bytearray([0x55, 0x5A, CMD_GET_CHANNEL_POWER, channel_mask, 0x00, (CMD_GET_CHANNEL_POWER + channel_mask) & 0xFF])
-        self.ser.write(command)
-        if self.debug:
-            print(f"Sent command: {command.hex()}")
+        command = self._send_packet(CMD_GET_CHANNEL_POWER, channels)
+        # Wait for acknowledgment
+        ack_event = self.ack_events[CMD_GET_CHANNEL_POWER]
+        ack_event.clear()
+        if ack_event.wait(timeout=0.01):  # Timeout after 1 second
+            if self.debug:
+                print("get_channel_power_status ACK")
+            return self.channel_power_status
+        else:
+            if self.debug:
+                print("get_channel_power_status No ACK!")
+            return None
 
     def get_channel_voltage(self, *channels):
         channel_mask = sum([1 << (ch - 1) for ch in channels])
@@ -374,38 +412,3 @@ class SmartUSBHub:
         if self.ack_events[CMD_GET_CHANNEL_DATALINE].wait(timeout=0.01):
             return {ch: self.channel_dataline.get(ch) for ch in channels}
         return None
-    
-# if __name__ == "__main__":
-#     # 尝试扫描并连接到 Smart USB Hub 设备
-#     hub = SmartUSBHub.scan_and_connect(debug=True)
-
-#     if hub:
-#         print(f"Connected to {hub.name}")
-#         # Example usage
-#         while True:
-#             # hub.get_channel_power_status(1, 2, 3, 4)
-#             # hub.set_channel_power(1,2,3,4, state=1)
-#             # time.sleep(0.01)
-#             # hub.set_channel_power(1,2,3,4, state=0)
-#             # time.sleep(0.01)
-#             # for i in range(1, 5):
-#             #     hub.get_channel_voltage(i)
-#             #     hub.get_channel_current(i)
-#             #     print(f"ch{i} voltage: {hub.channel_voltages.get(i)/1000} V, current: {hub.channel_currents.get(i)/1000} A")
-#             # time.sleep(0.01)
-#             channel_data =  hub.get_channel_dataline(1,2,3,4)
-#             print(channel_data)
-#             time.sleep(1)
-#         # Keep main thread running
-#         hub.protocol_thread.join()
-#         hub.uart_recv_thread.join()
-
-#     else:
-#         print("No Smart USB Hub found.")
-
-#     except KeyboardInterrupt:
-#         print("Exiting...")
-#         hub.stop_event.set()
-#         hub.protocol_thread.join()
-#         hub.uart_recv_thread.join()
-#         hub.ser.close()
