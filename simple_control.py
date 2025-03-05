@@ -17,7 +17,7 @@ def main():
                 for ch in range(1, 5):
                     current_state = power_status.get(ch, 0)
                     new_state = 0 if current_state else 1
-                    hub.set_channel_power(ch, state=new_state)
+                    hub.set_channel_power_status(ch, state=new_state)
                     if hub.debug:
                         print(f"Set channel {ch} to {'ON' if new_state else 'OFF'}")
 

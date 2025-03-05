@@ -330,18 +330,18 @@ class SmartUSBHub:
                 print(f"Get Channel Data: ch{ch} = {data_value}")
         self.ack_events[CMD_GET_CHANNEL_DATALINE].set()
     
-    def set_channel_power(self, *channels, state):
+    def set_channel_power_status(self, *channels, state):
         command = self._send_packet(CMD_SET_CHANNEL_POWER, channels, state)
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_SET_CHANNEL_POWER]
         ack_event.clear()
         if ack_event.wait(timeout=0.01):  # Timeout after 1 second
             if self.debug:
-                print("set_channel_power ACK")
+                print("set_channel_power_status ACK")
             return True
         else:
             if self.debug:
-                print("set_channel_power No ACK!")
+                print("set_channel_power_status No ACK!")
             return False
         
     def get_channel_power_status(self, *channels):
@@ -401,14 +401,14 @@ class SmartUSBHub:
                 print("No acknowledgment received")
             return False
 
-    def get_channel_dataline(self, *channels):
+    def get_channel_dataline_status(self, *channels):
         channel_mask = sum([1 << (ch - 1) for ch in channels])
         cmd_sum = (CMD_GET_CHANNEL_DATALINE + channel_mask) & 0xFF
         command = bytearray([0x55, 0x5A, CMD_GET_CHANNEL_DATALINE, channel_mask, 0x00, cmd_sum])
         self.ack_events[CMD_GET_CHANNEL_DATALINE].clear()
         self.ser.write(command)
         if self.debug:
-            print(f"Sent get_channel_dataline cmd: {command.hex()}")
+            print(f"Sent get_channel_dataline_status cmd: {command.hex()}")
         if self.ack_events[CMD_GET_CHANNEL_DATALINE].wait(timeout=0.01):
             return {ch: self.channel_dataline.get(ch) for ch in channels}
         return None
