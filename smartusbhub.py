@@ -85,6 +85,7 @@
 import os
 import platform
 import serial
+import serial.tools.list_ports
 import time
 import glob
 import threading
@@ -116,9 +117,9 @@ CHANNEL_3 = 0x04
 CHANNEL_4 = 0x08
 
 class SmartUSBHub:
-    def __init__(self, port, debug=False):
+    def __init__(self, port):
         self.ser = serial.Serial(port, 115200, timeout=1)
-        self.debug = debug
+        self.debug = False
         self.stop_event = threading.Event()
 
         self.ack_events = {
@@ -140,6 +141,37 @@ class SmartUSBHub:
         self.protocol_thread.start()
         self.uart_recv_thread.start()
 
+    @classmethod
+    def scan_and_connect(cls):
+        """Scan all serial ports, attempt connection, and verify if it's a Smart USB Hub."""
+        for port_info in serial.tools.list_ports.comports():
+            port_name = port_info.device
+            try:
+                hub = cls(port_name)
+                if hub.check_operate_mode():
+                    # Extract the relevant part of the port name
+                    port_suffix = port_name.split('/')[-1]
+                    hub.name = f"smarthub_id:{port_suffix}"
+                    return hub
+            except Exception as e:
+                    print(f"Failed on port {port_name}: {e}")
+        return None
+    
+    def check_operate_mode(self):
+        """Send CMD_GET_OPERATE_MODE to see if the device responds correctly."""
+        cmd_sum = (CMD_GET_OPERATE_MODE + 0) & 0xFF
+        command = bytearray([0x55, 0x5A, CMD_GET_OPERATE_MODE, 0x00, 0x00, cmd_sum])
+        self.ack_events[CMD_GET_OPERATE_MODE] = threading.Event()
+        self.ack_events[CMD_GET_OPERATE_MODE].clear()
+        self.ser.write(command)
+        if self.debug:
+            print(f"Sent CMD_GET_OPERATE_MODE: {command.hex()}")
+        if self.ack_events[CMD_GET_OPERATE_MODE].wait(timeout=0.01):
+            if self.debug:
+                print("Device responded to CMD_GET_OPERATE_MODE.")
+            return True
+        return False
+    
     def protocol_task(self, stop_event):
         while not stop_event.is_set():
             time.sleep(0.1)
@@ -343,31 +375,37 @@ class SmartUSBHub:
             return {ch: self.channel_dataline.get(ch) for ch in channels}
         return None
     
-if __name__ == "__main__":
-    hub = SmartUSBHub('/dev/cu.usbmodem132301', debug=False)
+# if __name__ == "__main__":
+#     # 尝试扫描并连接到 Smart USB Hub 设备
+#     hub = SmartUSBHub.scan_and_connect(debug=True)
 
-    try:
-        # Example usage
-        while True:
-            # hub.get_channel_power_status(1, 2, 3, 4)
-            # hub.set_channel_power(1,2,3,4, state=1)
-            # time.sleep(0.01)
-            # hub.set_channel_power(1,2,3,4, state=0)
-            # time.sleep(0.01)
-            # for i in range(1, 5):
-            #     hub.get_channel_voltage(i)
-            #     hub.get_channel_current(i)
-            #     print(f"ch{i} voltage: {hub.channel_voltages.get(i)/1000} V, current: {hub.channel_currents.get(i)/1000} A")
-            # time.sleep(0.01)
-            channel_data =  hub.get_channel_dataline(1,2,3,4)
-            print(channel_data)
-            time.sleep(1)
-        # Keep main thread running
-        hub.protocol_thread.join()
-        hub.uart_recv_thread.join()
-    except KeyboardInterrupt:
-        print("Exiting...")
-        hub.stop_event.set()
-        hub.protocol_thread.join()
-        hub.uart_recv_thread.join()
-        hub.ser.close()
+#     if hub:
+#         print(f"Connected to {hub.name}")
+#         # Example usage
+#         while True:
+#             # hub.get_channel_power_status(1, 2, 3, 4)
+#             # hub.set_channel_power(1,2,3,4, state=1)
+#             # time.sleep(0.01)
+#             # hub.set_channel_power(1,2,3,4, state=0)
+#             # time.sleep(0.01)
+#             # for i in range(1, 5):
+#             #     hub.get_channel_voltage(i)
+#             #     hub.get_channel_current(i)
+#             #     print(f"ch{i} voltage: {hub.channel_voltages.get(i)/1000} V, current: {hub.channel_currents.get(i)/1000} A")
+#             # time.sleep(0.01)
+#             channel_data =  hub.get_channel_dataline(1,2,3,4)
+#             print(channel_data)
+#             time.sleep(1)
+#         # Keep main thread running
+#         hub.protocol_thread.join()
+#         hub.uart_recv_thread.join()
+
+#     else:
+#         print("No Smart USB Hub found.")
+
+#     except KeyboardInterrupt:
+#         print("Exiting...")
+#         hub.stop_event.set()
+#         hub.protocol_thread.join()
+#         hub.uart_recv_thread.join()
+#         hub.ser.close()
