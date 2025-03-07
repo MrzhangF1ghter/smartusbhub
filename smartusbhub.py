@@ -80,8 +80,16 @@
 #     oper_mode_normal                        55 5A 07 00 00 07
 #     oper_mode_interlock                     55 5A 07 00 01 08
 
+# button control
+#     disable_buttons     55 5A 09 00 00 09   55 5A 09 00 00 09
+#     enable_buttons      55 5A 09 00 01 0A   55 5A 09 00 01 0A
+
+# get button control
+#     get_buttons_status  55 5A 0A 00 00 0A   55 5A 0A 00 00 0A[disable]   55 5A 0A 00 01 0B[enable]
+
 # Get software version    55 5A FD 00 00 FD   55 5A FD 00 0F 0C //SW_VERSION
 # Get hardware version    55 5A FE 00 00 FE   55 5A FE 00 03 01 //HW_VERSION
+
 import os
 import platform
 import serial
@@ -102,8 +110,8 @@ CMD_GET_CHANNEL_CURRENT = 0x04
 CMD_SET_CHANNEL_DATALINE = 0x05
 CMD_GET_CHANNEL_DATALINE = 0x08
 
-CMD_DISABLE_BUTTON_CONTROL = 0x09
-CMD_QUERY_BUTTON_CONTROL = 0x0A
+CMD_SET_BUTTON_CONTROL = 0x09
+CMD_GET_BUTTON_CONTROL = 0x0A
 
 CMD_SET_OPERATE_MODE = 0x06
 CMD_GET_OPERATE_MODE = 0x07
@@ -117,38 +125,65 @@ CHANNEL_3 = 0x04
 CHANNEL_4 = 0x08
 
 class SmartUSBHub:
+    """
+    Represents a Smart USB Hub device, providing methods to control power, data lines, and more.
+    """
+
     def __init__(self, port):
-        self.ser = serial.Serial(port, 115200, timeout=1)
+        """
+        Initializes the Smart USB Hub.
+
+        Args:
+            port (str): The serial port name to connect to the device.
+        """
+
+        self.ser = serial.Serial(port, 115200, timeout=0.1)
         self.debug = False
         self.stop_event = threading.Event()
+        self.threads = []
 
         self.ack_events = {
+            CMD_GET_OPERATE_MODE: threading.Event(),
             CMD_SET_CHANNEL_POWER: threading.Event(),
             CMD_GET_CHANNEL_POWER: threading.Event(),
             CMD_GET_CHANNEL_VOLTAGE: threading.Event(),
             CMD_GET_CHANNEL_CURRENT: threading.Event(),
             CMD_SET_CHANNEL_DATALINE: threading.Event(),
-            CMD_GET_CHANNEL_DATALINE: threading.Event()
+            CMD_GET_CHANNEL_DATALINE: threading.Event(),
+            CMD_SET_BUTTON_CONTROL: threading.Event(),
+            CMD_GET_BUTTON_CONTROL: threading.Event(),
+            CMD_GET_FIRMWARE_VERSION: threading.Event(),
+            CMD_GET_HARDWARE_VERSION: threading.Event(),
             # Add other commands if needed
         }
+
+        self.operate_mode = None
+        self.button_control_state = None
+        self.firmware_version = None
+        self.hardware_version = None
+
         self.channel_power_status = {}
+        self.channel_dataline_status = {}  # Store custom channel data
         self.channel_voltages = {}
         self.channel_currents = {}
-        self.channel_dataline = {}  # Store custom channel data
 
-        self.protocol_thread = threading.Thread(target=self.protocol_task, args=(self.stop_event,), daemon=True)
         self.uart_recv_thread = threading.Thread(target=self.uart_recv_task, args=(self.stop_event,), daemon=True)
-        self.protocol_thread.start()
         self.uart_recv_thread.start()
+        self.threads.append(self.uart_recv_thread)
 
     @classmethod
     def scan_and_connect(cls):
-        """Scan all serial ports, attempt connection, and verify if it's a Smart USB Hub."""
+        """
+        Searches for available Smart USB Hub devices and connects to the first valid one.
+
+        Returns:
+            SmartUSBHub or None: An instance of SmartUSBHub if found, otherwise None.
+        """
         for port_info in serial.tools.list_ports.comports():
             port_name = port_info.device
             try:
                 hub = cls(port_name)
-                if hub.check_operate_mode():
+                if hub.get_operate_mode():
                     # Extract the relevant part of the port name
                     port_suffix = port_name.split('/')[-1]
                     hub.name = f"smarthub_id:{port_suffix}"
@@ -157,30 +192,44 @@ class SmartUSBHub:
                     print(f"Failed on port {port_name}: {e}")
         return None
     
-    def check_operate_mode(self):
-        """Send CMD_GET_OPERATE_MODE to see if the device responds correctly."""
-        cmd_sum = (CMD_GET_OPERATE_MODE + 0) & 0xFF
-        command = bytearray([0x55, 0x5A, CMD_GET_OPERATE_MODE, 0x00, 0x00, cmd_sum])
-        self.ack_events[CMD_GET_OPERATE_MODE] = threading.Event()
-        self.ack_events[CMD_GET_OPERATE_MODE].clear()
-        self.ser.write(command)
-        if self.debug:
-            print(f"Sent CMD_GET_OPERATE_MODE: {command.hex()}")
-        if self.ack_events[CMD_GET_OPERATE_MODE].wait(timeout=0.01):
+    def disconnect(self):
+        """
+        Stops all background tasks and closes the serial connection to the hub.
+        """
+        self.stop_event.set()
+        for thread in self.threads:
+            if thread.is_alive():
+                thread.join()
+
+        if self.ser and self.ser.is_open:
+            self.ser.close()
             if self.debug:
-                print("Device responded to CMD_GET_OPERATE_MODE.")
-            return True
-        return False
+                print("Serial connection closed.")
+        else:
+            if self.debug:
+                print("Serial connection was already closed.")
     
     def protocol_task(self, stop_event):
+        """
+        Continuously handles higher-level protocol tasks until the stop event is set.
+
+        Args:
+            stop_event (threading.Event): Event used to signal the task should stop.
+        """
         while not stop_event.is_set():
             time.sleep(0.1)
 
     def parse_protocol_frame(self, data):
-        # Ensure at least 6 bytes are present for older commands
+        """
+        Processes a raw data frame from the device and delivers it to the correct handler.
+
+        Args:
+            data (bytes): Raw bytes read from the device.
+        """
         if len(data) < 6:
             return None
-
+        if self.debug:
+            print(f"Received data: {data.hex()}")
         frame_header1, frame_header2 = data[0], data[1]
         if frame_header1 != 0x55 or frame_header2 != 0x5A:
             return None
@@ -208,36 +257,65 @@ class SmartUSBHub:
             return (cmd, channel, value, 6)
 
     def uart_recv_task(self, stop_event):
-        buffer = bytearray()
-        while not stop_event.is_set():
-            if self.ser.in_waiting > 0:
-                buffer.extend(self.ser.read(self.ser.in_waiting))
-                # Try to parse frames of either 6 or 7 bytes
-                while len(buffer) >= 6:
-                    result = self.parse_protocol_frame(buffer)
-                    if result is not None:
-                        cmd, channel, value, length = result
-                        if self.debug:
-                            print(f"Parsed CMD: {cmd}, Channel: {channel}, Value: {value}")
-                        if cmd == CMD_GET_CHANNEL_POWER:
-                            self.handle_get_channel_power_status(channel, value)
-                        elif cmd == CMD_GET_CHANNEL_VOLTAGE:
-                            self.handle_get_channel_voltage(channel, value)
-                        elif cmd == CMD_GET_CHANNEL_CURRENT:
-                            self.handle_get_channel_current(channel, value)
-                        elif cmd == CMD_SET_CHANNEL_DATALINE:
-                            self.handle_set_channel_dataline(channel, value)
-                        elif cmd == CMD_GET_CHANNEL_DATALINE:
-                            self.handle_get_channel_dataline(channel, value)
-                        elif cmd in self.ack_events:
-                            self.ack_events[cmd].set()
-                        del buffer[:length]
-                    else:
-                        buffer.pop(0)
-            time.sleep(0.001)
+        """
+        Continuously reads from the UART buffer and attempts to parse incoming data frames.
+
+        Args:
+            stop_event (threading.Event): Event used to signal the task should stop.
+        """
+        try:
+            buffer = bytearray()
+            while not stop_event.is_set():
+                if self.ser.in_waiting > 0:
+                    buffer.extend(self.ser.read(self.ser.in_waiting))
+                    # Try to parse frames of either 6 or 7 bytes
+                    while len(buffer) >= 6:
+                        result = self.parse_protocol_frame(buffer)
+                        if result is not None:
+                            cmd, channel, value, length = result
+                            if self.debug:
+                                print(f"Parsed CMD: {cmd}, Channel: {channel}, Value: {value}")
+                            if cmd == CMD_GET_CHANNEL_POWER:
+                                self.handle_get_channel_power_status(channel, value)
+                            elif cmd == CMD_GET_CHANNEL_VOLTAGE:
+                                self.handle_get_channel_voltage(channel, value)
+                            elif cmd == CMD_GET_CHANNEL_CURRENT:
+                                self.handle_get_channel_current(channel, value)
+                            elif cmd == CMD_SET_CHANNEL_DATALINE:
+                                self.handle_set_channel_dataline(channel, value)
+                            elif cmd == CMD_GET_CHANNEL_DATALINE:
+                                self.handle_get_channel_dataline(channel, value)
+                            elif cmd == CMD_GET_BUTTON_CONTROL:
+                                self.handle_button_control(value)
+                            elif cmd == CMD_SET_OPERATE_MODE:
+                                self.handle_get_operate_mode(value)
+                            elif cmd == CMD_GET_FIRMWARE_VERSION:
+                                self.handle_firmware_version(value)
+                            elif cmd == CMD_GET_HARDWARE_VERSION:
+                                self.handle_hardware_version(value)
+
+                            if cmd in self.ack_events:
+                                self.ack_events[cmd].set()
+
+                            del buffer[:length]
+                        else:
+                            buffer.pop(0)
+
+                time.sleep(0.001)
+        except Exception as e:
+            if self.debug:
+                print(f"Exception in uart_recv_task: {e}")
 
     def _convert_channel(self, channel_mask):
-        """Convert channel bitmask to corresponding channel numbers."""
+        """
+        Converts a channel bitmask into a list of individual channel numbers.
+
+        Args:
+            channel_mask (int): Bitmask representing which channels are included.
+
+        Returns:
+            list: A list of channel numbers (1, 2, 3, 4).
+        """
         channels = []
         if channel_mask & CHANNEL_1:
             channels.append(1)
@@ -251,15 +329,21 @@ class SmartUSBHub:
     
     def _send_packet(self, cmd, channels, data=None):
         """
-        Create a command packet and send it via serial port.
-        
-        :param cmd: Command byte
-        :param channels: List or tuple of channel numbers (1-4) to convert to mask
-        :param data: List or tuple of additional data bytes, defaults to 0 if None
-        :return: Bytearray containing the complete packet that was sent
+        Builds and sends a packet to the device.
+
+        Args:
+            cmd (int): Command byte.
+            channels (list[int]): List of channel numbers to include in the packet.
+            data (list[int] or None): Extra data bytes to include.
+
+        Returns:
+            bytearray: The packet that was sent to the device.
         """
-        # Convert channels to channel mask
-        channel_mask = sum([1 << (ch - 1) for ch in channels])
+        if channels is None:
+            channel_mask = 0
+        else:
+            # Convert channels to channel mask
+            channel_mask = sum([1 << (ch - 1) for ch in channels])
         
         # Handle data parameter - use 0 if data is None
         if data is None:
@@ -289,48 +373,144 @@ class SmartUSBHub:
             print(f"Sent command: {packet.hex()}")
             
         return packet
-        
+    
+    def handle_get_operate_mode(self, data_value):
+        self.operate_mode = data_value
+        # self.ack_events[CMD_GET_OPERATE_MODE].set()
+
     def handle_get_channel_power_status(self, channel, value):
+        """
+        Updates stored power status for the specified channel(s).
+
+        Args:
+            channel (int): Bitmask of channels.
+            value (int): Power state for the channel(s).
+        """
         channels = self._convert_channel(channel)
         for ch in channels:
             self.channel_power_status[ch] = value
             if self.debug:
                 print(f"Get Channel Power: ch{ch} = {value}")
-        self.ack_events[CMD_GET_CHANNEL_POWER].set()
+        # self.ack_events[CMD_GET_CHANNEL_POWER].set()
 
     def handle_get_channel_voltage(self, channel, value):
+        """
+        Updates stored voltage value for the specified channel(s).
+
+        Args:
+            channel (int): Bitmask of channels.
+            value (int): Voltage reading for the channel(s).
+        """
         ch_list = self._convert_channel(channel)
         for ch in ch_list:
             self.channel_voltages[ch] = value
             if self.debug:
                 print(f"Get Channel Voltage: ch{ch} = {value}")
-        self.ack_events[CMD_GET_CHANNEL_VOLTAGE].set()
+        # self.ack_events[CMD_GET_CHANNEL_VOLTAGE].set()
 
     def handle_get_channel_current(self, channel, value):
+        """
+        Updates stored current value for the specified channel(s).
+
+        Args:
+            channel (int): Bitmask of channels.
+            value (int): Current reading for the channel(s).
+        """
         ch_list = self._convert_channel(channel)
         for ch in ch_list:
             self.channel_currents[ch] = value
             if self.debug:
                 print(f"Get Channel Current: ch{ch} = {value}")
-        self.ack_events[CMD_GET_CHANNEL_CURRENT].set()
+        # self.ack_events[CMD_GET_CHANNEL_CURRENT].set()
 
     def handle_set_channel_dataline(self, channel, data_value):
-        ch_list = self._convert_channel(channel)
-        for ch in ch_list:
-            self.channel_dataline[ch] = data_value
+        """
+        Updates stored dataline status after a set command is received.
+
+        Args:
+            channel (int): Bitmask of channels.
+            data_value (int): New dataline state for the channel(s).
+        """
+        channels = self._convert_channel(channel)
+        for ch in channels:
+            self.channel_dataline_status[ch] = data_value
             if self.debug:
-                print(f"Set Channel Data: ch{ch} = {data_value}")
-        self.ack_events[CMD_SET_CHANNEL_DATALINE].set()
+                print(f"Set Channel Dataline: ch{ch} = {data_value}")
+        # self.ack_events[CMD_SET_CHANNEL_DATALINE].set()
 
     def handle_get_channel_dataline(self, channel, data_value):
+        """
+        Updates stored dataline status after a get command is received.
+
+        Args:
+            channel (int): Bitmask of channels.
+            data_value (int): Dataline state for the channel(s).
+        """
         ch_list = self._convert_channel(channel)
         for ch in ch_list:
-            self.channel_dataline[ch] = data_value
+            self.channel_dataline_status[ch] = data_value
             if self.debug:
-                print(f"Get Channel Data: ch{ch} = {data_value}")
-        self.ack_events[CMD_GET_CHANNEL_DATALINE].set()
+                print(f"Get Channel Dataline: ch{ch} = {data_value}")
+        # self.ack_events[CMD_GET_CHANNEL_DATALINE].set()
+    
+    def handle_button_control(self, data_value):
+        self.button_control_state = data_value
+        # self.ack_events[CMD_SET_BUTTON_CONTROL].set()
+
+    def handle_firmware_version(self, data_value):
+        self.firmware_version = data_value
+        # self.ack_events[CMD_GET_FIRMWARE_VERSION].set()
+
+    def handle_hardware_version(self, data_value):
+        self.hardware_version = data_value
+        # self.ack_events[CMD_GET_HARDWARE_VERSION].set()
+
+    def set_operate_mode(self, mode):
+        """
+        Set the device's operating mode.
+
+        Args:
+            mode (int): The desired operating mode.
+        """
+
+        self._send_packet(CMD_SET_OPERATE_MODE,None,mode)
+        ack_event = self.ack_events[CMD_SET_OPERATE_MODE]
+        ack_event.clear()
+        if ack_event.wait(timeout=0.01):
+            if self.debug:
+                print("set_operate_mode ACK")
+        else:
+            if self.debug:
+                print("set_operate_mode No ACK!")
+
+    def get_operate_mode(self):
+        """
+        Sends a command to verify the current operating mode of the device.
+
+        Returns:
+            bool: True if the device responds in the expected mode, otherwise False.
+        """
+        command = self._send_packet(CMD_GET_OPERATE_MODE,None,None)
+        # Wait for acknowledgment
+        ack_event = self.ack_events[CMD_GET_OPERATE_MODE]
+        ack_event.clear()
+        if ack_event.wait(timeout=0.01):  # Timeout after 1 second
+            if self.debug:
+                print("get_operate_mode ACK")
+            return True
+        else:
+            if self.debug:
+                print("get_operate_mode No ACK!")
+            return False
     
     def set_channel_power_status(self, *channels, state):
+        """
+        Sends a command to set the power state of specified channels.
+
+        Args:
+            *channels (int): Channels to control.
+            state (int): 1 to enable power, 0 to disable.
+        """
         command = self._send_packet(CMD_SET_CHANNEL_POWER, channels, state)
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_SET_CHANNEL_POWER]
@@ -345,6 +525,15 @@ class SmartUSBHub:
             return False
         
     def get_channel_power_status(self, *channels):
+        """
+        Requests the power status of specified channels.
+
+        Args:
+            *channels (int): Channels to query.
+
+        Returns:
+            dict or None: A dictionary with channel numbers as keys and power states as values, or None if timed out.
+        """
         command = self._send_packet(CMD_GET_CHANNEL_POWER, channels)
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_GET_CHANNEL_POWER]
@@ -358,57 +547,176 @@ class SmartUSBHub:
                 print("get_channel_power_status No ACK!")
             return None
 
-    def get_channel_voltage(self, *channels):
-        channel_mask = sum([1 << (ch - 1) for ch in channels])
-        cmd_sum = (CMD_GET_CHANNEL_VOLTAGE + channel_mask) & 0xFF
-        command = bytearray([0x55, 0x5A, CMD_GET_CHANNEL_VOLTAGE, channel_mask, 0x00, cmd_sum])
-        self.ack_events[CMD_GET_CHANNEL_VOLTAGE].clear()
-        self.ser.write(command)
-        if self.debug:
-            print(f"Sent get_channel_voltage cmd: {command.hex()}")
-        if self.ack_events[CMD_GET_CHANNEL_VOLTAGE].wait(timeout=0.01):
-            return {ch: self.channel_voltages.get(ch) for ch in channels}
-        return None
+    def get_channel_voltage(self, channel):
+        """
+        Returns the voltage of a single channel.
 
-    def get_channel_current(self, *channels):
-        channel_mask = sum([1 << (ch - 1) for ch in channels])
-        cmd_sum = (CMD_GET_CHANNEL_CURRENT + channel_mask) & 0xFF
-        command = bytearray([0x55, 0x5A, CMD_GET_CHANNEL_CURRENT, channel_mask, 0x00, cmd_sum])
-        self.ack_events[CMD_GET_CHANNEL_CURRENT].clear()
-        self.ser.write(command)
-        if self.debug:
-            print(f"Sent get_channel_current cmd: {command.hex()}")
-        if self.ack_events[CMD_GET_CHANNEL_CURRENT].wait(timeout=0.01):
-            return {ch: self.channel_currents.get(ch) for ch in channels}
-        return None
+        Args:
+            channel (int): The channel to query.
+
+        Returns:
+            int or None: Voltage reading for the channel, or None if timed out.
+        """
+        if isinstance(channel, (list, tuple)):
+            raise ValueError("get_channel_voltage only supports a single channel")
+
+        command = self._send_packet(CMD_GET_CHANNEL_VOLTAGE, [channel])
+        ack_event = self.ack_events[CMD_GET_CHANNEL_VOLTAGE]
+        ack_event.clear()
+        if ack_event.wait(timeout=0.01):
+            if self.debug:
+                print("get_channel_voltage ACK")
+            return self.channel_voltages.get(channel)
+        else:
+            if self.debug:
+                print("get_channel_voltage No ACK!")
+            return None
+
+    def get_channel_current(self, channel):
+        """
+        Returns the current reading of a single channel.
+
+        Args:
+            channel (int): The channel to query.
+
+        Returns:
+            int or None: Current reading for the channel, or None if timed out.
+        """
+        if isinstance(channel, (list, tuple)):
+            raise ValueError("get_channel_voltage only supports a single channel")
+
+        command = self._send_packet(CMD_GET_CHANNEL_CURRENT, [channel])
+        ack_event = self.ack_events[CMD_GET_CHANNEL_CURRENT]
+        ack_event.clear()
+        if ack_event.wait(timeout=0.01):
+            if self.debug:
+                print("get_channel_current ACK")
+            return self.channel_currents
+        else:
+            if self.debug:
+                print("get_channel_current No ACK!")
+            return None
     
     def set_channel_dataline(self, data_value, *channels,state):
-        channel_mask = sum([1 << (ch - 1) for ch in channels])
-        command = bytearray([0x55, 0x5A, CMD_SET_CHANNEL_DATALINE, channel_mask, state, (CMD_SET_CHANNEL_DATALINE + channel_mask + state) & 0xFF])
-        self.ser.write(command)
-        if self.debug:
-            print(f"Sent command: {command.hex()}")
+        """
+        Sends a command to set the data line state of specific channels.
+
+        Args:
+            data_value (int): New data line state.
+            *channels (int): Channels to update.
+            state (int): 1 to enable data line, 0 to disable.
+        """
+        command = self._send_packet(CMD_SET_CHANNEL_DATALINE, channels, state)
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_SET_CHANNEL_DATALINE]
         ack_event.clear()
         if ack_event.wait(timeout=0.01):  # Timeout after 1 second
             if self.debug:
-                print("set_channel_dataline ack received")
+                print("set_channel_dataline ACK")
             return True
         else:
-            print("[Error]No set_channel_dataline ack received")
             if self.debug:
-                print("No acknowledgment received")
+                print("set_channel_dataline No ACK!")
             return False
 
     def get_channel_dataline_status(self, *channels):
-        channel_mask = sum([1 << (ch - 1) for ch in channels])
-        cmd_sum = (CMD_GET_CHANNEL_DATALINE + channel_mask) & 0xFF
-        command = bytearray([0x55, 0x5A, CMD_GET_CHANNEL_DATALINE, channel_mask, 0x00, cmd_sum])
-        self.ack_events[CMD_GET_CHANNEL_DATALINE].clear()
-        self.ser.write(command)
-        if self.debug:
-            print(f"Sent get_channel_dataline_status cmd: {command.hex()}")
-        if self.ack_events[CMD_GET_CHANNEL_DATALINE].wait(timeout=0.01):
-            return {ch: self.channel_dataline.get(ch) for ch in channels}
-        return None
+        """
+        Requests the data line status for specified channels.
+
+        Args:
+            *channels (int): Channels to query.
+
+        Returns:
+            dict or None: A dictionary with channel numbers as keys and data line states as values, or None if timed out.
+        """
+        command = self._send_packet(CMD_GET_CHANNEL_DATALINE, channels)
+        # Wait for acknowledgment
+        ack_event = self.ack_events[CMD_GET_CHANNEL_DATALINE]
+        ack_event.clear()
+        if ack_event.wait(timeout=0.01):  # Timeout after 1 second
+            if self.debug:
+                print("get_channel_dataline_status ACK")
+            return self.channel_dataline_status
+        else:
+            if self.debug:
+                print("get_channel_dataline_status No ACK!")
+            return None
+    
+    def set_button_control(self, enable: bool):
+        """
+        Enable or disable the hub's physical buttons.
+
+        Args:
+            enable (bool): True to enable buttons, False to disable.
+        """
+        data_val = 1 if enable else 0
+
+        self._send_packet(CMD_SET_BUTTON_CONTROL,None,data_val)
+        ack_event = self.ack_events[CMD_SET_BUTTON_CONTROL]
+        ack_event.clear()
+        if ack_event.wait(timeout=0.01):
+            if self.debug:
+                print("set_button_control ACK")
+        else:
+            if self.debug:
+                print("set_button_control No ACK!")
+
+    def get_button_control(self):
+        """
+        Query whether the hub's physical buttons are enabled or disabled.
+
+        Returns:
+            int or None: 1 if enabled, 0 if disabled, or None if no response.
+        """
+
+        self._send_packet(CMD_GET_BUTTON_CONTROL,None,None)
+        ack_event = self.ack_events[CMD_GET_BUTTON_CONTROL]
+        ack_event.clear()
+        if ack_event.wait(timeout=0.01):
+            if self.debug:
+                print("ge t_button_control ACK")
+            return self.button_control_state
+        else:
+            if self.debug:
+                print("get_button_control No ACK!")
+            return None
+
+    def get_firmware_version(self):
+        """
+        Query the device's firmware version.
+
+        Returns:
+            int or None: The firmware version, or None if no response.
+        """
+
+        self._send_packet(CMD_GET_FIRMWARE_VERSION,None,None)
+        ack_event = self.ack_events[CMD_GET_FIRMWARE_VERSION]
+        ack_event.clear()
+        if ack_event.wait(timeout=0.01):
+            if self.debug:
+                print("get_firmware_version ACK")
+            return self.firmware_version
+        else:
+            if self.debug:
+                print("get_firmware_version No ACK!")
+            return None
+
+    def get_hardware_version(self):
+        """
+        Query the device's hardware version.
+
+        Returns:
+            int or None: The hardware version, or None if no response.
+        """
+
+        self._send_packet(CMD_GET_HARDWARE_VERSION,None,None)
+        ack_event = self.ack_events[CMD_GET_HARDWARE_VERSION]
+        ack_event.clear()
+        if ack_event.wait(timeout=0.01):
+            if self.debug:
+                print("get_hardware_version ACK")
+            return self.hardware_version
+        else:
+            if self.debug:
+                print("get_hardware_version No ACK!")
+            return None
