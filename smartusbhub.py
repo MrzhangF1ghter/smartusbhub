@@ -129,22 +129,22 @@ CHANNEL_4 = 0x08
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 
-# Create file handler which logs even debug messages
-fh = logging.FileHandler('smartusbhub.log')
-fh.setLevel(logging.DEBUG)
+# # Create file handler which logs even debug messages
+# fh = logging.FileHandler('smartusbhub.log')
+# fh.setLevel(logging.DEBUG)
 
 # Create console handler with a higher log level
 ch = colorlog.StreamHandler()
 ch.setLevel(logging.DEBUG)
 
-# Create formatter and add it to the handlers
-file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-fh.setFormatter(file_formatter)
+# # Create formatter and add it to the handlers
+# file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# fh.setFormatter(file_formatter)
 
 console_formatter = colorlog.ColoredFormatter(
-    '%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    '%(log_color)s%(asctime)s - %(levelname)s - %(message)s',
     datefmt=None,
     reset=True,
     log_colors={
@@ -158,7 +158,7 @@ console_formatter = colorlog.ColoredFormatter(
 ch.setFormatter(console_formatter)
 
 # Add the handlers to the logger
-logger.addHandler(fh)
+# logger.addHandler(fh)
 logger.addHandler(ch)
 
 class SmartUSBHub:
