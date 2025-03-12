@@ -1,5 +1,7 @@
 from smartusbhub import SmartUSBHub
 import time
+import sys
+import os
 
 def main():
     # 尝试扫描并连接到 Smart USB Hub 设备
@@ -45,11 +47,11 @@ def main():
                 # else:
                 #     print("dataline_status is None")
 
-                # voltage_readings = {}
-                # for ch in [1, 2, 3, 4]:
-                #     reading = hub.get_channel_voltage(ch)
-                #     # reading 可能是 None，需做相应判断
-                #     voltage_readings[ch] = reading
+                voltage_readings = {}
+                for ch in [1, 2, 3, 4]:
+                    reading = hub.get_channel_voltage(ch)
+                    # reading 可能是 None，需做相应判断
+                    voltage_readings[ch] = reading
 
                 # print("Voltage readings:")
                 # for ch, val in voltage_readings.items():
@@ -60,9 +62,9 @@ def main():
                     reading = hub.get_channel_current(ch)
                     current_readings[ch] = reading
 
-                print("Current readings:")
-                for ch, val in current_readings.items():
-                    print(f"  ch{ch}: {val}")
+                # print("Current readings:")
+                # for ch, val in current_readings.items():
+                #     print(f"  ch{ch}: {val}")
 
 
                 time.sleep(0.01)
@@ -70,7 +72,6 @@ def main():
         except KeyboardInterrupt:
             print("Exiting program...")
             hub.disconnect()
-            print("program exit.")
 
     else:
         print("No Smart USB Hub found.")

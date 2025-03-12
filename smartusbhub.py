@@ -97,6 +97,9 @@ import serial.tools.list_ports
 import time
 import glob
 import threading
+import sys
+import logging
+import colorlog
 
 # Command definitions
 CMD_GET_CHANNEL_POWER = 0x00
@@ -124,6 +127,40 @@ CHANNEL_2 = 0x02
 CHANNEL_3 = 0x04
 CHANNEL_4 = 0x08
 
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Create file handler which logs even debug messages
+fh = logging.FileHandler('smartusbhub.log')
+fh.setLevel(logging.DEBUG)
+
+# Create console handler with a higher log level
+ch = colorlog.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+# Create formatter and add it to the handlers
+file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh.setFormatter(file_formatter)
+
+console_formatter = colorlog.ColoredFormatter(
+    '%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt=None,
+    reset=True,
+    log_colors={
+        'DEBUG': 'white',
+        'INFO': 'green',
+        'WARNING': 'yellow',
+        'ERROR': 'red',
+        'CRITICAL': 'red,bg_white',
+    }
+)
+ch.setFormatter(console_formatter)
+
+# Add the handlers to the logger
+logger.addHandler(fh)
+logger.addHandler(ch)
+
 class SmartUSBHub:
     """
     Represents a Smart USB Hub device, providing methods to control power, data lines, and more.
@@ -138,7 +175,6 @@ class SmartUSBHub:
         """
 
         self.ser = serial.Serial(port, 115200, timeout=0.1)
-        self.debug = False
         self.stop_event = threading.Event()
         self.threads = []
 
@@ -167,9 +203,11 @@ class SmartUSBHub:
         self.channel_voltages = {}
         self.channel_currents = {}
 
-        self.uart_recv_thread = threading.Thread(target=self.uart_recv_task, args=(self.stop_event,), daemon=True)
+        self.uart_recv_thread = threading.Thread(target=self.uart_recv_task)
+        self.uart_recv_thread.daemon=True
         self.uart_recv_thread.start()
         self.threads.append(self.uart_recv_thread)
+        logger.info("SmartUSBHub initialized")
 
     @classmethod
     def scan_and_connect(cls):
@@ -183,41 +221,31 @@ class SmartUSBHub:
             port_name = port_info.device
             try:
                 hub = cls(port_name)
-                if hub.get_operate_mode():
+                if hub.get_operate_mode() is not None:
                     # Extract the relevant part of the port name
                     port_suffix = port_name.split('/')[-1]
                     hub.name = f"smarthub_id:{port_suffix}"
                     return hub
             except Exception as e:
-                    print(f"Failed on port {port_name}: {e}")
+                    logger.error(f"Failed on port {port_name}: {e}")
         return None
-    
+
     def disconnect(self):
-        """
-        Stops all background tasks and closes the serial connection to the hub.
-        """
-        self.stop_event.set()
-        for thread in self.threads:
-            if thread.is_alive():
-                thread.join()
+        # self.stop_event.set()
+        # for thread in self.threads:
+        #     if thread.is_alive():
+        #         logger.debug(f"Waiting for thread {thread.name} to join...")
+        #         # thread.join()
+        #         thread._stop()
 
-        if self.ser and self.ser.is_open:
-            self.ser.close()
-            if self.debug:
-                print("Serial connection closed.")
-        else:
-            if self.debug:
-                print("Serial connection was already closed.")
-    
-    def protocol_task(self, stop_event):
-        """
-        Continuously handles higher-level protocol tasks until the stop event is set.
+        # if self.ser and self.ser.is_open:
+        #     self.ser.flush()
+        #     self.ser.close()
+        #     logger.info("Serial connection closed.")
+        # else:
+        #     logger.debug("Serial connection closed.")
 
-        Args:
-            stop_event (threading.Event): Event used to signal the task should stop.
-        """
-        while not stop_event.is_set():
-            time.sleep(0.1)
+        sys.exit(0)
 
     def parse_protocol_frame(self, data):
         """
@@ -228,8 +256,10 @@ class SmartUSBHub:
         """
         if len(data) < 6:
             return None
-        if self.debug:
-            print(f"Received data: {data.hex()}")
+        
+
+        logger.debug(f"Received data: {data.hex()}")
+        
         frame_header1, frame_header2 = data[0], data[1]
         if frame_header1 != 0x55 or frame_header2 != 0x5A:
             return None
@@ -256,16 +286,12 @@ class SmartUSBHub:
                 return None
             return (cmd, channel, value, 6)
 
-    def uart_recv_task(self, stop_event):
-        """
-        Continuously reads from the UART buffer and attempts to parse incoming data frames.
-
-        Args:
-            stop_event (threading.Event): Event used to signal the task should stop.
-        """
+    def uart_recv_task(self):
         try:
             buffer = bytearray()
-            while not stop_event.is_set():
+            # whil
+            # e not self.stop_event.is_set():
+            while True:
                 if self.ser.in_waiting > 0:
                     buffer.extend(self.ser.read(self.ser.in_waiting))
                     # Try to parse frames of either 6 or 7 bytes
@@ -273,8 +299,7 @@ class SmartUSBHub:
                         result = self.parse_protocol_frame(buffer)
                         if result is not None:
                             cmd, channel, value, length = result
-                            if self.debug:
-                                print(f"Parsed CMD: {cmd}, Channel: {channel}, Value: {value}")
+                            logger.debug(f"Parsed CMD: {cmd}, Channel: {channel}, Value: {value}")
                             if cmd == CMD_GET_CHANNEL_POWER:
                                 self.handle_get_channel_power_status(channel, value)
                             elif cmd == CMD_GET_CHANNEL_VOLTAGE:
@@ -287,6 +312,8 @@ class SmartUSBHub:
                                 self.handle_get_channel_dataline(channel, value)
                             elif cmd == CMD_GET_BUTTON_CONTROL:
                                 self.handle_button_control(value)
+                            elif cmd == CMD_GET_OPERATE_MODE:
+                                self.handle_get_operate_mode(value)
                             elif cmd == CMD_SET_OPERATE_MODE:
                                 self.handle_get_operate_mode(value)
                             elif cmd == CMD_GET_FIRMWARE_VERSION:
@@ -300,11 +327,10 @@ class SmartUSBHub:
                             del buffer[:length]
                         else:
                             buffer.pop(0)
-
                 time.sleep(0.001)
+
         except Exception as e:
-            if self.debug:
-                print(f"Exception in uart_recv_task: {e}")
+            logger.error(f"Exception in uart_recv_task: {e}")
 
     def _convert_channel(self, channel_mask):
         """
@@ -369,14 +395,13 @@ class SmartUSBHub:
         # Send the packet
         self.ser.write(packet)
         
-        if self.debug:
-            print(f"Sent command: {packet.hex()}")
+        logger.debug(f"Sent command: {packet.hex()}")
             
         return packet
     
     def handle_get_operate_mode(self, data_value):
+        logger.debug(f"handle_get_operate_mode: {data_value}")
         self.operate_mode = data_value
-        # self.ack_events[CMD_GET_OPERATE_MODE].set()
 
     def handle_get_channel_power_status(self, channel, value):
         """
@@ -389,9 +414,7 @@ class SmartUSBHub:
         channels = self._convert_channel(channel)
         for ch in channels:
             self.channel_power_status[ch] = value
-            if self.debug:
-                print(f"Get Channel Power: ch{ch} = {value}")
-        # self.ack_events[CMD_GET_CHANNEL_POWER].set()
+            logger.debug(f"Get Channel Power: ch{ch} = {value}")
 
     def handle_get_channel_voltage(self, channel, value):
         """
@@ -404,9 +427,7 @@ class SmartUSBHub:
         ch_list = self._convert_channel(channel)
         for ch in ch_list:
             self.channel_voltages[ch] = value
-            if self.debug:
-                print(f"Get Channel Voltage: ch{ch} = {value}")
-        # self.ack_events[CMD_GET_CHANNEL_VOLTAGE].set()
+            logger.debug(f"Get Channel Voltage: ch{ch} = {value}")
 
     def handle_get_channel_current(self, channel, value):
         """
@@ -419,9 +440,7 @@ class SmartUSBHub:
         ch_list = self._convert_channel(channel)
         for ch in ch_list:
             self.channel_currents[ch] = value
-            if self.debug:
-                print(f"Get Channel Current: ch{ch} = {value}")
-        # self.ack_events[CMD_GET_CHANNEL_CURRENT].set()
+            logger.debug(f"Get Channel Current: ch{ch} = {value}")
 
     def handle_set_channel_dataline(self, channel, data_value):
         """
@@ -434,9 +453,7 @@ class SmartUSBHub:
         channels = self._convert_channel(channel)
         for ch in channels:
             self.channel_dataline_status[ch] = data_value
-            if self.debug:
-                print(f"Set Channel Dataline: ch{ch} = {data_value}")
-        # self.ack_events[CMD_SET_CHANNEL_DATALINE].set()
+            logger.debug(f"Set Channel Dataline: ch{ch} = {data_value}")
 
     def handle_get_channel_dataline(self, channel, data_value):
         """
@@ -449,21 +466,16 @@ class SmartUSBHub:
         ch_list = self._convert_channel(channel)
         for ch in ch_list:
             self.channel_dataline_status[ch] = data_value
-            if self.debug:
-                print(f"Get Channel Dataline: ch{ch} = {data_value}")
-        # self.ack_events[CMD_GET_CHANNEL_DATALINE].set()
-    
+            logger.debug(f"Get Channel Dataline: ch{ch} = {data_value}")
+
     def handle_button_control(self, data_value):
         self.button_control_state = data_value
-        # self.ack_events[CMD_SET_BUTTON_CONTROL].set()
 
     def handle_firmware_version(self, data_value):
         self.firmware_version = data_value
-        # self.ack_events[CMD_GET_FIRMWARE_VERSION].set()
 
     def handle_hardware_version(self, data_value):
         self.hardware_version = data_value
-        # self.ack_events[CMD_GET_HARDWARE_VERSION].set()
 
     def set_operate_mode(self, mode):
         """
@@ -477,11 +489,9 @@ class SmartUSBHub:
         ack_event = self.ack_events[CMD_SET_OPERATE_MODE]
         ack_event.clear()
         if ack_event.wait(timeout=0.01):
-            if self.debug:
-                print("set_operate_mode ACK")
+            logger.debug("set_operate_mode ACK")
         else:
-            if self.debug:
-                print("set_operate_mode No ACK!")
+            logger.error("set_operate_mode No ACK!")
 
     def get_operate_mode(self):
         """
@@ -491,17 +501,16 @@ class SmartUSBHub:
             bool: True if the device responds in the expected mode, otherwise False.
         """
         command = self._send_packet(CMD_GET_OPERATE_MODE,None,None)
+        command = self._send_packet(CMD_GET_OPERATE_MODE,None,None)
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_GET_OPERATE_MODE]
         ack_event.clear()
-        if ack_event.wait(timeout=0.01):  # Timeout after 1 second
-            if self.debug:
-                print("get_operate_mode ACK")
-            return True
+        if ack_event.wait(timeout=0.1):  # Timeout after 10 ms
+            logger.debug("get_operate_mode ACK")
+            return self.operate_mode
         else:
-            if self.debug:
-                print("get_operate_mode No ACK!")
-            return False
+            logger.warning("get_operate_mode No ACK!")
+            return None
     
     def set_channel_power_status(self, *channels, state):
         """
@@ -515,13 +524,11 @@ class SmartUSBHub:
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_SET_CHANNEL_POWER]
         ack_event.clear()
-        if ack_event.wait(timeout=0.01):  # Timeout after 1 second
-            if self.debug:
-                print("set_channel_power_status ACK")
+        if ack_event.wait(timeout=0.01):  # Timeout after 10 ms
+            logger.debug("set_channel_power_status ACK")
             return True
         else:
-            if self.debug:
-                print("set_channel_power_status No ACK!")
+            logger.error("set_channel_power_status No ACK!")
             return False
         
     def get_channel_power_status(self, *channels):
@@ -538,13 +545,11 @@ class SmartUSBHub:
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_GET_CHANNEL_POWER]
         ack_event.clear()
-        if ack_event.wait(timeout=0.01):  # Timeout after 1 second
-            if self.debug:
-                print("get_channel_power_status ACK")
+        if ack_event.wait(timeout=0.01):  # Timeout after 10 ms
+            logger.debug("get_channel_power_status ACK")
             return self.channel_power_status
         else:
-            if self.debug:
-                print("get_channel_power_status No ACK!")
+            logger.error("get_channel_power_status No ACK!")
             return None
 
     def get_channel_voltage(self, channel):
@@ -564,12 +569,10 @@ class SmartUSBHub:
         ack_event = self.ack_events[CMD_GET_CHANNEL_VOLTAGE]
         ack_event.clear()
         if ack_event.wait(timeout=0.01):
-            if self.debug:
-                print("get_channel_voltage ACK")
+            logger.debug("get_channel_voltage ACK")
             return self.channel_voltages.get(channel)
         else:
-            if self.debug:
-                print("get_channel_voltage No ACK!")
+            logger.error("get_channel_voltage No ACK!")
             return None
 
     def get_channel_current(self, channel):
@@ -589,12 +592,10 @@ class SmartUSBHub:
         ack_event = self.ack_events[CMD_GET_CHANNEL_CURRENT]
         ack_event.clear()
         if ack_event.wait(timeout=0.01):
-            if self.debug:
-                print("get_channel_current ACK")
+            logger.debug("get_channel_current ACK")
             return self.channel_currents
         else:
-            if self.debug:
-                print("get_channel_current No ACK!")
+            logger.error("get_channel_current No ACK!")
             return None
     
     def set_channel_dataline(self, data_value, *channels,state):
@@ -610,13 +611,11 @@ class SmartUSBHub:
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_SET_CHANNEL_DATALINE]
         ack_event.clear()
-        if ack_event.wait(timeout=0.01):  # Timeout after 1 second
-            if self.debug:
-                print("set_channel_dataline ACK")
+        if ack_event.wait(timeout=0.01):  # Timeout after 10 ms
+            logger.debug("set_channel_dataline ACK")
             return True
         else:
-            if self.debug:
-                print("set_channel_dataline No ACK!")
+            logger.error("set_channel_dataline No ACK!")
             return False
 
     def get_channel_dataline_status(self, *channels):
@@ -633,13 +632,11 @@ class SmartUSBHub:
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_GET_CHANNEL_DATALINE]
         ack_event.clear()
-        if ack_event.wait(timeout=0.01):  # Timeout after 1 second
-            if self.debug:
-                print("get_channel_dataline_status ACK")
+        if ack_event.wait(timeout=0.01):  # Timeout after 10 ms
+            logger.debug("get_channel_dataline_status ACK")
             return self.channel_dataline_status
         else:
-            if self.debug:
-                print("get_channel_dataline_status No ACK!")
+            logger.error("get_channel_dataline_status No ACK!")
             return None
     
     def set_button_control(self, enable: bool):
@@ -655,11 +652,10 @@ class SmartUSBHub:
         ack_event = self.ack_events[CMD_SET_BUTTON_CONTROL]
         ack_event.clear()
         if ack_event.wait(timeout=0.01):
-            if self.debug:
-                print("set_button_control ACK")
+            logger.debug("set_button_control ACK")
+            return self.button_control_state
         else:
-            if self.debug:
-                print("set_button_control No ACK!")
+            logger.error("set_button_control No ACK!")
 
     def get_button_control(self):
         """
@@ -673,12 +669,10 @@ class SmartUSBHub:
         ack_event = self.ack_events[CMD_GET_BUTTON_CONTROL]
         ack_event.clear()
         if ack_event.wait(timeout=0.01):
-            if self.debug:
-                print("ge t_button_control ACK")
+            logger.debug("get_button_control ACK")
             return self.button_control_state
         else:
-            if self.debug:
-                print("get_button_control No ACK!")
+            logger.error("get_button_control No ACK!")
             return None
 
     def get_firmware_version(self):
@@ -693,12 +687,10 @@ class SmartUSBHub:
         ack_event = self.ack_events[CMD_GET_FIRMWARE_VERSION]
         ack_event.clear()
         if ack_event.wait(timeout=0.01):
-            if self.debug:
-                print("get_firmware_version ACK")
+            logger.debug("get_firmware_version ACK")
             return self.firmware_version
         else:
-            if self.debug:
-                print("get_firmware_version No ACK!")
+            logger.error("get_firmware_version No ACK!")
             return None
 
     def get_hardware_version(self):
@@ -713,10 +705,8 @@ class SmartUSBHub:
         ack_event = self.ack_events[CMD_GET_HARDWARE_VERSION]
         ack_event.clear()
         if ack_event.wait(timeout=0.01):
-            if self.debug:
-                print("get_hardware_version ACK")
+            logger.debug("get_hardware_version ACK")
             return self.hardware_version
         else:
-            if self.debug:
-                print("get_hardware_version No ACK!")
+            logger.error("get_hardware_version No ACK!")
             return None
