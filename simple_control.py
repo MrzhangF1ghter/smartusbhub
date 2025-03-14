@@ -1,80 +1,155 @@
 from smartusbhub import SmartUSBHub
 import time
 import sys
-import os
 
 def main():
-    # 尝试扫描并连接到 Smart USB Hub 设备
-    hub = SmartUSBHub.scan_and_connect()
+    hub = SmartUSBHub.scan_and_connect() # Scan and connect to the first SmartUSBHub found
+    if hub is None:
+        print("No SmartUSBHub found")
+        sys.exit(1)
+    print("SmartUSBHub found")
     
-    if hub:
-        print(f"Connected to {hub.name}")
-        # get firmware version
-        firmware_version = hub.get_firmware_version()
-        print(f"firmware_version: {firmware_version}")
+# control channel power one bye one
+    print("\ncontrol channel power one by one:")
+    for i in range(1, 5):
+        print("turn on channel", i)
+        hub.set_channel_power(i, state=1)
+        if(hub.get_channel_power_status(i)):
+            print("channel", i, "is on")
+        else:
+            print("channel", i, "still off")
+            sys.exit(1)
+        time.sleep(0.5)
+        print("turn off channel", i)
+        hub.set_channel_power(i, state=0)
+        if(hub.get_channel_power_status(i)==0):
+            print("channel", i, "is off")
+        else:
+            print("channel", i, "still on")
+            sys.exit(1)
+        time.sleep(0.5)
+    
 
-        # get hardware version
-        hardware_version = hub.get_hardware_version()
-        print(f"hardware_version: {hardware_version}")
-        
-        # get operation mode
-        operation_mode = hub.get_operate_mode()
-        print(f"operation_mode: {operation_mode}")
+# control multi channel power at once @TODO: need to fix,don't use now!
+    # print("control multi channel power at once:")
+    # while True:
+    #     print("turn on channel 1,3")
+    #     hub.set_channel_power(1,3, state=1)
+    #     channel_status = hub.get_channel_power_status(1,3)
+    #     if channel_status is not None:
+    #         if channel_status.get(1) and channel_status.get(3):
+    #             print("channel 1,3 are on")
+    #         else:
+    #             if channel_status.get(1) is 0:
+    #                 print("channel 1 still off")
+    #             if channel_status.get(3) is 0:
+    #                 print("channel 3 still off")
+    #             sys.exit(1)
+    #     else:
+    #         print("Failed to get channel status")
+    #         sys.exit(1)
 
-        # get button status
-        button_status = hub.get_button_control()
-        print(f"button_status: {button_status}")
+    #     time.sleep(1)
 
-        try:
-            while True:
-                
-                # power_status = hub.get_channel_power_status(1,2,3,4)
-                # if power_status:
-                #     print(f"power_status ch1: {power_status.get(1)}, ch2: {power_status.get(2)}, ch3: {power_status.get(3)}, ch4: {power_status.get(4)}")
+    #     print("turn off channel 1,3:")
+    #     hub.set_channel_power(1,3, state=0)
+    #     channel_status = hub.get_channel_power_status(1,3)
+    #     if channel_status is not None:
+    #         if channel_status.get(1) is 0 and channel_status.get(3) is 0:
+    #             print("channel 1,3 are off")
+    #         else:
+    #             if channel_status.get(1) == 1:
+    #                 print("channel 1 still on")
+    #             if channel_status.get(3) == 1:
+    #                 print("channel 3 still on")
+    #             sys.exit(1)
+    #     else:
+    #         print("Failed to get channel status")
+    #         sys.exit(1)
 
-                # # Flip the power state of each channel
-                # if power_status:
-                #     for ch in range(1, 5):
-                #         current_state = power_status.get(ch, 0)
-                #         new_state = 0 if current_state else 1
-                #         hub.set_channel_power_status(ch, state=new_state)
-                #         if hub.debug:
-                #             print(f"Set channel {ch} to {'ON' if new_state else 'OFF'}")
+    #     time.sleep(1)
 
-                # dataline_status = hub.get_channel_dataline_status(1,2,3,4)
-                # if dataline_status:
-                #     print(f"dataline_status ch1: {dataline_status.get(1)}, ch2: {dataline_status.get(2)}, ch3: {dataline_status.get(3)}, ch4: {dataline_status.get(4)}")
-                # else:
-                #     print("dataline_status is None")
+# interlock control
+    print("interlock power control")
+    start_time = time.time()
+    while time.time() - start_time < 5:
+        for i in range(1, 5):
+            hub.set_channel_power_interlock(i)
+            print("interlock control,turn on channel", i)
+            time.sleep(0.5)
+    hub.set_channel_power_interlock(None)
 
-                voltage_readings = {}
-                for ch in [1, 2, 3, 4]:
-                    reading = hub.get_channel_voltage(ch)
-                    # reading 可能是 None，需做相应判断
-                    voltage_readings[ch] = reading
-
-                # print("Voltage readings:")
-                # for ch, val in voltage_readings.items():
-                #     print(f"  ch{ch}: {val}")
-                
-                current_readings = {}
-                for ch in [1, 2, 3, 4]:
-                    reading = hub.get_channel_current(ch)
-                    current_readings[ch] = reading
-
-                # print("Current readings:")
-                # for ch, val in current_readings.items():
-                #     print(f"  ch{ch}: {val}")
-
-
-                time.sleep(0.01)
-
-        except KeyboardInterrupt:
-            print("Exiting program...")
-            hub.disconnect()
-
+# control channel data line
+    print("\ndisconnect channel's data but keep power on:")
+    if hub.get_channel_power_status(1) == 0:
+        print("channel 1 power is off,turn on first")
+        hub.set_channel_power(1, state=1)
+        if(hub.get_channel_power_status(1) == 0):
+            print("channel 1 power is still off")
+            sys.exit(1)
+    
+    result = hub.set_channel_dataline(1,state=0)   
+    if result:
+        print("now channel 1 power is on and data is disconnected")
     else:
-        print("No Smart USB Hub found.")
+        print("channel 1 dataline disconnect failed")
+
+    time.sleep(3)
+    print("connect channel 1's data again")   
+    result = hub.set_channel_dataline(1,state=1) 
+    if result:
+        print("channel 1 dataline connected")
+    else:
+        print("channel 1 dataline connect failed")
+
+# control multi channel data line @TODO: need to fix,don't use now!
+    # print("disconnect multi channel's data but keep power on:")
+    # if hub.get_channel_power_status(1,3) == 0:
+    #     print("channel 1,3 power is off,turn on first")
+    #     hub.set_channel_power(1,3, state=1)
+    #     if(hub.get_channel_power_status(1,3) == 0):
+    #         print("channel 1,3 power is still off")
+    #         sys.exit(1)
+    
+    # result = hub.set_channel_dataline(1,3,state=0)   
+    # if result:
+    #     print("now channel 1,3 power is on and data is disconnected")
+    # else:
+    #     print("channel 1,3 dataline disconnect failed")
+
+    # time.sleep(3)
+    # print("connect channel 1,3's data again")   
+    # result = hub.set_channel_dataline(1,3,state=1) 
+    # if result:
+    #     print("channel 1,3 dataline connected")
+    # else:
+    #     print("channel 1,3 dataline connect failed")
+
+# get channel voltage
+    print("\nget channel voltage:")
+    start_time = time.time()
+    while time.time() - start_time < 5:
+        for i in range(1, 5):
+            voltage = hub.get_channel_voltage(i)
+            if voltage is not None:
+                print(f"channel {i} voltage is {voltage / 1000.0:.2f} V")
+            else:
+                print("Failed to get channel", i, "voltage")
+            time.sleep(0.1)
+        print("\n")
+
+# get channel current
+    print("\nget channel current:")
+    start_time = time.time()
+    while time.time() - start_time < 5:
+        for i in range(1, 5):
+            current = hub.get_channel_current(i)
+            if current is not None:
+                print(f"channel {i} current is {current / 1000.0:.2f} A")
+            else:
+                print("Failed to get channel", i, "current")
+            time.sleep(0.1)
+        print("\n")
 
 if __name__ == "__main__":
     main()
