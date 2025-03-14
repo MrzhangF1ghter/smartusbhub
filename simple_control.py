@@ -101,7 +101,7 @@ def main():
         print("channel 1 dataline connected")
     else:
         print("channel 1 dataline connect failed")
-
+    
 # control multi channel data line @TODO: need to fix,don't use now!
     # print("disconnect multi channel's data but keep power on:")
     # if hub.get_channel_power_status(1,3) == 0:
@@ -150,6 +150,36 @@ def main():
                 print("Failed to get channel", i, "current")
             time.sleep(0.1)
         print("\n")
+
+# get hub's operation mode:
+    print("\nget hub's operation mode:")
+    operate_mode = hub.get_operate_mode()
+    print("operation mode:", operate_mode)
+
+# get hub's version info:
+    print("\nget hub's version info:")
+    hardware_version = hub.get_hardware_version()
+    print("hardware version:", hardware_version)
+    firmware_version = hub.get_firmware_version()
+    print("firmware_version version:", firmware_version)
+
+# get button control status
+    print("\nget button control status:")
+    button_control_status = hub.get_button_control_status()
+    print("button control status:", button_control_status)
+
+# disable button control
+    print("\ndisable button control:")
+    hub.set_button_control(0)
+    button_control_status = hub.get_button_control_status()
+    print("button control status:", button_control_status)
+    print(("button control disabled,now you can't control the hub by button"))
+    time.sleep(5)
+    print("enable button control again:")
+    hub.set_button_control(1)
+    button_control_status = hub.get_button_control_status()
+    print("button control status:", button_control_status)
+    print("button control enabled,now you can control the hub by button")
 
 if __name__ == "__main__":
     main()
