@@ -101,7 +101,7 @@ import logging
 import colorlog
 
 # Command definitions
-CMD_GET_CHANNEL_POWER = 0x00
+CMD_GET_CHANNEL_POWER_STATUS = 0x00
 CMD_SET_CHANNEL_POWER = 0x01
 
 CMD_SET_CHANNEL_POWER_INTERLOCK = 0x02
@@ -110,10 +110,10 @@ CMD_GET_CHANNEL_VOLTAGE = 0x03
 CMD_GET_CHANNEL_CURRENT = 0x04
 
 CMD_SET_CHANNEL_DATALINE = 0x05
-CMD_GET_CHANNEL_DATALINE = 0x08
+CMD_GET_CHANNEL_DATALINE_STATUS = 0x08
 
 CMD_SET_BUTTON_CONTROL = 0x09
-CMD_GET_BUTTON_CONTROL = 0x0A
+CMD_GET_BUTTON_CONTROL_STATUS = 0x0A
 
 CMD_SET_OPERATE_MODE = 0x06
 CMD_GET_OPERATE_MODE = 0x07
@@ -179,14 +179,14 @@ class SmartUSBHub:
         self.ack_events = {
             CMD_GET_OPERATE_MODE: threading.Event(),
             CMD_SET_CHANNEL_POWER: threading.Event(),
-            CMD_GET_CHANNEL_POWER: threading.Event(),
+            CMD_GET_CHANNEL_POWER_STATUS: threading.Event(),
             CMD_SET_CHANNEL_POWER_INTERLOCK: threading.Event(),
             CMD_GET_CHANNEL_VOLTAGE: threading.Event(),
             CMD_GET_CHANNEL_CURRENT: threading.Event(),
             CMD_SET_CHANNEL_DATALINE: threading.Event(),
-            CMD_GET_CHANNEL_DATALINE: threading.Event(),
+            CMD_GET_CHANNEL_DATALINE_STATUS: threading.Event(),
             CMD_SET_BUTTON_CONTROL: threading.Event(),
-            CMD_GET_BUTTON_CONTROL: threading.Event(),
+            CMD_GET_BUTTON_CONTROL_STATUS: threading.Event(),
             CMD_GET_FIRMWARE_VERSION: threading.Event(),
             CMD_GET_HARDWARE_VERSION: threading.Event(),
         }
@@ -207,7 +207,7 @@ class SmartUSBHub:
         self.hardware_version = self.get_hardware_version()
         self.firmware_version =  self.get_firmware_version()
         self.operate_mode = self.get_operate_mode()
-        self.button_control_state = self.get_button_control()
+        self.button_control_state = self.get_button_control_status()
 
         if self.operate_mode is None:
             logger.error("Failed to get operate mode.")
@@ -323,7 +323,7 @@ class SmartUSBHub:
                         )
                         if cmd == CMD_SET_CHANNEL_POWER:
                             self._handle_set_channel_power_status(channel, value)
-                        if cmd == CMD_GET_CHANNEL_POWER:
+                        if cmd == CMD_GET_CHANNEL_POWER_STATUS:
                             self._handle_get_channel_power_status(channel, value)
                         if cmd == CMD_SET_CHANNEL_POWER_INTERLOCK:
                             self._handle_power_interlock_control()
@@ -333,9 +333,9 @@ class SmartUSBHub:
                             self._handle_get_channel_current(channel, value)
                         elif cmd == CMD_SET_CHANNEL_DATALINE:
                             self._handle_set_channel_dataline(channel, value)
-                        elif cmd == CMD_GET_CHANNEL_DATALINE:
+                        elif cmd == CMD_GET_CHANNEL_DATALINE_STATUS:
                             self._handle_get_channel_dataline(channel, value)
-                        elif cmd == CMD_GET_BUTTON_CONTROL:
+                        elif cmd == CMD_GET_BUTTON_CONTROL_STATUS:
                             self._handle_get_button_control(value)
                         elif cmd == CMD_SET_BUTTON_CONTROL:
                             self._handle_set_button_control(value)
@@ -443,7 +443,7 @@ class SmartUSBHub:
         for ch in channels:
             self.channel_power_status[ch] = value
             logger.debug(f"Get Channel Power: ch{ch} = {value}")
-        self.ack_events[CMD_GET_CHANNEL_POWER].set()
+        self.ack_events[CMD_GET_CHANNEL_POWER_STATUS].set()
 
     def _handle_power_interlock_control(self):
         self.ack_events[CMD_SET_CHANNEL_POWER_INTERLOCK].set()
@@ -478,12 +478,12 @@ class SmartUSBHub:
         for ch in ch_list:
             self.channel_dataline_status[ch] = data_value
             logger.debug(f"Get Channel Dataline: ch{ch} = {data_value}")
-        self.ack_events[CMD_GET_CHANNEL_DATALINE].set()
+        self.ack_events[CMD_GET_CHANNEL_DATALINE_STATUS].set()
 
     def _handle_get_button_control(self, data_value):
         # Updates stored button control state.
         self.button_control_state = data_value
-        self.ack_events[CMD_GET_BUTTON_CONTROL].set()
+        self.ack_events[CMD_GET_BUTTON_CONTROL_STATUS].set()
 
     def _handle_set_button_control(self, data_value):
         # Handles the response for setting the button control state.
@@ -525,7 +525,7 @@ class SmartUSBHub:
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_GET_OPERATE_MODE]
         ack_event.clear()
-        if ack_event.wait(self.com_timeout):  # Timeout after 10 ms
+        if ack_event.wait(self.com_timeout):  
             logger.debug("get_operate_mode ACK")
             logger.debug(f"operate_mode: {self.operate_mode}")
             if self.operate_mode is None:
@@ -548,7 +548,7 @@ class SmartUSBHub:
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_SET_CHANNEL_POWER]
         ack_event.clear()
-        if ack_event.wait(self.com_timeout):  # Timeout after 10 ms
+        if ack_event.wait(self.com_timeout):  
             logger.debug("set_channel_power ACK")
             return True
         else:
@@ -567,11 +567,11 @@ class SmartUSBHub:
                                  the power state of the single channel if only one channel is queried,
                                  or None if timed out.
         """
-        command = self._send_packet(CMD_GET_CHANNEL_POWER, channels)
+        command = self._send_packet(CMD_GET_CHANNEL_POWER_STATUS, channels)
         # Wait for acknowledgment
-        ack_event = self.ack_events[CMD_GET_CHANNEL_POWER]
+        ack_event = self.ack_events[CMD_GET_CHANNEL_POWER_STATUS]
         ack_event.clear()
-        if ack_event.wait(self.com_timeout):  # Timeout after 10 ms
+        if ack_event.wait(self.com_timeout):  
             logger.debug("get_channel_power_status ACK")
 
             if len(channels) == 1:
@@ -583,6 +583,15 @@ class SmartUSBHub:
             return None
 
     def set_channel_power_interlock(self,channel):
+        """
+        Sets the interlock mode for a specified channel or all channels.
+
+        Args:
+            channel (int or None): The channel to set. If None, all channels will be turn off.
+
+        Returns:
+            bool: True if the command was acknowledged, False otherwise.
+        """
         if channel is None:
             # If channel is None, set interlock mode for all channels
             self._send_packet(CMD_SET_CHANNEL_POWER_INTERLOCK, None,0)
@@ -592,7 +601,7 @@ class SmartUSBHub:
 
         ack_event = self.ack_events[CMD_SET_CHANNEL_POWER_INTERLOCK]
         ack_event.clear()
-        if ack_event.wait(timeout=0.1):  # Timeout after 10 ms
+        if ack_event.wait(timeout=0.1):  
             logger.debug("set_channel_power_interlock ACK")
             return True
         else:
@@ -658,7 +667,7 @@ class SmartUSBHub:
         # Wait for acknowledgment
         ack_event = self.ack_events[CMD_SET_CHANNEL_DATALINE]
         ack_event.clear()
-        if ack_event.wait(self.com_timeout):  # Timeout after 10 ms
+        if ack_event.wait(self.com_timeout):  
             logger.debug("set_channel_dataline ACK")
             return True
         else:
@@ -675,11 +684,11 @@ class SmartUSBHub:
         Returns:
             dict or None: A dictionary with channel numbers as keys and data line states as values, or None if timed out.
         """
-        command = self._send_packet(CMD_GET_CHANNEL_DATALINE, channels)
+        command = self._send_packet(CMD_GET_CHANNEL_DATALINE_STATUS, channels)
         # Wait for acknowledgment
-        ack_event = self.ack_events[CMD_GET_CHANNEL_DATALINE]
+        ack_event = self.ack_events[CMD_GET_CHANNEL_DATALINE_STATUS]
         ack_event.clear()
-        if ack_event.wait(self.com_timeout):  # Timeout after 10 ms
+        if ack_event.wait(self.com_timeout):  
             logger.debug("get_channel_dataline_status ACK")
             return self.channel_dataline_status
         else:
@@ -704,21 +713,21 @@ class SmartUSBHub:
         else:
             logger.error("set_button_control No ACK!")
 
-    def get_button_control(self):
+    def get_button_control_status(self):
         """
         Query whether the hub's physical buttons are enabled or disabled.
 
         Returns:
             int or None: 1 if enabled, 0 if disabled, or None if no response.
         """
-        self._send_packet(CMD_GET_BUTTON_CONTROL, None, None)
-        ack_event = self.ack_events[CMD_GET_BUTTON_CONTROL]
+        self._send_packet(CMD_GET_BUTTON_CONTROL_STATUS, None, None)
+        ack_event = self.ack_events[CMD_GET_BUTTON_CONTROL_STATUS]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):
-            logger.debug("get_button_control ACK")
+            logger.debug("get_button_control_status ACK")
             return self.button_control_state
         else:
-            logger.error("get_button_control No ACK!")
+            logger.error("get_button_control_status No ACK!")
             return None
 
     def get_firmware_version(self):
