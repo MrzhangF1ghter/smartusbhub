@@ -126,9 +126,12 @@ CHANNEL_2 = 0x02
 CHANNEL_3 = 0x04
 CHANNEL_4 = 0x08
 
+OPERATE_MODE_NORMAL = 0
+OPERATE_MODE_INTERLOCK = 1
+
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.ERROR)
 
 # # Create file handler which logs even debug messages
 # fh = logging.FileHandler('smartusbhub.log')
@@ -173,11 +176,12 @@ class SmartUSBHub:
         """
         self.port = port
         self.ser = serial.Serial(port, 115200,timeout = 0.5)
-        self.com_timeout = 0.5  
+        self.com_timeout = 0.1 
         logger.info(f"SmartUSBHub initialized on port {self.port}")
 
         self.ack_events = {
             CMD_GET_OPERATE_MODE: threading.Event(),
+            CMD_SET_OPERATE_MODE: threading.Event(),
             CMD_SET_CHANNEL_POWER: threading.Event(),
             CMD_GET_CHANNEL_POWER_STATUS: threading.Event(),
             CMD_SET_CHANNEL_POWER_INTERLOCK: threading.Event(),
@@ -203,13 +207,9 @@ class SmartUSBHub:
         self.channel_currents = {}
 
         self._start()
-        
-        self.hardware_version = self.get_hardware_version()
-        self.firmware_version =  self.get_firmware_version()
-        self.operate_mode = self.get_operate_mode()
-        self.button_control_state = self.get_button_control_status()
+        self.get_device_info()
 
-        if self.operate_mode is None:
+        if self.get_operate_mode is None:
             logger.error("Failed to get operate mode.")
             sys.exit(1)
             
@@ -237,7 +237,7 @@ class SmartUSBHub:
 
         logger.error("No Smart USB Hub found.")
         return None
-
+        
     def _start(self):
         """
         Starts the UART receive thread and sets up signal handling.
@@ -248,6 +248,14 @@ class SmartUSBHub:
         self.uart_recv_thread.start()
         print("SmartUSBHub started.")
     
+    def is_connected(self):
+        """
+        Check if the device's serial port is connected and open.
+
+        Returns:
+            bool: True if the serial port is open, False otherwise.
+        """
+        return self.ser.is_open if self.ser else False
 
     def _signal_handler(self, sig, frame):
         """
@@ -322,7 +330,7 @@ class SmartUSBHub:
                             f"Parsed CMD: {cmd:#04x}, Channel: {channel:#04x}, Value: {value:#04x}"
                         )
                         if cmd == CMD_SET_CHANNEL_POWER:
-                            self._handle_set_channel_power_status(channel, value)
+                            self._handle_set_channel_power_status()
                         if cmd == CMD_GET_CHANNEL_POWER_STATUS:
                             self._handle_get_channel_power_status(channel, value)
                         if cmd == CMD_SET_CHANNEL_POWER_INTERLOCK:
@@ -338,11 +346,11 @@ class SmartUSBHub:
                         elif cmd == CMD_GET_BUTTON_CONTROL_STATUS:
                             self._handle_get_button_control(value)
                         elif cmd == CMD_SET_BUTTON_CONTROL:
-                            self._handle_set_button_control(value)
+                            self._handle_set_button_control()
                         elif cmd == CMD_GET_OPERATE_MODE:
                             self._handle_get_operate_mode(value)
                         elif cmd == CMD_SET_OPERATE_MODE:
-                            self._handle_set_operate_mode(value)
+                            self._handle_set_operate_mode()
                         elif cmd == CMD_GET_FIRMWARE_VERSION:
                             self._handle_firmware_version(value)
                         elif cmd == CMD_GET_HARDWARE_VERSION:
@@ -354,7 +362,7 @@ class SmartUSBHub:
                         del buffer[:length]
                     else:
                         buffer.pop(0)
-            time.sleep(0.001)
+            time.sleep(0.01)
 
     def _convert_channel(self, channel_mask):
         """
@@ -424,7 +432,7 @@ class SmartUSBHub:
 
         return packet
 
-    def _handle_set_operate_mode(self, data_value):
+    def _handle_set_operate_mode(self):
         # Handles the response for setting the operate mode.
         self.ack_events[CMD_SET_OPERATE_MODE].set()
 
@@ -433,7 +441,7 @@ class SmartUSBHub:
         self.operate_mode = data_value
         self.ack_events[CMD_GET_OPERATE_MODE].set()
 
-    def _handle_set_channel_power_status(self, channel, value):
+    def _handle_set_channel_power_status(self):
         # Handles the response for setting the power status of the channel(s).
         self.ack_events[CMD_SET_CHANNEL_POWER].set()
 
@@ -442,7 +450,7 @@ class SmartUSBHub:
         channels = self._convert_channel(channel)
         for ch in channels:
             self.channel_power_status[ch] = value
-            logger.debug(f"Get Channel Power: ch{ch} = {value}")
+            logger.info(f"CMD_GET_CHANNEL_POWER_STATUS acked: ch{ch} = {value}")
         self.ack_events[CMD_GET_CHANNEL_POWER_STATUS].set()
 
     def _handle_power_interlock_control(self):
@@ -482,11 +490,13 @@ class SmartUSBHub:
 
     def _handle_get_button_control(self, data_value):
         # Updates stored button control state.
+        logger.debug(f"Button control status: {data_value}")
         self.button_control_state = data_value
         self.ack_events[CMD_GET_BUTTON_CONTROL_STATUS].set()
 
-    def _handle_set_button_control(self, data_value):
+    def _handle_set_button_control(self):
         # Handles the response for setting the button control state.
+        logger.debug("CMD_SET_BUTTON_CONTROL ACK")
         self.ack_events[CMD_SET_BUTTON_CONTROL].set()
 
     def _handle_firmware_version(self, data_value):
@@ -499,6 +509,27 @@ class SmartUSBHub:
         self.hardware_version = data_value
         self.ack_events[CMD_GET_HARDWARE_VERSION].set()
 
+    def get_device_info(self):
+        """
+        Returns the hub's ID, hardware version, firmware version, operate mode, and button control status.
+
+        Returns:
+            dict: A dictionary containing the hub's information.
+        """
+        self.hardware_version = self.get_hardware_version()
+        self.firmware_version =  self.get_firmware_version()
+        self.operate_mode = self.get_operate_mode()
+        self.button_control_state = self.get_button_control_status()
+
+        hub_info = {
+            "id": self.port.split("/")[-1],
+            "hardware_version": self.hardware_version,
+            "firmware_version": self.firmware_version,
+            "operate_mode": "normal" if self.operate_mode == 0 else "interlock" if self.operate_mode == 1 else "N/A",
+            "button_control_state": "enabled" if self.button_control_state == 1 else "disabled"
+        }
+        return hub_info
+    
     def set_operate_mode(self, mode):
         """
         Set the device's operating mode.
@@ -576,7 +607,7 @@ class SmartUSBHub:
 
             if len(channels) == 1:
                 return self.channel_power_status.get(channels[0], None)
-            logger.info(f"get_channel_power_status: {self.channel_power_status}")
+            logger.debug(f"get_channel_power_status: {self.channel_power_status}")
             return self.channel_power_status
         else:
             logger.error("get_channel_power_status No ACK!")
