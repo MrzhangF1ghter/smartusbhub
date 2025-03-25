@@ -1,3 +1,10 @@
+# Description: A GUI application that displays the voltage and current of each channel of the SmartUSBHub in real-time.
+# copyright: (c) 2024 EmbeddedTec studio
+# license: Apache-2.0
+# version: 1.0
+# author: EmbeddedTec studio
+# email:embeddedtec@outlook.com
+
 import sys
 sys.path.append('../')
 from smartusbhub import SmartUSBHub
@@ -8,7 +15,7 @@ import numpy as np
 import sys
 from PyQt5 import QtWidgets, QtCore, QtSerialPort
 
-#pack app: pyinstaller --hidden-import=smartusbhub --paths=.. oscilloscope.py --onedir
+#pack app: pyinstaller --hidden-import=smartusbhub --paths=.. oscilloscope.py --onefile --distpath ../app
 
 class SerialPortSelector(QtWidgets.QDialog):
     def __init__(self, parent=None):

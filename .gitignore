@@ -3,3 +3,6 @@
 *.pyc
 *.pyo
 *.log
+document
+build
+*.spec

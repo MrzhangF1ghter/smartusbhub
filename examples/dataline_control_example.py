@@ -1,3 +1,10 @@
+# Description: control the dataline of each channel of the SmartUSBHub
+# copyright: (c) 2024 EmbeddedTec studio
+# license: Apache-2.0
+# version: 1.0
+# author: EmbeddedTec studio
+# email:embeddedtec@outlook.com
+
 import sys
 import time
 sys.path.append('../')

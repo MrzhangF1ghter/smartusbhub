@@ -9,15 +9,17 @@ smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 
 > [!NOTE]
 >
-> 此smartusbhub python库只是用于测试用途，如果要集成到生产环境，建议自行实现通信控制，协议文档请查阅： [protocol documentation](https://github.com/MrzhangF1ghter/smartusbhub/wiki/protocol)
+> 此smartusbhub python库只是用于测试用途，如果要集成到生产环境，建议自行实现通信控制。
+>
+> 协议文档请查阅： [集线器协议文档](https://github.com/MrzhangF1ghter/smartusbhub/wiki/protocol)
+>
+> 最简单的控制demo：[simple_serial.py](./examples/simple_serial.py)
 
-## 使用方法
 
-[视频演示及教程](https://www.bilibili.com/video/BV1R5meY7EkQ/)
 
-### 环境部署
+## 环境部署
 
-#### 克隆仓库
+### 获取最新的库
 
 把此代码仓库克隆到本地,假设你的工程名字为`my_project`  
 
@@ -26,7 +28,20 @@ cd my_project
 git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 ```
 
-#### 设置虚拟环境
+库目录结构如下：
+
+```shell
+.
+├── README.md					# 文档
+├── examples					# 例程
+├── apps							# 已经编译好的例程
+├── requirements.txt	# 安装依赖
+└── smartusbhub.py 		# 功能源码
+```
+
+
+
+### 设置虚拟环境
 
 设置python虚拟环境（推荐）
 `python -m venv venv`
@@ -50,15 +65,54 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
    - Linux平台: `/dev/ttyACMx`
    - mac平台: `/dev/cu.usbmodemx`
 
-#### 运行例程
+
+
+### 运行例程
 
 `smartusbhub python library`库包含多个例程，其存放在`examples`目录下，目前有以下例子：
 
 - `power_control_example`：展示如何控制指定通道的电源
-- `dataline_control_example：展示如何控制指定通道的数据线通断（保持电源供电）
+- `dataline_control_example`：展示如何控制指定通道的数据线通断（保持电源供电）
 - `voltage_monitor_example`：展示如何获取指定通道的电压值
 - `current_monitor_example`：展示如何获取指定通道的电流值
-- `setting_example:展示如何配置设置项
+- `setting_example`:展示如何配置设置项
+- `oscilloscope`：一个简单的GUI示波器，可控制通道电源开关、电压及电流采集
+
+![oscilloscope](./assets/oscilloscope.png)
+
+<center>图：示波器demo</center>
+
+
+
+若要运行demo，请执行以下指令：
+
+- 激活虚拟环境：
+
+  - Linux/macOS用户：
+
+    ```
+     source ./venv/bin/activate
+    ```
+
+  - Windows 用户：
+
+    ```shell
+    .\venv\Scripts\activate.bat
+    ```
+
+- 进入examples文件夹：
+
+  ```
+  cd ./examples/
+  ```
+
+- 运行demo，例如：
+
+  ```shell
+  python oscilloscope.py
+  ```
+
+  
 
 ### 集成到你的项目中
 
@@ -90,7 +144,9 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
      hub = SmartUSBHub("/dev/cu.usbmodem132301")
      ```
 
-## **API:**
+
+
+## **用户接口**
 
 ### 设备连接
 
