@@ -1,5 +1,9 @@
 # Description: Python class to control Smart USB Hub with serial communication.
-# copyright: (c) 2024 by zhangtec studio, embedded tec
+# copyright: (c) 2024 EmbeddedTec studio
+# license: Apache-2.0
+# version: 1.0
+# author: EmbeddedTec studio
+# email:embeddedtec@outlook.com
 
 # Single Channel ON/OFF   send                ack
 #     ch1_on              55 5A 01 01 01 03   55 5A 01 01 01 03
