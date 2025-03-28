@@ -689,7 +689,7 @@ class SmartUSBHub:
             logger.error("get_channel_current No ACK!")
             return None
 
-    def set_channel_dataline(self, data_value, *channels, state):
+    def set_channel_dataline(self, *channels, state):
         """
         Sends a command to set the data line state of specific channels.
 
