@@ -471,13 +471,10 @@ class SmartUSBHub:
 
     def _handle_set_operate_mode(self):
         logger.debug("_handle_set_operate_mode ACK")
-        # self._invoke_callback(CMD_SET_OPERATE_MODE)
-        # self.ack_events[CMD_SET_OPERATE_MODE].set()
 
     def _handle_get_operate_mode(self, data_value):
         logger.debug("_handle_get_operate_mode ACK")
         self.operate_mode = data_value
-        # self.ack_events[CMD_GET_OPERATE_MODE].set()
 
     def _handle_set_channel_power_status(self):
         logger.debug("_handle_set_channel_power_status ACK")
@@ -489,19 +486,16 @@ class SmartUSBHub:
         for ch in channels:
             self.channel_power_status[ch] = value
             logger.info(f"CMD_GET_CHANNEL_POWER_STATUS acked: ch{ch} = {value}")
-        # self.ack_events[CMD_GET_CHANNEL_POWER_STATUS].set()
 
     def _handle_power_interlock_control(self):
         logger.debug("_handle_power_interlock_control ACK")
-        self.ack_events[CMD_SET_CHANNEL_POWER_INTERLOCK].set()
-        
+
     def _handle_get_channel_voltage(self, channel, value):
         logger.debug("_handle_get_channel_voltage ACK")
         ch_list = self._convert_channel(channel)
         for ch in ch_list:
             self.channel_voltages[ch] = value
             logger.debug(f"Get Channel Voltage: ch{ch} = {value}")
-        # self.ack_events[CMD_GET_CHANNEL_VOLTAGE].set()
 
     def _handle_get_channel_current(self, channel, value):
         logger.debug("_handle_get_channel_current ACK")
@@ -509,7 +503,6 @@ class SmartUSBHub:
         for ch in ch_list:
             self.channel_currents[ch] = value
             logger.debug(f"Get Channel Current: ch{ch} = {value}")
-        # self.ack_events[CMD_GET_CHANNEL_CURRENT].set()
 
     def _handle_set_channel_dataline(self, channel, data_value):
         logger.debug("_handle_set_channel_dataline ACK")
@@ -517,34 +510,28 @@ class SmartUSBHub:
         for ch in channels:
             self.channel_dataline_status[ch] = data_value
             logger.debug(f"Set Channel Dataline: ch{ch} = {data_value}")
-        # self.ack_events[CMD_SET_CHANNEL_DATALINE].set()
-        
+
     def _handle_get_channel_dataline(self, channel, data_value):
         logger.debug("_handle_get_channel_dataline ACK")
         ch_list = self._convert_channel(channel)
         for ch in ch_list:
             self.channel_dataline_status[ch] = data_value
             logger.debug(f"Get Channel Dataline: ch{ch} = {data_value}")
-        # self.ack_events[CMD_GET_CHANNEL_DATALINE_STATUS].set()
 
     def _handle_get_button_control(self, data_value):
         logger.debug("_handle_get_button_control ACK")
         self.button_control_state = data_value
-        # self.ack_events[CMD_GET_BUTTON_CONTROL_STATUS].set()
 
     def _handle_set_button_control(self):
         logger.debug("_handle_set_button_control ACK")
-        # self.ack_events[CMD_SET_BUTTON_CONTROL].set()
 
     def _handle_firmware_version(self, data_value):
         logger.debug("_handle_firmware_version ACK")
         self.firmware_version = data_value
-        # self.ack_events[CMD_GET_FIRMWARE_VERSION].set()
 
     def _handle_hardware_version(self, data_value):
         logger.debug("_handle_hardware_version ACK")
         self.hardware_version = data_value
-        # self.ack_events[CMD_GET_HARDWARE_VERSION].set()
 
     def get_device_info(self):
         """
@@ -582,7 +569,7 @@ class SmartUSBHub:
         else:
             logger.error("set_operate_mode No ACK!")
 
-    def get_operate_mode(self):#@TODO: need to fix return none?
+    def get_operate_mode(self):
         """
         Sends a command to verify the current operating mode of the device.
 
