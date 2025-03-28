@@ -199,6 +199,9 @@ class SmartUSBHub:
             CMD_GET_HARDWARE_VERSION: threading.Event(),
         }
         
+        # 用户回调字典
+        self.callbacks = {cmd: None for cmd in self.ack_events.keys()}
+
         self.hardware_version = None
         self.firmware_version = None
         self.operate_mode = None
@@ -221,6 +224,35 @@ class SmartUSBHub:
         logger.info(f"Firmware version: V1.{self.firmware_version}")
         logger.info(f"Operate mode: {'normal' if self.operate_mode == 0 else 'interlock'}")
         logger.info(f"button control: {'enable' if self.button_control_state == 1 else 'disabled'}")
+
+    def register_callback(self, cmd, callback):
+        """
+        Registers a user callback for a specific command.
+
+        Args:
+            cmd (int): The command for which the callback is registered.
+            callback (function): The callback function to execute when the command's ACK is received.
+        """
+        if cmd in self.callbacks:
+            self.callbacks[cmd] = callback
+            logger.info(f"Callback registered for command: {cmd:#04x}")
+        else:
+            logger.warning(f"Invalid command: {cmd:#04x}. Cannot register callback.")
+    
+    def _invoke_callback(self, cmd, *args, **kwargs):
+        """
+        Invokes the user callback for a specific command, if registered.
+
+        Args:
+            cmd (int): The command for which the callback is invoked.
+            *args: Positional arguments to pass to the callback.
+            **kwargs: Keyword arguments to pass to the callback.
+        """
+        if cmd in self.callbacks and self.callbacks[cmd]:
+            try:
+                self.callbacks[cmd](*args, **kwargs)
+            except Exception as e:
+                logger.error(f"Error in callback for command {cmd:#04x}: {e}")
 
     @classmethod
     def scan_and_connect(cls):
@@ -360,8 +392,9 @@ class SmartUSBHub:
                         elif cmd == CMD_GET_HARDWARE_VERSION:
                             self._handle_hardware_version(value)
 
-                        # if cmd in self.ack_events:
-                        #     self.ack_events[cmd].set()
+                        if cmd in self.ack_events:
+                            self._invoke_callback(cmd,channel,value)
+                            self.ack_events[cmd].set()
 
                         del buffer[:length]
                     else:
@@ -437,81 +470,81 @@ class SmartUSBHub:
         return packet
 
     def _handle_set_operate_mode(self):
-        # Handles the response for setting the operate mode.
-        self.ack_events[CMD_SET_OPERATE_MODE].set()
+        logger.debug("_handle_set_operate_mode ACK")
+        # self._invoke_callback(CMD_SET_OPERATE_MODE)
+        # self.ack_events[CMD_SET_OPERATE_MODE].set()
 
     def _handle_get_operate_mode(self, data_value):
-        # Handles the response for getting the operate mode.
+        logger.debug("_handle_get_operate_mode ACK")
         self.operate_mode = data_value
-        self.ack_events[CMD_GET_OPERATE_MODE].set()
+        # self.ack_events[CMD_GET_OPERATE_MODE].set()
 
     def _handle_set_channel_power_status(self):
-        # Handles the response for setting the power status of the channel(s).
+        logger.debug("_handle_set_channel_power_status ACK")
         self.ack_events[CMD_SET_CHANNEL_POWER].set()
 
     def _handle_get_channel_power_status(self, channel, value):
-        # Updates stored power status for the specified channel(s).
+        logger.debug("_handle_get_channel_power_status ACK")
         channels = self._convert_channel(channel)
         for ch in channels:
             self.channel_power_status[ch] = value
             logger.info(f"CMD_GET_CHANNEL_POWER_STATUS acked: ch{ch} = {value}")
-        self.ack_events[CMD_GET_CHANNEL_POWER_STATUS].set()
+        # self.ack_events[CMD_GET_CHANNEL_POWER_STATUS].set()
 
     def _handle_power_interlock_control(self):
+        logger.debug("_handle_power_interlock_control ACK")
         self.ack_events[CMD_SET_CHANNEL_POWER_INTERLOCK].set()
         
     def _handle_get_channel_voltage(self, channel, value):
-        # Updates stored voltage value for the specified channel(s).
+        logger.debug("_handle_get_channel_voltage ACK")
         ch_list = self._convert_channel(channel)
         for ch in ch_list:
             self.channel_voltages[ch] = value
             logger.debug(f"Get Channel Voltage: ch{ch} = {value}")
-        self.ack_events[CMD_GET_CHANNEL_VOLTAGE].set()
+        # self.ack_events[CMD_GET_CHANNEL_VOLTAGE].set()
 
     def _handle_get_channel_current(self, channel, value):
-        # Updates stored current value for the specified channel(s).
+        logger.debug("_handle_get_channel_current ACK")
         ch_list = self._convert_channel(channel)
         for ch in ch_list:
             self.channel_currents[ch] = value
             logger.debug(f"Get Channel Current: ch{ch} = {value}")
-        self.ack_events[CMD_GET_CHANNEL_CURRENT].set()
+        # self.ack_events[CMD_GET_CHANNEL_CURRENT].set()
 
     def _handle_set_channel_dataline(self, channel, data_value):
-        # Updates stored dataline status after a set command is received.
+        logger.debug("_handle_set_channel_dataline ACK")
         channels = self._convert_channel(channel)
         for ch in channels:
             self.channel_dataline_status[ch] = data_value
             logger.debug(f"Set Channel Dataline: ch{ch} = {data_value}")
-        self.ack_events[CMD_SET_CHANNEL_DATALINE].set()
+        # self.ack_events[CMD_SET_CHANNEL_DATALINE].set()
         
     def _handle_get_channel_dataline(self, channel, data_value):
-        # Updates stored dataline status after a get command is received.
+        logger.debug("_handle_get_channel_dataline ACK")
         ch_list = self._convert_channel(channel)
         for ch in ch_list:
             self.channel_dataline_status[ch] = data_value
             logger.debug(f"Get Channel Dataline: ch{ch} = {data_value}")
-        self.ack_events[CMD_GET_CHANNEL_DATALINE_STATUS].set()
+        # self.ack_events[CMD_GET_CHANNEL_DATALINE_STATUS].set()
 
     def _handle_get_button_control(self, data_value):
-        # Updates stored button control state.
-        logger.debug(f"Button control status: {data_value}")
+        logger.debug("_handle_get_button_control ACK")
         self.button_control_state = data_value
-        self.ack_events[CMD_GET_BUTTON_CONTROL_STATUS].set()
+        # self.ack_events[CMD_GET_BUTTON_CONTROL_STATUS].set()
 
     def _handle_set_button_control(self):
-        # Handles the response for setting the button control state.
-        logger.debug("CMD_SET_BUTTON_CONTROL ACK")
-        self.ack_events[CMD_SET_BUTTON_CONTROL].set()
+        logger.debug("_handle_set_button_control ACK")
+        # self.ack_events[CMD_SET_BUTTON_CONTROL].set()
 
     def _handle_firmware_version(self, data_value):
-        # Updates stored firmware version.
+        logger.debug("_handle_firmware_version ACK")
         self.firmware_version = data_value
-        self.ack_events[CMD_GET_FIRMWARE_VERSION].set()
+        # self.ack_events[CMD_GET_FIRMWARE_VERSION].set()
 
     def _handle_hardware_version(self, data_value):
-        # Updates stored hardware version.
+        logger.debug("_handle_hardware_version ACK")
         self.hardware_version = data_value
-        self.ack_events[CMD_GET_HARDWARE_VERSION].set()
+        # self.ack_events[CMD_GET_HARDWARE_VERSION].set()
 
     def get_device_info(self):
         """
