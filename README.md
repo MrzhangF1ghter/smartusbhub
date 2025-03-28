@@ -170,7 +170,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - 参数:
 
-  - [port](vscode-file://vscode-app/Applications/Visual Studio Code.app/Contents/Resources/app/out/vs/code/electron-sandbox/workbench/workbench.html) (str): 要连接的串口名称。
+  - [port](str): 要连接的串口名称。
 
 - 示例:
 
