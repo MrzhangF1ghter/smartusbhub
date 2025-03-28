@@ -30,7 +30,7 @@ class SerialPortSelector(QtWidgets.QDialog):
         for port in self.ports:
             port_name = port.portName()
             # Filter for macOS/Linux specific patterns
-            if sys.platform in ["linux", "darwin"] and not (port_name.startswith("cu.usbmodem") or port_name.startswith("cu.ttyACM")):
+            if sys.platform in ["linux", "darwin"] and not (port_name.startswith("cu.usbmodem") or port_name.startswith("ttyACM")):
                 continue
             self.port_combobox.addItem(port_name)
 
@@ -175,30 +175,32 @@ class OscilloscopeApp(QtWidgets.QWidget):
         # get voltage data and update curve and label
         for i, channel in enumerate(self.channels):
             # Fetch new data
-            new_voltage = self.hub.get_channel_voltage(channel) or 0
-            # Update data arrays
-            self.data['voltage'][i]= np.roll(self.data['voltage'][i], -1)
-            self.data['voltage'][i, -1] = new_voltage
-            # Update curves
-            self.curves['voltage'][i].setData(self.data['voltage'][i])
+            new_voltage = self.hub.get_channel_voltage(channel)
+            if new_voltage is not None:
+                # Update data arrays
+                self.data['voltage'][i]= np.roll(self.data['voltage'][i], -1)
+                self.data['voltage'][i, -1] = new_voltage
+                # Update curves
+                self.curves['voltage'][i].setData(self.data['voltage'][i])
+
+                # update voltage label
+                voltage_in_volts = new_voltage / 1000.0
+                self.labels['voltage'][i].setText(f"{voltage_in_volts:.3f} V")
+                self.labels['voltage'][i].setPos(0, new_voltage-300)
 
             # Fetch new data
-            new_current = self.hub.get_channel_current(channel) or 0
-            # Update data arrays
-            self.data['current'][i] = np.roll(self.data['current'][i], -1)
-            self.data['current'][i, -1] = new_current
-            # Update curves
-            self.curves['current'][i].setData(self.data['current'][i])
+            new_current = self.hub.get_channel_current(channel)
+            if new_current is not None:
+                # Update data arrays
+                self.data['current'][i] = np.roll(self.data['current'][i], -1)
+                self.data['current'][i, -1] = new_current
+                # Update curves
+                self.curves['current'][i].setData(self.data['current'][i])
 
-            # update voltage label
-            voltage_in_volts = new_voltage / 1000.0
-            self.labels['voltage'][i].setText(f"{voltage_in_volts:.3f} V")
-            self.labels['voltage'][i].setPos(0, new_voltage-300)
-
-            # update current label
-            current_in_ma = new_current / 1000.0
-            self.labels['current'][i].setText(f"{current_in_ma:.3f} A")
-            self.labels['current'][i].setPos(0, new_current-300)
+                # update current label
+                current_in_ma = new_current / 1000.0
+                self.labels['current'][i].setText(f"{current_in_ma:.3f} A")
+                self.labels['current'][i].setPos(0, new_current-300)
 
 def main():
     # Create and show the oscilloscope application

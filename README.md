@@ -1,4 +1,6 @@
 # SmartUSBHub python library
+[TOC]
+
 ## 简介
 
 smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
@@ -57,7 +59,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
     `source ./venv/bin/activate`
 
 2. 安装依赖库
-    `pip install -r ./smartusbhub/requirements.txt`
+    `pip install -r requirements.txt`
 
 3. 将随附的数据线接到设备短边侧的<u>设备通信口</u>USB-C，另外一端接到主机的USB端口上，连接后主机将会把设备识别成:
 
@@ -232,17 +234,20 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 ### 控制通道数据开关
 
-#### `set_channel_dataline(data_value, *channels, state)`
+#### `set_channel_dataline(*channels, state)`
 
 - **描述**: 设置指定通道的数据线状态。
+
 - **参数**:
-  - data_value (int): 新的数据线状态。
   - `*channels` (int): 要更新的通道。
-  - state (int): `1` 开启数据线，`0` 关闭数据线。
+  - state (int): `1` 连通 D+ D-的物理连接， `0` 断开D+ D-的物理连接。
 
 - **示例**:
+  
+  连通 通道1的物理连接
+  
   ```python
-  hub.set_channel_dataline(1, 1, 2, state=1)
+  hub.set_channel_dataline(1,state=1)
   ```
   
   

@@ -1,7 +1,7 @@
-colorlog==6.9.0
-numpy==2.2.4
-PyQt5==5.15.11
-PyQt5-Qt5==5.15.16
-PyQt5_sip==12.17.0
-pyqtgraph==0.13.7
-pyserial==3.5
+colorlog
+numpy
+PyQt5
+PyQt5-Qt5
+PyQt5_sip
+pyqtgraph
+pyserial
