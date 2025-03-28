@@ -78,6 +78,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 - `voltage_monitor_example`：展示如何获取指定通道的电压值
 - `current_monitor_example`：展示如何获取指定通道的电流值
 - `setting_example`:展示如何配置设置项
+- `user_callback_example`：展示如何添加用户回调
 - `oscilloscope`：一个简单的GUI示波器，可控制通道电源开关、电压及电流采集
 
 ![oscilloscope](./assets/oscilloscope.png)
@@ -298,9 +299,52 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   current = hub.get_channel_current(1)
   ```
 
+### 注册用户回调
+
+#### `register_callback(cmd, callback)`
+
+- **描述**: 为指定的命令注册一个用户回调函数。当设备返回该命令的应答时，回调函数会被触发。
+
+- **参数**:
+  - cmd (int): 要注册回调的命令。
+  - callback (function): 当命令的 ACK 被接收到时执行的回调函数。回调函数应接受两个参数：
+    - channel (int): 触发回调的通道编号。
+    - status (int): 通道的状态值。
+  
+- **返回值:**
+  - 无返回值。
+  
+- **注意事项**:
+  - 如果 cmd 不在支持的命令列表中，将记录警告日志，并不会注册回调。
+  - 回调函数的签名应与设备返回的数据结构匹配。
+  
+- **cmd列表：**
+  
+  ```c
+  CMD_GET_CHANNEL_POWER_STATUS = 0x00
+  CMD_SET_CHANNEL_POWER = 0x01
+  
+  CMD_SET_CHANNEL_POWER_INTERLOCK = 0x02
+  
+  CMD_GET_CHANNEL_VOLTAGE = 0x03
+  CMD_GET_CHANNEL_CURRENT = 0x04
+  
+  CMD_SET_CHANNEL_DATALINE = 0x05
+  CMD_GET_CHANNEL_DATALINE_STATUS = 0x08
+  
+  CMD_SET_BUTTON_CONTROL = 0x09
+  CMD_GET_BUTTON_CONTROL_STATUS = 0x0A
+  
+  CMD_SET_OPERATE_MODE = 0x06
+  CMD_GET_OPERATE_MODE = 0x07
+  CMD_GET_FIRMWARE_VERSION = 0xFD
+  CMD_GET_HARDWARE_VERSION = 0xFE
+  ```
+
+​	
 
 
-### **设置按钮控制**
+### 设置按钮控制
 
 #### `set_button_control(enable)`
 
@@ -316,7 +360,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### **获取按钮控制状态**
+### 获取按钮控制状态
 
 #### `get_button_control_status()`
 
