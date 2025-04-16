@@ -11,6 +11,9 @@ sys.path.append('../')
 from smartusbhub import SmartUSBHub
 
 def main():
+    hub_list = SmartUSBHub.scan_available_ports()# Scan all available ports
+    print("available device:", hub_list)
+
     hub = SmartUSBHub.scan_and_connect()# Scan and connect to the first SmartUSBHub found
     # hub = SmartUSBHub("/dev/cu.usbmodem132301") # Connect to a specific SmartUSBHub device
     if hub is None:

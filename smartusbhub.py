@@ -5,92 +5,144 @@
 # author: EmbeddedTec studio
 # email:embeddedtec@outlook.com
 
-# Single Channel ON/OFF   send                ack
-#     ch1_on              55 5A 01 01 01 03   55 5A 01 01 01 03
-#     ch2_on              55 5A 01 02 01 04   55 5A 01 02 01 04
-#     ch3_on              55 5A 01 04 01 06   55 5A 01 04 01 06
-#     ch4_on              55 5A 01 08 01 0A   55 5A 01 08 01 0A
-#     ch1_off             55 5A 01 01 00 02   55 5A 01 01 00 02
-#     ch2_off             55 5A 01 02 00 03   55 5A 01 02 00 03
-#     ch3_off             55 5A 01 04 00 05   55 5A 01 04 00 05
-#     ch4_off             55 5A 01 08 00 09   55 5A 01 08 00 09
+# Single Channel ON/OFF   send                ack                
+#     ch1_on              55 5A 01 01 01 03   55 5A 01 01 01 03 
+#     ch2_on              55 5A 01 02 01 04   55 5A 01 02 01 04 
+#     ch3_on              55 5A 01 04 01 06   55 5A 01 04 01 06 
+#     ch4_on              55 5A 01 08 01 0A   55 5A 01 08 01 0A 
+#     ch1_off             55 5A 01 01 00 02   55 5A 01 01 00 02 
+#     ch2_off             55 5A 01 02 00 03   55 5A 01 02 00 03 
+#     ch3_off             55 5A 01 04 00 05   55 5A 01 04 00 05 
+#     ch4_off             55 5A 01 08 00 09   55 5A 01 08 00 09 
 
 # All Channel
-#     ch_all_on           55 5A 01 0F 01 11   55 5A 01 0F 01 11
-#     ch_all_off          55 5A 01 0F 00 10   55 5A 01 0F 00 10
+#     ch_all_on           55 5A 01 0F 01 11   55 5A 01 0F 01 11  
+#     ch_all_off          55 5A 01 0F 00 10   55 5A 01 0F 00 10 
 
 # Combine Channel
-#     ch_13_on            55 5A 01 05 01 07   55 5A 01 05 01 07
-#     ch_13_off           55 5A 01 05 00 06   55 5A 01 05 00 06
-#     ch_24_on            55 5A 01 0A 01 0C   55 5A 01 0A 01 0C
-#     ch_24_off           55 5A 01 0A 00 0B   55 5A 01 0A 00 0B
+#     ch_13_on            55 5A 01 05 01 07   55 5A 01 05 01 07 
+#     ch_13_off           55 5A 01 05 00 06   55 5A 01 05 00 06 
+#     ch_24_on            55 5A 01 0A 01 0C   55 5A 01 0A 01 0C 
+#     ch_24_off           55 5A 01 0A 00 0B   55 5A 01 0A 00 0B 
 
-# Get digital level
+# Get digital level       [channel,value]     
 #     ch1_get_level       55 5A 00 01 00 01   55 5A 00 01 00 01 [OFF]     55 5A 00 01 01 02 [ON]
 #     ch2_get_level       55 5A 00 02 00 02   55 5A 00 02 00 02 [OFF]     55 5A 00 02 01 03 [ON]
 #     ch3_get_level       55 5A 00 04 00 04   55 5A 00 04 00 04 [OFF]     55 5A 00 04 01 05 [ON]
 #     ch4_get_level       55 5A 00 08 00 08   55 5A 00 08 00 08 [OFF]     55 5A 00 08 01 09 [ON]
-#     ch_all_get_level    55 5A 00 0F 00 0F   55 5A 00 01 00 01 55 5A 00 02 00 02 55 5A 00 04 00 04 55 5A 00 08 00 08
+#     ch_all_get_level    55 5A 00 0F 00 0F   55 5A 00 01 00 01 55 5A 00 02 00 02 55 5A 00 04 00 04 55 5A 00 08 00 08 
 
-# Initerlock mode
-#     interlock_set_ch1   55 5A 02 01 01 04   55 5A 02 01 01 04
+# Initerlock mode         [channel,0x01]
+#     interlock_set_ch1   55 5A 02 01 01 04   55 5A 02 01 01 04 
 #     interlock_set_ch2   55 5A 02 02 01 05   55 5A 02 02 01 05
 #     interlock_set_ch3   55 5A 02 04 01 07   55 5A 02 04 01 07
 #     interlock_set_ch4   55 5A 02 08 01 0B   55 5A 02 08 01 0B
-#     interlock_set_off   55 5A 02 0F 01 12   55 5A 02 0F 01 12
+#     interlock_set_all   55 5A 02 0F 01 12   55 5A 02 0F 01 12
 
-# Get Channel Voltage
+# Get Channel Voltage     [channel,0x00]      [channel,voltage]
 #     ch1_get_voltage     55 5A 03 01 00 04   55 5A 03 01 00 00 04
-#     ch2_get_voltage     55 5A 03 02 00 05   55 5A 03 02 00 00 05
-#     ch3_get_voltage     55 5A 03 04 00 07   55 5A 03 04 00 00 07
-#     ch4_get_voltage     55 5A 03 08 00 0B   55 5A 03 08 00 00 0B
+#     ch2_get_voltage     55 5A 03 02 00 05   55 5A 03 02 00 00 05 
+#     ch3_get_voltage     55 5A 03 04 00 07   55 5A 03 04 00 00 07 
+#     ch4_get_voltage     55 5A 03 08 00 0B   55 5A 03 08 00 00 0B 
 
-# Get Channel Current
+# Get Channel Current     [channel,0x00]      [channel,current]
 #     ch1_get_current     55 5A 04 01 00 05   55 5A 04 01 00 00 05
 #     ch2_get_current     55 5A 04 02 00 06   55 5A 04 02 00 00 06
 #     ch3_get_current     55 5A 04 04 00 08   55 5A 04 04 00 00 08
 #     ch4_get_current     55 5A 04 08 00 0C   55 5A 04 08 00 00 0C
 
-# Set Channel Dataline
+# Set Channel Dataline    [channel,value]     
 #     ch1_set_data_on     55 5A 05 01 01 07   55 5A 05 01 01 07
-#     ch1_set_data_off    55 5A 05 01 00 06   55 5A 05 01 00 06
-
 #     ch2_set_data_on     55 5A 05 02 01 08   55 5A 05 02 01 08
-#     ch2_set_data_off    55 5A 05 02 00 07   55 5A 05 02 00 07
-
 #     ch3_set_data_on     55 5A 05 04 01 0A   55 5A 05 02 01 0A
-#     ch3_set_data_off    55 5A 05 04 00 09   55 5A 05 02 00 09
-
 #     ch4_set_data_on     55 5A 05 08 01 0E   55 5A 05 08 01 0E
+
+#     ch1_set_data_off    55 5A 05 01 00 06   55 5A 05 01 00 06
+#     ch2_set_data_off    55 5A 05 02 00 07   55 5A 05 02 00 07
+#     ch3_set_data_off    55 5A 05 04 00 09   55 5A 05 02 00 09
 #     ch4_set_data_off    55 5A 05 08 00 0D   55 5A 05 08 00 0D
-
+    
 # All Channel
-#     ch_dataline_all_on  55 5A 05 0F 01 15   55 5A 05 0F 01 15
-#     ch_dataline_all_off 55 5A 05 0F 00 14   55 5A 05 0F 00 14
+#     ch_dataline_all_on  55 5A 05 0F 01 15   55 5A 05 0F 01 15  
+#     ch_dataline_all_off 55 5A 05 0F 00 14   55 5A 05 0F 00 14 
 
-# Get Channel Dataline
+# Get Channel Dataline    [channel,value]     
 #     ch1_get_data_status 55 5A 08 01 00 09   55 5A 08 01 00 09[disconnect]   55 5A 08 01 01 0A[connected]
 #     ch2_get_data_status 55 5A 08 02 00 0A   55 5A 08 02 00 0A[disconnect]   55 5A 08 02 01 0B[connected]
 #     ch3_get_data_status 55 5A 08 04 00 0C   55 5A 08 04 00 0C[disconnect]   55 5A 08 04 01 0D[connected]
 #     ch4_get_data_status 55 5A 08 08 00 10   55 5A 08 08 00 10[disconnect]   55 5A 08 08 01 11[connected]
 
 #     All Channel
-#     ch_all_get_dataline 55 5A 08 0F 00 17
+#     ch_all_get_dataline 55 5A 08 0F 00 17   
 
-# Set Operate Mode
+# Set Button control Mode [0x00,enable]
+#     disable_btn_control 55 5A 09 00 00 09   55 5A 09 00 00 09
+#     enable_btn_control  55 5A 09 00 01 0A   55 5A 09 00 01 0A
+
+# Get Button control Mode [0x00,value]
+#     get_btn_control     55 5A 0A 00 00 0A   55 5A 0A 00 00 0A[disable]      55 5A 0A 00 01 0B[enable]
+
+# Set default power status [channel,enable,value] protocol_v2
+#     ch1_set_default_power_status_enable_on      55 5A 0B 01 01 01 0E   55 5A 0B 01 01 01 0E [channel 1 default power status enable,value is on]
+#     ch2_set_default_power_status_enable_on      55 5A 0B 02 01 01 0F   55 5A 0B 02 01 01 0F [channel 2 default power status enable,value is on]
+#     ch3_set_default_power_status_enable_on      55 5A 0B 04 01 01 11   55 5A 0B 04 01 01 11 [channel 3 default power status enable,value is on]
+#     ch4_set_default_power_status_enable_on      55 5A 0B 08 01 01 15   55 5A 0B 08 01 01 15 [channel 4 default power status enable,value is on]
+#     all_ch_set_default_power_status_enable_on   55 5A 0B 0F 01 01 1C   55 5A 0B 0F 01 01 1C [all default power status enable,value is on]
+
+#     ch1_set_default_power_status_enable_off     55 5A 0B 01 01 00 0D   55 5A 0B 01 01 00 0D [channel 1 default power status enable,value is off]
+#     ch2_set_default_power_status_enable_off     55 5A 0B 02 01 00 0E   55 5A 0B 02 01 00 0E [channel 2 default power status enable,value is off]
+#     ch3_set_default_power_status_enable_off     55 5A 0B 04 01 00 10   55 5A 0B 04 01 00 10 [channel 3 default power status enable,value is off]
+#     ch4_set_default_power_status_enable_off     55 5A 0B 08 01 00 14   55 5A 0B 08 01 00 14 [channel 4 default power status enable,value is off]
+#     all_ch_set_default_power_status_enable_off  55 5A 0B 0F 01 00 1B   55 5A 0B 0F 01 00 1B [all default power status enable,value is off]
+
+#     ch1_set_default_power_status_disable        55 5A 0B 01 00 00 0C   55 5A 0B 01 00 0C [channel 1 default power status disable]
+#     ch2_set_default_power_status_disable        55 5A 0B 02 00 00 0D   55 5A 0B 02 00 0D [channel 2 default power status disable]
+#     ch3_set_default_power_status_disable        55 5A 0B 04 00 00 0F   55 5A 0B 04 00 0F [channel 3 default power status disable]
+#     ch4_set_default_power_status_disable        55 5A 0B 08 00 00 13   55 5A 0B 08 00 13 [channel 4 default power status disable]
+#     all_ch_set_default_power_status_enable_off  55 5A 0B 0F 00 00 1A   55 5A 0B 0F 00 00 1A [all default power status enable,value is off]
+
+# Get default power status [channel,enable,value] protocol_v2
+#     ch1_get_default_power_status                55 5A 0C 01 00 00 0D   55 5A 0C 01 00 0D [channel 1 default power status is disabled]
+#     ch2_get_default_power_status                55 5A 0C 02 00 00 0E   55 5A 0C 02 00 0E [channel 2 default power status is disabled]
+#     ch3_get_default_power_status                55 5A 0C 04 00 00 10   55 5A 0C 04 00 10 [channel 3 default power status is disabled]
+#     ch4_get_default_power_status                55 5A 0C 08 00 00 14   55 5A 0C 08 00 14 [channel 4 default power status is disabled]
+
+# Set default dataline status [channel,enable,value] protocol_v2
+#     ch1_set_default_dataline_status_enable_on   55 5A 0D 01 01 01 10   55 5A 0D 01 01 01 10 [channel 1 default dataline status enable,value is connect]
+#     ch2_set_default_dataline_status_enable_on   55 5A 0D 02 01 01 11   55 5A 0D 02 01 01 11 [channel 2 default dataline status enable,value is connect]
+#     ch3_set_default_dataline_status_enable_on   55 5A 0D 04 01 01 13   55 5A 0D 04 01 01 13 [channel 3 default dataline status enable,value is connect]
+#     ch4_set_default_dataline_status_enable_on   55 5A 0D 08 01 01 17   55 5A 0D 08 01 01 17 [channel 4 default dataline status enable,value is connect]
+
+#     ch1_set_default_dataline_status_enable_off  55 5A 0D 01 01 00 0F   55 5A 0D 01 01 01 0F [channel 1 default dataline status enable,value is connect]
+#     ch2_set_default_dataline_status_enable_off  55 5A 0D 02 01 00 10   55 5A 0D 02 01 01 10 [channel 2 default dataline status enable,value is connect]
+#     ch3_set_default_dataline_status_enable_off  55 5A 0D 04 01 00 12   55 5A 0D 04 01 01 12 [channel 3 default dataline status enable,value is connect]
+#     ch4_set_default_dataline_status_enable_off  55 5A 0D 08 01 00 16   55 5A 0D 08 01 01 16 [channel 4 default dataline status enable,value is connect]
+#     all_ch_set_default_power_status_enable_off  55 5A 0D 0F 01 00 1D   55 5A 0D 0F 01 00 1D [all default dataline status enable,value is disconnect]
+
+#     ch1_set_default_dataline_status_disable     55 5A 0D 01 00 00 0E   55 5A 0D 01 00 00 0E [channel 1 default dataline status disable,value is fix to connect]
+#     ch2_set_default_dataline_status_disable     55 5A 0D 02 00 00 0F   55 5A 0D 02 00 00 0F [channel 2 default dataline status disable,value is fix to connect]
+#     ch3_set_default_dataline_status_disable     55 5A 0D 04 00 00 11   55 5A 0D 04 00 00 11 [channel 3 default dataline status disable,value is fix to connect]
+#     ch4_set_default_dataline_status_disable     55 5A 0D 08 00 00 15   55 5A 0D 08 00 00 15 [channel 4 default dataline status disable,value is fix to connect]
+
+# Get default dataline status [channel,enable,value] protocol_v2
+#     ch1_get_default_dataline_status             55 5A 0E 01 00 01 10  55 5A 0E 01 00 01 10 [channel 1 default dataline status is disabled,value is fix to connected]
+#     ch2_get_default_dataline_status             55 5A 0E 02 00 01 11  55 5A 0E 02 00 01 11 [channel 2 default dataline status is disabled,value is fix to connected]
+#     ch3_get_default_dataline_status             55 5A 0E 04 00 01 13  55 5A 0E 04 00 01 13 [channel 3 default dataline status is disabled,value is fix to connected]
+#     ch4_get_default_dataline_status             55 5A 0E 08 00 01 17  55 5A 0E 08 00 01 17 [channel 4 default dataline status is disabled,value is fix to connected]
+    
+# Set auto restore [0x00,value]
+#     enable auto restore                         55 5A 0F 00 01 10   55 5A 0F 00 01 10
+#     disable auto restore                        55 5A 0F 00 00 0F   55 5A 0F 00 00 0F
+
+# Get auto restore state                          55 5A 10 00 00 10   55 5A 10 00 01 11[enable]   55 5A 10 00 00 10[disable]
+
+# Set Operate Mode [0x00,mode]
 #     oper_mode_normal    55 5A 06 00 00 06   55 5A 06 00 00 06
 #     oper_mode_interlock 55 5A 06 00 01 07   55 5A 06 00 01 07
 
 # Get Operate Mode        55 5A 07 00 00 07
 #     oper_mode_normal                        55 5A 07 00 00 07
 #     oper_mode_interlock                     55 5A 07 00 01 08
-
-# button control
-#     disable_buttons     55 5A 09 00 00 09   55 5A 09 00 00 09
-#     enable_buttons      55 5A 09 00 01 0A   55 5A 09 00 01 0A
-
-# get button control
-#     get_buttons_status  55 5A 0A 00 00 0A   55 5A 0A 00 00 0A[disable]   55 5A 0A 00 01 0B[enable]
 
 # Get software version    55 5A FD 00 00 FD   55 5A FD 00 0F 0C //SW_VERSION
 # Get hardware version    55 5A FE 00 00 FE   55 5A FE 00 03 01 //HW_VERSION
@@ -105,24 +157,34 @@ import logging
 import colorlog
 
 # Command definitions
-CMD_GET_CHANNEL_POWER_STATUS = 0x00
-CMD_SET_CHANNEL_POWER = 0x01
+CMD_GET_CHANNEL_POWER_STATUS        = 0x00
+CMD_SET_CHANNEL_POWER               = 0x01
 
-CMD_SET_CHANNEL_POWER_INTERLOCK = 0x02
+CMD_SET_CHANNEL_POWER_INTERLOCK     = 0x02
 
-CMD_GET_CHANNEL_VOLTAGE = 0x03
-CMD_GET_CHANNEL_CURRENT = 0x04
+CMD_GET_CHANNEL_VOLTAGE             = 0x03
+CMD_GET_CHANNEL_CURRENT             = 0x04
 
-CMD_SET_CHANNEL_DATALINE = 0x05
-CMD_GET_CHANNEL_DATALINE_STATUS = 0x08
+CMD_SET_CHANNEL_DATALINE            = 0x05
+CMD_GET_CHANNEL_DATALINE_STATUS     = 0x08
 
-CMD_SET_BUTTON_CONTROL = 0x09
-CMD_GET_BUTTON_CONTROL_STATUS = 0x0A
+CMD_SET_BUTTON_CONTROL              = 0x09
+CMD_GET_BUTTON_CONTROL_STATUS       = 0x0A
 
-CMD_SET_OPERATE_MODE = 0x06
-CMD_GET_OPERATE_MODE = 0x07
-CMD_GET_FIRMWARE_VERSION = 0xFD
-CMD_GET_HARDWARE_VERSION = 0xFE
+CMD_SET_DEFAULT_POWER_STATUS        = 0x0B
+CMD_GET_DEFAULT_POWER_STATUS        = 0x0C
+
+CMD_SET_DEFAULT_DATALINE_STATUS     = 0x0D
+CMD_GET_DEFAULT_DATALINE_STATUS     = 0x0E
+
+CMD_SET_AUTO_RESTORE_ENABLE         = 0x0F
+CMD_GET_AUTO_RESTORE_STATUS         = 0x10
+
+CMD_SET_OPERATE_MODE                = 0x06
+CMD_GET_OPERATE_MODE                = 0x07
+
+CMD_GET_FIRMWARE_VERSION            = 0xFD
+CMD_GET_HARDWARE_VERSION            = 0xFE
 
 # Channel value definitions
 CHANNEL_1 = 0x01
@@ -135,7 +197,7 @@ OPERATE_MODE_INTERLOCK = 1
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
 
 # # Create file handler which logs even debug messages
 # fh = logging.FileHandler('smartusbhub.log')
@@ -195,17 +257,29 @@ class SmartUSBHub:
             CMD_GET_CHANNEL_DATALINE_STATUS: threading.Event(),
             CMD_SET_BUTTON_CONTROL: threading.Event(),
             CMD_GET_BUTTON_CONTROL_STATUS: threading.Event(),
+            CMD_SET_DEFAULT_POWER_STATUS: threading.Event(),
+            CMD_GET_DEFAULT_POWER_STATUS: threading.Event(),
+            CMD_SET_DEFAULT_DATALINE_STATUS: threading.Event(),
+            CMD_GET_DEFAULT_DATALINE_STATUS: threading.Event(),
+            CMD_SET_AUTO_RESTORE_ENABLE: threading.Event(),
+            CMD_GET_AUTO_RESTORE_STATUS: threading.Event(),
             CMD_GET_FIRMWARE_VERSION: threading.Event(),
             CMD_GET_HARDWARE_VERSION: threading.Event(),
         }
         
         # 用户回调字典
         self.callbacks = {cmd: None for cmd in self.ack_events.keys()}
-
+        
+        self.poweroff_recover = None
         self.hardware_version = None
         self.firmware_version = None
         self.operate_mode = None
         self.button_control_state = None
+
+        self.channel_default_power_flag = {}
+        self.channel_default_power_status = {}
+        self.channel_default_dataline_flag = {}
+        self.channel_default_dataline_status = {}
 
 
         self.channel_power_status = {}
@@ -253,7 +327,22 @@ class SmartUSBHub:
                 self.callbacks[cmd](*args, **kwargs)
             except Exception as e:
                 logger.error(f"Error in callback for command {cmd:#04x}: {e}")
+                
+    @classmethod
+    def scan_available_ports(cls):
+        """
+        Scan for all available serial ports and return a list of port names
+        that match specific VID and PID.
+        """
+        ports = serial.tools.list_ports.comports()
+        port_list = []
 
+        for port in ports:
+            if port.vid == 0x1A86 and port.pid == 0xfe0c:  # 筛选特定 VID 和 PID
+                port_list.append(port.device)
+
+        return port_list
+    
     @classmethod
     def scan_and_connect(cls):
         """
@@ -330,18 +419,17 @@ class SmartUSBHub:
         cmd = data[2]
         channel = data[3]
 
-        # voltage/current frames have 7 bytes total (two bytes for value)
-        if cmd in [CMD_GET_CHANNEL_VOLTAGE, CMD_GET_CHANNEL_CURRENT]:
+        # voltage/current,default channel status frames have 7 bytes total (two bytes for value)
+        if cmd in [CMD_GET_CHANNEL_VOLTAGE, CMD_GET_CHANNEL_CURRENT,CMD_GET_DEFAULT_POWER_STATUS,CMD_GET_DEFAULT_DATALINE_STATUS]:
             if len(data) < 7:
                 return None
-            value_hi = data[4]
-            value_lo = data[5]
+            value_0 = data[4]
+            value_1 = data[5]
             checksum = data[6]
-            if ((cmd + channel + value_hi + value_lo) & 0xFF) != checksum:
+            if ((cmd + channel + value_0 + value_1) & 0xFF) != checksum:
                 return None
             # Combine two bytes into a single value
-            value_combined = (value_hi << 8) | value_lo
-            return (cmd, channel, value_combined, 7)
+            return (cmd, channel, [value_0,value_1], 7)
         else:
             value = data[4]
             checksum = data[5]
@@ -379,10 +467,14 @@ class SmartUSBHub:
                             self._handle_set_channel_dataline(channel, value)
                         elif cmd == CMD_GET_CHANNEL_DATALINE_STATUS:
                             self._handle_get_channel_dataline(channel, value)
-                        elif cmd == CMD_GET_BUTTON_CONTROL_STATUS:
-                            self._handle_get_button_control(value)
                         elif cmd == CMD_SET_BUTTON_CONTROL:
                             self._handle_set_button_control()
+                        elif cmd == CMD_GET_BUTTON_CONTROL_STATUS:
+                            self._handle_get_button_control(value)
+                        elif cmd == CMD_SET_DEFAULT_POWER_STATUS:
+                            self._handle_set_default_power_status(channel,value)
+                        elif cmd == CMD_GET_DEFAULT_POWER_STATUS:
+                            self._handle_get_default_power_status(channel,value)
                         elif cmd == CMD_GET_OPERATE_MODE:
                             self._handle_get_operate_mode(value)
                         elif cmd == CMD_SET_OPERATE_MODE:
@@ -391,7 +483,6 @@ class SmartUSBHub:
                             self._handle_firmware_version(value)
                         elif cmd == CMD_GET_HARDWARE_VERSION:
                             self._handle_hardware_version(value)
-
                         if cmd in self.ack_events:
                             self._invoke_callback(cmd,channel,value)
                             self.ack_events[cmd].set()
@@ -440,11 +531,14 @@ class SmartUSBHub:
             # Convert channels to channel mask
             channel_mask = sum([1 << (ch - 1) for ch in channels])
 
-        # Handle data parameter - use 0 if data is None
+        # Clean and normalize data
         if data is None:
-            data = 0
+            data = [0x00]
+        elif not isinstance(data, list):
+            data = [data]
 
-        data = [channel_mask] + (data if isinstance(data, list) else [data])
+        # Combine channel mask and data
+        payload = [channel_mask] + data
 
         # Start with header bytes
         packet = bytearray([0x55, 0x5A, cmd])
@@ -472,9 +566,9 @@ class SmartUSBHub:
     def _handle_set_operate_mode(self):
         logger.debug("_handle_set_operate_mode ACK")
 
-    def _handle_get_operate_mode(self, data_value):
+    def _handle_get_operate_mode(self, value):
         logger.debug("_handle_get_operate_mode ACK")
-        self.operate_mode = data_value
+        self.operate_mode = value
 
     def _handle_set_channel_power_status(self):
         logger.debug("_handle_set_channel_power_status ACK")
@@ -492,46 +586,77 @@ class SmartUSBHub:
 
     def _handle_get_channel_voltage(self, channel, value):
         logger.debug("_handle_get_channel_voltage ACK")
-        ch_list = self._convert_channel(channel)
-        for ch in ch_list:
-            self.channel_voltages[ch] = value
-            logger.debug(f"Get Channel Voltage: ch{ch} = {value}")
+        channels = self._convert_channel(channel)
+        if isinstance(value, list) and len(value) == 2:
+            value_int = (value[0] << 8) | value[1]
+            for ch in channels:
+                self.channel_voltages[ch] = value_int
+                logger.debug(f"Get Channel Voltage: ch{ch} = {value_int}")
+        else:
+            logger.error("Invalid voltage value received")
 
     def _handle_get_channel_current(self, channel, value):
         logger.debug("_handle_get_channel_current ACK")
-        ch_list = self._convert_channel(channel)
-        for ch in ch_list:
-            self.channel_currents[ch] = value
-            logger.debug(f"Get Channel Current: ch{ch} = {value}")
+        channels = self._convert_channel(channel)
+        if isinstance(value, list) and len(value) == 2:
+            value_int = (value[0] << 8) | value[1]
+            for ch in channels:
+                self.channel_currents[ch] = value_int
+                logger.debug(f"Get Channel Current: ch{ch} = {value_int}")
+        else:
+            logger.error("Invalid current value received")
 
-    def _handle_set_channel_dataline(self, channel, data_value):
+    def _handle_set_channel_dataline(self, channel, value):
         logger.debug("_handle_set_channel_dataline ACK")
         channels = self._convert_channel(channel)
         for ch in channels:
-            self.channel_dataline_status[ch] = data_value
-            logger.debug(f"Set Channel Dataline: ch{ch} = {data_value}")
+            self.channel_dataline_status[ch] = value
+            logger.debug(f"Set Channel Dataline: ch{ch} = {value}")
 
-    def _handle_get_channel_dataline(self, channel, data_value):
+    def _handle_get_channel_dataline(self, channel, value):
         logger.debug("_handle_get_channel_dataline ACK")
-        ch_list = self._convert_channel(channel)
-        for ch in ch_list:
-            self.channel_dataline_status[ch] = data_value
-            logger.debug(f"Get Channel Dataline: ch{ch} = {data_value}")
+        channels = self._convert_channel(channel)
+        for ch in channels:
+            self.channel_dataline_status[ch] = value
+            logger.debug(f"Get Channel Dataline: ch{ch} = {value}")
 
-    def _handle_get_button_control(self, data_value):
+    def _handle_get_button_control(self, value):
         logger.debug("_handle_get_button_control ACK")
-        self.button_control_state = data_value
+        self.button_control_state = value
 
     def _handle_set_button_control(self):
         logger.debug("_handle_set_button_control ACK")
 
-    def _handle_firmware_version(self, data_value):
+    def _handle_set_default_power_status(self,channel,value):
+        logger.debug("_handle_set_default_power_status ACK")
+        if isinstance(value, list) and len(value) == 2:
+            enable, status = value
+            channels = self._convert_channel(channel)
+            for ch in channels:
+                self.channel_default_power_flag[ch] = enable
+                self.channel_default_power_status[ch] = status
+                logger.debug(f"Channel {channel} {'enable' if enable else 'disable'} default power status, value: {'on' if status else 'off'}")
+        else:
+            logger.error("Invalid data for _handle_set_default_power_status")
+    
+    def _handle_get_default_power_status(self,channel,value):
+        logger.debug("_handle_get_default_power_status ACK")
+        if isinstance(value, list) and len(value) == 2:
+            enable, status = value
+            channels = self._convert_channel(channel)
+            for ch in channels:
+                self.channel_default_power_flag[ch] = enable
+                self.channel_default_power_status[ch] = status
+                logger.debug(f"Channel {channel} {'enable' if enable else 'disable'} default power status, value: {'on' if status else 'off'}")
+        else:
+            logger.error("Invalid data for _handle_set_default_power_status")
+    def _handle_firmware_version(self, value):
         logger.debug("_handle_firmware_version ACK")
-        self.firmware_version = data_value
+        self.firmware_version = value
 
-    def _handle_hardware_version(self, data_value):
+    def _handle_hardware_version(self, value):
         logger.debug("_handle_hardware_version ACK")
-        self.hardware_version = data_value
+        self.hardware_version = value
 
     def get_device_info(self):
         """
@@ -577,7 +702,6 @@ class SmartUSBHub:
             bool: True if the device responds in the expected mode, otherwise False.
         """
         command = self._send_packet(CMD_GET_OPERATE_MODE, None, None)
-        # Wait for acknowledgment
         ack_event = self.ack_events[CMD_GET_OPERATE_MODE]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):  
@@ -600,7 +724,6 @@ class SmartUSBHub:
             state (int): 1 to enable power, 0 to disable.
         """
         command = self._send_packet(CMD_SET_CHANNEL_POWER, channels, state)
-        # Wait for acknowledgment
         ack_event = self.ack_events[CMD_SET_CHANNEL_POWER]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):  
@@ -623,7 +746,6 @@ class SmartUSBHub:
                                  or None if timed out.
         """
         command = self._send_packet(CMD_GET_CHANNEL_POWER_STATUS, channels)
-        # Wait for acknowledgment
         ack_event = self.ack_events[CMD_GET_CHANNEL_POWER_STATUS]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):  
@@ -714,12 +836,11 @@ class SmartUSBHub:
         Sends a command to set the data line state of specific channels.
 
         Args:
-            data_value (int): New data line state.
+            value (int): New data line state.
             *channels (int): Channels to update.
             state (int): 1 to enable data line, 0 to disable.
         """
         command = self._send_packet(CMD_SET_CHANNEL_DATALINE, channels, state)
-        # Wait for acknowledgment
         ack_event = self.ack_events[CMD_SET_CHANNEL_DATALINE]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):  
@@ -740,7 +861,6 @@ class SmartUSBHub:
             dict or None: A dictionary with channel numbers as keys and data line states as values, or None if timed out.
         """
         command = self._send_packet(CMD_GET_CHANNEL_DATALINE_STATUS, channels)
-        # Wait for acknowledgment
         ack_event = self.ack_events[CMD_GET_CHANNEL_DATALINE_STATUS]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):  
@@ -785,6 +905,28 @@ class SmartUSBHub:
             logger.error("get_button_control_status No ACK!")
             return None
 
+    def set_default_power_status(self,*channels,enable,status):
+        self._send_packet(CMD_SET_DEFAULT_POWER_STATUS, channels,enable,status)
+        ack_event = self.ack_events[CMD_SET_DEFAULT_POWER_STATUS]
+        ack_event.clear()
+        if ack_event.wait(self.com_timeout):  
+            logger.debug("set_default_power_status ACK")
+            return True
+        else:
+            logger.error("set_default_power_status No ACK!")
+            return False
+
+    def get_default_power_status(self,*channels):
+        self._send_packet(CMD_GET_DEFAULT_POWER_STATUS, channels)
+        ack_event = self.ack_events[CMD_GET_DEFAULT_POWER_STATUS]
+        ack_event.clear()
+        if ack_event.wait(self.com_timeout):  
+            logger.debug("get_default_power_status ACK")
+            return self.default_power_status#@todo
+        else:
+            logger.error("get_default_power_status No ACK!")
+            return None
+            
     def get_firmware_version(self):
         """
         Query the device's firmware version.
