@@ -106,6 +106,7 @@
 #     ch2_get_default_power_status                55 5A 0C 02 00 00 0E   55 5A 0C 02 00 0E [channel 2 default power status is disabled]
 #     ch3_get_default_power_status                55 5A 0C 04 00 00 10   55 5A 0C 04 00 10 [channel 3 default power status is disabled]
 #     ch4_get_default_power_status                55 5A 0C 08 00 00 14   55 5A 0C 08 00 14 [channel 4 default power status is disabled]
+#     all_ch_get_default_power_status             55 5A 0C 0F 00 00 1B   
 
 # Set default dataline status [channel,enable,value] protocol_v2
 #     ch1_set_default_dataline_status_enable_on   55 5A 0D 01 01 01 10   55 5A 0D 01 01 01 10 [channel 1 default dataline status enable,value is connect]
@@ -197,18 +198,11 @@ OPERATE_MODE_INTERLOCK = 1
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-# # Create file handler which logs even debug messages
-# fh = logging.FileHandler('smartusbhub.log')
-# fh.setLevel(logging.DEBUG)
+# log level
+logger.setLevel(logging.ERROR)
 
 # Create console handler with a higher log level
 ch = colorlog.StreamHandler()
-
-# # Create formatter and add it to the handlers
-# file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# fh.setFormatter(file_formatter)
 
 console_formatter = colorlog.ColoredFormatter(
     "%(log_color)s%(asctime)s - %(levelname)s - %(message)s",
@@ -225,7 +219,6 @@ console_formatter = colorlog.ColoredFormatter(
 ch.setFormatter(console_formatter)
 
 # Add the handlers to the logger
-# logger.addHandler(fh)
 logger.addHandler(ch)
 
 class SmartUSBHub:
@@ -242,7 +235,7 @@ class SmartUSBHub:
         """
         self.port = port
         self.ser = serial.Serial(port, 115200,timeout = 0.5)
-        self.com_timeout = 0.1 
+        self.com_timeout = 0.1
         logger.info(f"SmartUSBHub initialized on port {self.port}")
 
         self.ack_events = {
@@ -408,25 +401,33 @@ class SmartUSBHub:
             tuple or None: Parsed command, channel, value, and length if valid, otherwise None.
         """
 
-        logger.debug(f"Received data: {data.hex()}")
+        # logger.debug(f"Received data: {data.hex()}")
 
         if len(data) < 6:
             return None
-        frame_header1, frame_header2 = data[0], data[1]
-        if frame_header1 != 0x55 or frame_header2 != 0x5A:
+
+        if data[0] != 0x55 or data[1] != 0x5A:
             return None
 
         cmd = data[2]
         channel = data[3]
 
-        # voltage/current,default channel status frames have 7 bytes total (two bytes for value)
-        if cmd in [CMD_GET_CHANNEL_VOLTAGE, CMD_GET_CHANNEL_CURRENT,CMD_GET_DEFAULT_POWER_STATUS,CMD_GET_DEFAULT_DATALINE_STATUS]:
+        if cmd in [CMD_GET_CHANNEL_VOLTAGE,
+                    CMD_GET_CHANNEL_CURRENT,
+                    CMD_SET_DEFAULT_POWER_STATUS,
+                    CMD_SET_DEFAULT_DATALINE_STATUS,
+                    CMD_GET_DEFAULT_POWER_STATUS,
+                    CMD_GET_DEFAULT_DATALINE_STATUS]:
+           
+            logger.debug(f"Received protocol_v2 data for channel {self._convert_channel(channel)}")
             if len(data) < 7:
                 return None
             value_0 = data[4]
             value_1 = data[5]
             checksum = data[6]
-            if ((cmd + channel + value_0 + value_1) & 0xFF) != checksum:
+            cal_sum = (cmd + channel + value_0 + value_1) & 0xFF
+            if cal_sum != checksum:
+                logger.debug(f"Invalid checksum for protocol_v2 data for channel {channel},cal:{cal_sum},recv:{checksum}")
                 return None
             # Combine two bytes into a single value
             return (cmd, channel, [value_0,value_1], 7)
@@ -445,14 +446,14 @@ class SmartUSBHub:
         while not self.stop_event.is_set():
             if self.ser.in_waiting > 0:
                 buffer.extend(self.ser.read(self.ser.in_waiting))
-                # Try to parse frames of either 6 or 7 bytes
+                logger.debug(f"rx data: {buffer.hex()}")
                 while len(buffer) >= 6:
                     result = self._parse_protocol_frame(buffer)
                     if result is not None:
                         cmd, channel, value, length = result
-                        logger.debug(
-                            f"Parsed CMD: {cmd:#04x}, Channel: {channel:#04x}, Value: {value:#04x}"
-                        )
+
+                        logger.debug(f"Parsed CMD: {cmd:#04x}, Channel: {channel:#04x}, Value: {value}")
+
                         if cmd == CMD_SET_CHANNEL_POWER:
                             self._handle_set_channel_power_status()
                         if cmd == CMD_GET_CHANNEL_POWER_STATUS:
@@ -475,6 +476,10 @@ class SmartUSBHub:
                             self._handle_set_default_power_status(channel,value)
                         elif cmd == CMD_GET_DEFAULT_POWER_STATUS:
                             self._handle_get_default_power_status(channel,value)
+                        elif cmd == CMD_SET_DEFAULT_DATALINE_STATUS:
+                            self._handle_set_default_dataline_status(channel,value)
+                        elif cmd == CMD_GET_DEFAULT_DATALINE_STATUS:
+                            self._handle_get_default_dataline_status(channel,value)
                         elif cmd == CMD_GET_OPERATE_MODE:
                             self._handle_get_operate_mode(value)
                         elif cmd == CMD_SET_OPERATE_MODE:
@@ -536,7 +541,7 @@ class SmartUSBHub:
             data = [0x00]
         elif not isinstance(data, list):
             data = [data]
-
+        
         # Combine channel mask and data
         payload = [channel_mask] + data
 
@@ -544,13 +549,10 @@ class SmartUSBHub:
         packet = bytearray([0x55, 0x5A, cmd])
 
         # Add data bytes
-        packet.extend(data)
+        packet.extend(payload)
 
         # Calculate checksum (cmd + all data bytes) & 0xFF
-        checksum = cmd
-        for byte in data:
-            checksum += byte
-        checksum &= 0xFF
+        checksum = (cmd + sum(payload)) & 0xFF
 
         # Add checksum to packet
         packet.append(checksum)
@@ -586,9 +588,9 @@ class SmartUSBHub:
 
     def _handle_get_channel_voltage(self, channel, value):
         logger.debug("_handle_get_channel_voltage ACK")
-        channels = self._convert_channel(channel)
         if isinstance(value, list) and len(value) == 2:
             value_int = (value[0] << 8) | value[1]
+            channels = self._convert_channel(channel)
             for ch in channels:
                 self.channel_voltages[ch] = value_int
                 logger.debug(f"Get Channel Voltage: ch{ch} = {value_int}")
@@ -597,9 +599,9 @@ class SmartUSBHub:
 
     def _handle_get_channel_current(self, channel, value):
         logger.debug("_handle_get_channel_current ACK")
-        channels = self._convert_channel(channel)
         if isinstance(value, list) and len(value) == 2:
             value_int = (value[0] << 8) | value[1]
+            channels = self._convert_channel(channel)
             for ch in channels:
                 self.channel_currents[ch] = value_int
                 logger.debug(f"Get Channel Current: ch{ch} = {value_int}")
@@ -635,7 +637,7 @@ class SmartUSBHub:
             for ch in channels:
                 self.channel_default_power_flag[ch] = enable
                 self.channel_default_power_status[ch] = status
-                logger.debug(f"Channel {channel} {'enable' if enable else 'disable'} default power status, value: {'on' if status else 'off'}")
+                logger.debug(f"Channel {ch} {'enable' if enable else 'disable'} default power status, value: {'on' if status else 'off'}")
         else:
             logger.error("Invalid data for _handle_set_default_power_status")
     
@@ -647,9 +649,34 @@ class SmartUSBHub:
             for ch in channels:
                 self.channel_default_power_flag[ch] = enable
                 self.channel_default_power_status[ch] = status
-                logger.debug(f"Channel {channel} {'enable' if enable else 'disable'} default power status, value: {'on' if status else 'off'}")
+                logger.debug(f"Channel {ch} {'enable' if enable else 'disable'} default power status, value: {'on' if status else 'off'}")
         else:
             logger.error("Invalid data for _handle_set_default_power_status")
+
+    def _handle_set_default_dataline_status(self,channel,value):
+        logger.debug("_handle_set_default_dataline_status ACK")
+        if isinstance(value, list) and len(value) == 2:
+            enable, status = value
+            channels = self._convert_channel(channel)
+            for ch in channels:
+                self.channel_default_dataline_flag[ch] = enable
+                self.channel_default_dataline_status[ch] = status
+                logger.debug(f"Channel {ch} {'enable' if enable else 'disable'} default dataline status, value: {'on' if status else 'off'}")
+        else:
+            logger.error("Invalid data for _handle_set_default_dataline_status")
+    
+    def _handle_get_default_dataline_status(self,channel,value):
+        logger.debug("_handle_get_default_dataline_status ACK")
+        if isinstance(value, list) and len(value) == 2:
+            enable, status = value
+            channels = self._convert_channel(channel)
+            for ch in channels:
+                self.channel_default_dataline_flag[ch] = enable
+                self.channel_default_dataline_status[ch] = status
+                logger.debug(f"Channel {ch} {'enable' if enable else 'disable'} default dataline status, value: {'on' if status else 'off'}")
+        else:
+            logger.error("Invalid data for _handle_get_default_dataline_status")
+
     def _handle_firmware_version(self, value):
         logger.debug("_handle_firmware_version ACK")
         self.firmware_version = value
@@ -778,7 +805,7 @@ class SmartUSBHub:
 
         ack_event = self.ack_events[CMD_SET_CHANNEL_POWER_INTERLOCK]
         ack_event.clear()
-        if ack_event.wait(timeout=0.1):  
+        if ack_event.wait(timeout=self.com_timeout): 
             logger.debug("set_channel_power_interlock ACK")
             return True
         else:
@@ -905,8 +932,10 @@ class SmartUSBHub:
             logger.error("get_button_control_status No ACK!")
             return None
 
-    def set_default_power_status(self,*channels,enable,status):
-        self._send_packet(CMD_SET_DEFAULT_POWER_STATUS, channels,enable,status)
+    def set_default_power_status(self,*channels,enable,status=None):
+        if status is None:
+            status = 0
+        self._send_packet(CMD_SET_DEFAULT_POWER_STATUS,channels,[enable,status])
         ack_event = self.ack_events[CMD_SET_DEFAULT_POWER_STATUS]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):  
@@ -917,16 +946,60 @@ class SmartUSBHub:
             return False
 
     def get_default_power_status(self,*channels):
-        self._send_packet(CMD_GET_DEFAULT_POWER_STATUS, channels)
+        self._send_packet(CMD_GET_DEFAULT_POWER_STATUS, channels,[0,0])
         ack_event = self.ack_events[CMD_GET_DEFAULT_POWER_STATUS]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):  
             logger.debug("get_default_power_status ACK")
-            return self.default_power_status#@todo
+            result = {}
+            for ch in channels:
+                enable = self.channel_default_power_flag.get(ch)
+                status = self.channel_default_power_status.get(ch)
+                if enable is not None and status is not None:
+                    result[ch] = {
+                        "enabled": enable,
+                        "value": status
+                    }
+                    logger.info(f"channel {ch} default power status: enabled={enable}, value={status}")
+            return result
         else:
             logger.error("get_default_power_status No ACK!")
             return None
-            
+    
+    def set_default_dataline_status(self,*channels,enable,status=None):
+        if status is None:
+            status = 0
+        self._send_packet(CMD_SET_DEFAULT_DATALINE_STATUS,channels,[enable,status])
+        ack_event = self.ack_events[CMD_SET_DEFAULT_DATALINE_STATUS]
+        ack_event.clear()
+        if ack_event.wait(self.com_timeout):  
+            logger.debug("set_default_dataline_status ACK")
+            return True
+        else:
+            logger.error("set_default_dataline_status No ACK!")
+            return False
+
+    def get_default_dataline_status(self,*channels):
+        self._send_packet(CMD_GET_DEFAULT_DATALINE_STATUS, channels,[0,0])
+        ack_event = self.ack_events[CMD_GET_DEFAULT_DATALINE_STATUS]
+        ack_event.clear()
+        if ack_event.wait(self.com_timeout):  
+            logger.debug("get_default_dataline_status ACK")
+            result = {}
+            for ch in channels:
+                enable = self.channel_default_dataline_flag.get(ch)
+                status = self.channel_default_dataline_status.get(ch)
+                if enable is not None and status is not None:
+                    result[ch] = {
+                        "enabled": enable,
+                        "value": status
+                    }
+                    logger.info(f"channel {ch} default dataline status: enabled={enable}, value={status}")
+            return result
+        else:
+            logger.error("get_default_dataline_status No ACK!")
+            return None
+        
     def get_firmware_version(self):
         """
         Query the device's firmware version.
