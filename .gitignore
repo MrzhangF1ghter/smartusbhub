@@ -6,3 +6,4 @@
 document
 build
 *.spec
+.vscode
