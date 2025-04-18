@@ -80,7 +80,6 @@ def main():
     if mode!=1 :
         print("Set operate mode to interlock mode failed.")
     print("Operate mode is interlock mode.")
-    #print now you can ONLY control one channel power on at a time using set_channel_power_interlock
     time.sleep(1)
     print("\r\nChanging operate mode to normal mode.")
     hub.set_operate_mode(0)
@@ -88,10 +87,8 @@ def main():
     if mode!=0 :
         print("Set operate mode to normal mode failed.")
     print("Operate mode is normal mode.")
-    #print now you can control multi channel power on at a time using set_channel_power
     time.sleep(1)
 
-    # disable button control
     print("\r\nDisabling button control.")
     hub.set_button_control(0)
     button_control_status = hub.get_button_control_status()

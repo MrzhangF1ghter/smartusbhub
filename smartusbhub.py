@@ -224,7 +224,12 @@ logger.addHandler(ch)
 
 class SmartUSBHub:
     """
-    Represents a Smart USB Hub device, providing methods to control power, data lines, and more.
+    SmartUSBHub provides a high-level interface for interacting with an industrial Smart USB Hub via UART.
+
+    This class enables robust per-port control of power and data connections, voltage/current monitoring,
+    configuration of default states, and factory-level resets.
+
+    Suitable for automated test systems and development workflows in hardware engineering environments.
     """
 
     def __init__(self, port):
@@ -361,7 +366,7 @@ class SmartUSBHub:
         
     def _start(self):
         """
-        Starts the UART receive thread and sets up signal handling.
+        Starts background threads and signal handlers for UART communication and SIGINT handling.
         """
         self.stop_event = threading.Event()
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -765,13 +770,16 @@ class SmartUSBHub:
 
     def set_channel_power(self, *channels, state):
         """
-        Sends a command to set the power state of specified channels.
+        Sets the power state of one or more USB channels.
 
         Args:
-            *channels (int): Channels to control.
-            state (int): 1 to enable power, 0 to disable.
+            *channels (int): Channel numbers (1-4) to be updated.
+            state (int): 1 to turn on power, 0 to turn off.
+
+        Returns:
+            bool: True if command was acknowledged, False otherwise.
         """
-        command = self._send_packet(CMD_SET_CHANNEL_POWER, channels, state)
+        self._send_packet(CMD_SET_CHANNEL_POWER, channels, state)
         ack_event = self.ack_events[CMD_SET_CHANNEL_POWER]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):  
@@ -793,7 +801,7 @@ class SmartUSBHub:
                                  the power state of the single channel if only one channel is queried,
                                  or None if timed out.
         """
-        command = self._send_packet(CMD_GET_CHANNEL_POWER_STATUS, channels)
+        self._send_packet(CMD_GET_CHANNEL_POWER_STATUS, channels)
         ack_event = self.ack_events[CMD_GET_CHANNEL_POWER_STATUS]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):  
@@ -846,7 +854,7 @@ class SmartUSBHub:
         if isinstance(channel, (list, tuple)):
             raise ValueError("get_channel_voltage only supports a single channel")
 
-        command = self._send_packet(CMD_GET_CHANNEL_VOLTAGE, [channel])
+        self._send_packet(CMD_GET_CHANNEL_VOLTAGE, [channel])
         ack_event = self.ack_events[CMD_GET_CHANNEL_VOLTAGE]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):
@@ -869,7 +877,7 @@ class SmartUSBHub:
         if isinstance(channel, (list, tuple)):
             raise ValueError("get_channel_voltage only supports a single channel")
 
-        command = self._send_packet(CMD_GET_CHANNEL_CURRENT, [channel])
+        self._send_packet(CMD_GET_CHANNEL_CURRENT, [channel])
         ack_event = self.ack_events[CMD_GET_CHANNEL_CURRENT]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):
@@ -888,7 +896,7 @@ class SmartUSBHub:
             *channels (int): Channels to update.
             state (int): 1 to enable data line, 0 to disable.
         """
-        command = self._send_packet(CMD_SET_CHANNEL_DATALINE, channels, state)
+        self._send_packet(CMD_SET_CHANNEL_DATALINE, channels, state)
         ack_event = self.ack_events[CMD_SET_CHANNEL_DATALINE]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):  
@@ -908,7 +916,7 @@ class SmartUSBHub:
         Returns:
             dict or None: A dictionary with channel numbers as keys and data line states as values, or None if timed out.
         """
-        command = self._send_packet(CMD_GET_CHANNEL_DATALINE_STATUS, channels)
+        self._send_packet(CMD_GET_CHANNEL_DATALINE_STATUS, channels)
         ack_event = self.ack_events[CMD_GET_CHANNEL_DATALINE_STATUS]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):  
