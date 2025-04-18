@@ -178,12 +178,13 @@ CMD_GET_DEFAULT_POWER_STATUS        = 0x0C
 CMD_SET_DEFAULT_DATALINE_STATUS     = 0x0D
 CMD_GET_DEFAULT_DATALINE_STATUS     = 0x0E
 
-CMD_SET_AUTO_RESTORE_ENABLE         = 0x0F
+CMD_SET_AUTO_RESTORE                = 0x0F
 CMD_GET_AUTO_RESTORE_STATUS         = 0x10
 
 CMD_SET_OPERATE_MODE                = 0x06
 CMD_GET_OPERATE_MODE                = 0x07
 
+CMD_FACTORY_RESET                   = 0xFC   
 CMD_GET_FIRMWARE_VERSION            = 0xFD
 CMD_GET_HARDWARE_VERSION            = 0xFE
 
@@ -254,8 +255,9 @@ class SmartUSBHub:
             CMD_GET_DEFAULT_POWER_STATUS: threading.Event(),
             CMD_SET_DEFAULT_DATALINE_STATUS: threading.Event(),
             CMD_GET_DEFAULT_DATALINE_STATUS: threading.Event(),
-            CMD_SET_AUTO_RESTORE_ENABLE: threading.Event(),
+            CMD_SET_AUTO_RESTORE: threading.Event(),
             CMD_GET_AUTO_RESTORE_STATUS: threading.Event(),
+            CMD_FACTORY_RESET:threading.Event(),
             CMD_GET_FIRMWARE_VERSION: threading.Event(),
             CMD_GET_HARDWARE_VERSION: threading.Event(),
         }
@@ -267,7 +269,8 @@ class SmartUSBHub:
         self.hardware_version = None
         self.firmware_version = None
         self.operate_mode = None
-        self.button_control_state = None
+        self.auto_restore_status = None
+        self.button_control_status = None
 
         self.channel_default_power_flag = {}
         self.channel_default_power_status = {}
@@ -290,7 +293,7 @@ class SmartUSBHub:
         logger.info(f"Hardware version: V1.{self.hardware_version}")
         logger.info(f"Firmware version: V1.{self.firmware_version}")
         logger.info(f"Operate mode: {'normal' if self.operate_mode == 0 else 'interlock'}")
-        logger.info(f"button control: {'enable' if self.button_control_state == 1 else 'disabled'}")
+        logger.info(f"button control: {'enable' if self.button_control_status == 1 else 'disabled'}")
 
     def register_callback(self, cmd, callback):
         """
@@ -480,10 +483,16 @@ class SmartUSBHub:
                             self._handle_set_default_dataline_status(channel,value)
                         elif cmd == CMD_GET_DEFAULT_DATALINE_STATUS:
                             self._handle_get_default_dataline_status(channel,value)
+                        elif cmd == CMD_SET_AUTO_RESTORE:
+                            self._handle_set_auto_restore()
+                        elif cmd == CMD_GET_AUTO_RESTORE_STATUS:
+                            self._handle_get_auto_restore_status(value)
                         elif cmd == CMD_GET_OPERATE_MODE:
                             self._handle_get_operate_mode(value)
                         elif cmd == CMD_SET_OPERATE_MODE:
                             self._handle_set_operate_mode()
+                        elif cmd == CMD_FACTORY_RESET:
+                            self._handle_factory_reset()
                         elif cmd == CMD_GET_FIRMWARE_VERSION:
                             self._handle_firmware_version(value)
                         elif cmd == CMD_GET_HARDWARE_VERSION:
@@ -624,7 +633,7 @@ class SmartUSBHub:
 
     def _handle_get_button_control(self, value):
         logger.debug("_handle_get_button_control ACK")
-        self.button_control_state = value
+        self.button_control_status = value
 
     def _handle_set_button_control(self):
         logger.debug("_handle_set_button_control ACK")
@@ -677,6 +686,9 @@ class SmartUSBHub:
         else:
             logger.error("Invalid data for _handle_get_default_dataline_status")
 
+    def _handle_factory_reset(self):
+        logger.debug("_handle_factory_reset ACK")
+
     def _handle_firmware_version(self, value):
         logger.debug("_handle_firmware_version ACK")
         self.firmware_version = value
@@ -684,6 +696,13 @@ class SmartUSBHub:
     def _handle_hardware_version(self, value):
         logger.debug("_handle_hardware_version ACK")
         self.hardware_version = value
+
+    def _handle_set_auto_restore(self):
+        logger.debug("_handle_set_auto_restore ACK")
+
+    def _handle_get_auto_restore_status(self,value):
+        logger.debug(f"_handle_get_auto_restore_status ACK,value:{value}")
+        self.auto_restore_status = value
 
     def get_device_info(self):
         """
@@ -695,14 +714,16 @@ class SmartUSBHub:
         self.hardware_version = self.get_hardware_version()
         self.firmware_version =  self.get_firmware_version()
         self.operate_mode = self.get_operate_mode()
-        self.button_control_state = self.get_button_control_status()
+        self.auto_restore_status = self.get_auto_restore_status()
+        self.button_control_status = self.get_button_control_status()
 
         hub_info = {
             "id": self.port.split("/")[-1],
             "hardware_version": self.hardware_version,
             "firmware_version": self.firmware_version,
             "operate_mode": "normal" if self.operate_mode == 0 else "interlock" if self.operate_mode == 1 else "N/A",
-            "button_control_state": "enabled" if self.button_control_state == 1 else "disabled"
+            "auto_restore": "enabled" if self.auto_restore_status == 1 else "disabled",
+            "button_control_status": "enabled" if self.button_control_status == 1 else "disabled"
         }
         return hub_info
     
@@ -911,7 +932,7 @@ class SmartUSBHub:
         ack_event.clear()
         if ack_event.wait(self.com_timeout):
             logger.debug("set_button_control ACK")
-            return self.button_control_state
+            return self.button_control_status
         else:
             logger.error("set_button_control No ACK!")
 
@@ -927,12 +948,23 @@ class SmartUSBHub:
         ack_event.clear()
         if ack_event.wait(self.com_timeout):
             logger.debug("get_button_control_status ACK")
-            return self.button_control_state
+            return self.button_control_status
         else:
             logger.error("get_button_control_status No ACK!")
             return None
 
     def set_default_power_status(self,*channels,enable,status=None):
+        """
+        Sets the default power status for one or more channels.
+
+        Args:
+            *channels (int): Channels to configure.
+            enable (int): 1 to enable default power status, 0 to disable.
+            status (int, optional): Default power state when enabled. 1 for ON, 0 for OFF. Defaults to 0.
+
+        Returns:
+            bool: True if command was acknowledged, False otherwise.
+        """
         if status is None:
             status = 0
         self._send_packet(CMD_SET_DEFAULT_POWER_STATUS,channels,[enable,status])
@@ -946,6 +978,15 @@ class SmartUSBHub:
             return False
 
     def get_default_power_status(self,*channels):
+        """
+        Retrieves the default power status configuration for specified channels.
+
+        Args:
+            *channels (int): Channels to query.
+
+        Returns:
+            dict or None: Dictionary with enabled status and default value per channel, or None if no response.
+        """
         self._send_packet(CMD_GET_DEFAULT_POWER_STATUS, channels,[0,0])
         ack_event = self.ack_events[CMD_GET_DEFAULT_POWER_STATUS]
         ack_event.clear()
@@ -967,6 +1008,17 @@ class SmartUSBHub:
             return None
     
     def set_default_dataline_status(self,*channels,enable,status=None):
+        """
+        Sets the default dataline status for one or more channels.
+
+        Args:
+            *channels (int): Channels to configure.
+            enable (int): 1 to enable default dataline status, 0 to disable.
+            status (int, optional): Default dataline state when enabled. 1 for Connected, 0 for Disconnected. Defaults to 0.
+
+        Returns:
+            bool: True if command was acknowledged, False otherwise.
+        """
         if status is None:
             status = 0
         self._send_packet(CMD_SET_DEFAULT_DATALINE_STATUS,channels,[enable,status])
@@ -980,6 +1032,15 @@ class SmartUSBHub:
             return False
 
     def get_default_dataline_status(self,*channels):
+        """
+        Retrieves the default dataline status configuration for specified channels.
+
+        Args:
+            *channels (int): Channels to query.
+
+        Returns:
+            dict or None: Dictionary with enabled status and default value per channel, or None if no response.
+        """
         self._send_packet(CMD_GET_DEFAULT_DATALINE_STATUS, channels,[0,0])
         ack_event = self.ack_events[CMD_GET_DEFAULT_DATALINE_STATUS]
         ack_event.clear()
@@ -999,6 +1060,61 @@ class SmartUSBHub:
         else:
             logger.error("get_default_dataline_status No ACK!")
             return None
+        
+    def set_auto_restore(self,enable:bool):
+        """
+        Enables or disables the auto-restore feature.
+        
+        Args:
+            enable (bool): True to enable auto-restore; False to disable.
+        
+        Returns:
+            int or None: Returns the latest auto_restore_status if acknowledged, or None if no response.
+        """
+        data_val = 1 if enable else 0
+
+        self._send_packet(CMD_SET_AUTO_RESTORE, None, data_val)
+        ack_event = self.ack_events[CMD_SET_AUTO_RESTORE]
+        ack_event.clear()
+        if ack_event.wait(self.com_timeout):
+            logger.debug("set_auto_restore ACK")
+            return self.auto_restore_status
+        else:
+            logger.error("set_auto_restore No ACK!")
+
+    def get_auto_restore_status(self):
+        """
+        Queries whether auto-restore is enabled.
+    
+        Returns:
+            int or None: 1 if auto-restore is enabled, 0 if disabled, or None if no response.
+        """
+        self._send_packet(CMD_GET_AUTO_RESTORE_STATUS, None, None)
+        ack_event = self.ack_events[CMD_GET_AUTO_RESTORE_STATUS]
+        ack_event.clear()
+        if ack_event.wait(self.com_timeout):
+            logger.debug("get_auto_restore_status ACK")
+            return self.auto_restore_status
+        else:
+            logger.error("get_auto_restore_status No ACK!")
+            return None
+        
+    def factory_reset(self):
+        """
+        Sends a command to reset the device to factory settings.
+    
+        Returns:
+            bool: True if the reset command was acknowledged; False otherwise.
+        """
+        self._send_packet(CMD_FACTORY_RESET, None, None)
+        ack_event = self.ack_events[CMD_FACTORY_RESET]
+        ack_event.clear()
+        if ack_event.wait(self.com_timeout):
+            logger.debug("factory_reset ACK")
+            return True
+        else:
+            logger.error("factory_reset No ACK!")
+            return False
         
     def get_firmware_version(self):
         """
