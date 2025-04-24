@@ -8,80 +8,80 @@
 import serial
 import time
 
-serial_port = "/dev/cu.usbmodem413101"  # 替换为你的实际串口
-baud_rate = 115200  # 波特率
+serial_port = "/dev/cu.usbmodem142101"  # Replace with your actual serial port
+baud_rate = 115200  # Baud rate
 
-# 命令
-get_mode_cmd = "55 5A 07 00 00 07" #查询工作模式命令
-ch1_on_cmd = "55 5A 01 01 01 03"  # 通道1 开命令
-ch1_off_cmd = "55 5A 01 01 00 02"  # 通道1 关命令
+# Commands
+get_mode_cmd = "55 5A 07 00 00 07" # Query working mode
+ch1_on_cmd = "55 5A 01 01 01 03"  # Turn on channel 1
+ch1_off_cmd = "55 5A 01 01 00 02"  # Turn off channel 1
 
 def hex_str_to_bytes(hex_str):
     """
-    将十六进制字符串转换为字节数组。
+    Convert hex string to byte array.
     """
     return bytes.fromhex(hex_str)
 
 def bytes_to_hex_str(byte_data):
     """
-    将字节数组转换为十六进制字符串。
+    Convert byte array to hex string.
     """
     return " ".join(f"{b:02X}" for b in byte_data)
 
 try:
-    # 打开串口
+    # Open serial port
     s = serial.Serial(serial_port, baudrate=baud_rate, timeout=1)
-    # 检查并关闭之前的连接
+    # Close previous connection if open
     if s.is_open:
         s.close()
     s.open()
 
-    print("串口已打开")
+    print("device connected")
 
-    # 发送计数器
+    # Send counter
     send_count = 0
-    current_cmd = ch1_off_cmd  # 初始状态：发送关命令
+    current_cmd = ch1_off_cmd  # Initial state: send OFF command
 
     while True:
-        # 转换命令为字节
+        # Convert command to bytes
         byte_cmd = hex_str_to_bytes(current_cmd)
 
-        # 发送命令
+        # Send command
         bytes_written = s.write(byte_cmd)
-        send_count += 1  # 每发送一次计数器加 1
+        send_count += 1  # Increment counter each time a command is sent
 
-        # 接收应答
-        response = s.read(len(byte_cmd))  # 假设应答长度与发送命令长度一致
+        # Receive response
+        response = s.read(len(byte_cmd))  # Assume response length equals command length
         if response:
             response_str = bytes_to_hex_str(response)
-            if response_str == current_cmd:  # 校验应答数据
-                status = f"发送 {send_count}: {current_cmd} | 应答成功: {response_str}"
+            if response_str == current_cmd:  # Verify response data
+                status = f"sent {send_count} times: {current_cmd} | ack: {response_str}"
             else:
-                status = f"发送 {send_count}: {current_cmd} | 应答失败: {response_str}"
-                raise ValueError(f"应答校验失败！发送: {current_cmd}，接收: {response_str}")
+                status = f"sent {send_count} times: {current_cmd} | ack: {response_str}"
+                raise ValueError(f"send failed, sent: {current_cmd}, ack: {response_str}")
         else:
-            status = f"发送 {send_count}: {current_cmd} | 未接收到应答数据"
+            status = f"sent {send_count}: {current_cmd} | no ack!"
 
-        # 在同一行打印状态并刷新
+        # Print status in the same line and flush
         print(f"\r{status}", end="", flush=True)
 
-        # 切换命令
+        # Toggle command
         current_cmd = ch1_on_cmd if current_cmd == ch1_off_cmd else ch1_off_cmd
 
-        # 每隔 10ms 发送一次
-        time.sleep(0.01)
+        # Send every 500ms
+        time.sleep(0.001)
 
 except serial.SerialException as e:
-    print(f"\n串口错误: {e}")
+    print(f"\nserial error: {e}")
 except ValueError as e:
-    print(f"\n错误: {e}")
-    print("程序退出")
+    print(f"\nerror: {e}")
+    print("program exit")
 except KeyboardInterrupt:
-    print("\n程序被中断")
+    print("\nprogram interrupted")
 except Exception as e:
-    print(f"\n其他错误: {e}")
+    print(f"\nother error: {e}")
 finally:
-    # 关闭串口
+    # Close serial port
     if 's' in locals() and s.is_open:
         s.close()
-        print("\n串口已关闭")
+        print("\nserial is closed")

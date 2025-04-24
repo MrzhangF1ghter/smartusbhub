@@ -1,19 +1,20 @@
 # SmartUSBHub python library
+
+文档版本：V1.9
+
 [TOC]
 
 ## 简介
 
 smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 
-使用前请先了解smartusbhub，详情请阅读[设备简介](https://github.com/MrzhangF1ghter/smartusbhub/wiki/quickstart)
-
-详情请阅读项目wiki [wiki page](https://github.com/MrzhangF1ghter/smartusbhub/wiki)
+使用前请先了解smartusbhub，详情请阅读[智能USB集线器_使用指南](https://github.com/MrzhangF1ghter/smartusbhub/document/智能USB集线器_使用指南.md)
 
 > [!NOTE]
 >
 > 此smartusbhub python库只是用于测试用途，如果要集成到生产环境，建议自行实现通信控制。
 >
-> 协议文档请查阅： [集线器协议文档](https://github.com/MrzhangF1ghter/smartusbhub/wiki/protocol)
+> 协议文档请查阅： [智能USB集线器_使用指南 协议章节](https://github.com/MrzhangF1ghter/smartusbhub/document/智能USB集线器_使用指南.md)
 >
 > 最简单的控制demo：[simple_serial.py](./examples/simple_serial.py)
 
@@ -66,6 +67,10 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
    - Windows平台:  `COMx`
    - Linux平台: `/dev/ttyACMx`
    - mac平台: `/dev/cu.usbmodemx`
+
+> [!NOTE]
+>
+> 若要数据传输，除了连接<u>设备通信口</u>，还需要连接<u>数据上行口</u>。
 
 
 
@@ -245,7 +250,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - **示例**:
   
-  连通 通道1的物理连接
+  连通 通道1 的数据信号
   
   ```python
   hub.set_channel_dataline(1,state=1)
@@ -255,11 +260,17 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 ### 获取通道数据状态
 #### `get_channel_dataline_status(*channels)`
 - **描述**: 查询指定通道的数据线状态。
+
 - **参数**:
   - `*channels` (int): 要查询的通道。
+  
 - **返回值**:
   - `dict` 或 `None`: 包含通道状态的字典，若超时则返回 `None`。
+  
 - **示例**:
+  
+  获取 通道2 的数据信号连接状态
+  
   ```python
   status = hub.get_channel_dataline_status(1, 2)
   ```
@@ -275,8 +286,11 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   - channel (int): 要查询的通道。
 
 - **返回值**:
-  - `int` 或 `None`: 通道的电压值，若超时则返回 `None`。
+  - `int` 或 `None`: 通道的电压值(mV)，若超时则返回 `None`。
 - **示例**:
+  
+  获取 通道1 的 电压值
+  
   ```python
   voltage = hub.get_channel_voltage(1)
   ```
@@ -295,65 +309,78 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 - **返回值**:
   - `int` 或 `None`: 通道的电流值(mA)，若超时则返回 `None`。
 - **示例**:
+  
+  获取 通道1 的 电流值
+  
   ```python
   current = hub.get_channel_current(1)
   ```
 
-### 注册用户回调
 
-#### `register_callback(cmd, callback)`
 
-- **描述**: 为指定的命令注册一个用户回调函数。当设备返回该命令的应答时，回调函数会被触发。
+### 设置通道电源的上电默认状态
+
+#### `set_default_power_status(*channels,enable,status)`
+
+- **描述**: 设置指定通道的上电默认电源状态。
 
 - **参数**:
-  - cmd (int): 要注册回调的命令。
-  - callback (function): 当命令的 ACK 被接收到时执行的回调函数。回调函数应接受两个参数：
-    - channel (int): 触发回调的通道编号。
-    - status (int): 通道的状态值。
-  
-- **返回值:**
-  - 无返回值。
-  
-- **注意事项**:
-  - 如果 cmd 不在支持的命令列表中，将记录警告日志，并不会注册回调。
-  - 回调函数的签名应与设备返回的数据结构匹配。
-  
-- **cmd列表：**
-  
-  ```c
-  CMD_GET_CHANNEL_POWER_STATUS = 0x00
-  CMD_SET_CHANNEL_POWER = 0x01
-  
-  CMD_SET_CHANNEL_POWER_INTERLOCK = 0x02
-  
-  CMD_GET_CHANNEL_VOLTAGE = 0x03
-  CMD_GET_CHANNEL_CURRENT = 0x04
-  
-  CMD_SET_CHANNEL_DATALINE = 0x05
-  CMD_GET_CHANNEL_DATALINE_STATUS = 0x08
-  
-  CMD_SET_BUTTON_CONTROL = 0x09
-  CMD_GET_BUTTON_CONTROL_STATUS = 0x0A
-  
-  CMD_SET_OPERATE_MODE = 0x06
-  CMD_GET_OPERATE_MODE = 0x07
-  CMD_GET_FIRMWARE_VERSION = 0xFD
-  CMD_GET_HARDWARE_VERSION = 0xFE
+
+  - `*channels` (int): 要设置的通道。
+  - enable (int): `1` 启用默认状态， `0` 禁用默认状态。
+  - status (int): 1 默认打开电源，0 默认关闭电源
+
+- **示例**:
+
+  通道1、2、3、4上电默认打开
+
+  ```python
+  hub.set_default_dataline_status(1,2,3,4,enable=1,status=0)
   ```
 
-​	
+  通道1、2、3、4上电不使用默认值
 
+  ```python
+  hub.set_default_dataline_status(1,2,3,4,enable=0)
+  ```
+
+  
+
+### 设置通道数据线的上电默认状态
+
+#### `set_default_power_status(*channels,enable,status)`
+
+- **描述**: 设置指定通道的上电默认电源状态。
+
+- **参数**:
+
+  - `*channels` (int): 要设置的通道。
+  - enable (int): `1` 启用默认状态， `0` 禁用默认状态。
+  - status (int): 1 默认打开电源，0 默认关闭电源
+
+- **示例**:
+
+  通道1、2、3、4上电默认打开
+
+  ```python
+  hub.set_default_dataline_status(1,2,3,4,enable=1,status=0)
+  ```
+
+  
 
 ### 设置按钮控制
 
 #### `set_button_control(enable)`
 
 - **描述**: 启用或禁用集线器的物理按钮。
+
 - **参数**:
   - enable (bool): `True` 启用按钮，`False` 禁用按钮。
 
 - **示例**:
-  
+
+  设置按钮为启用
+
   ```python
   hub.set_button_control(True)
   ```
@@ -369,6 +396,8 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   - `int` 或 `None`: `1` 表示启用，`0` 表示禁用，若无响应则返回 `None`。
 - **示例**:
   
+  查询按钮是否启用
+  
   ```python
   status = hub.get_button_control_status()
   ```
@@ -381,12 +410,22 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - **描述**: 设置设备的操作模式。
 - **参数**:
+  
   - mode (int): 操作模式（`0` 为普通模式，`1` 为互锁模式）。
-
+  
+  **注意:**
+  
+  - 互锁模式下，控制只能用互锁指令。
+  
 - **示例**:
+  
+  设置设备为普通模式
+  
   ```python
   hub.set_operate_mode(0)
   ```
+  
+
 
 
 ### 获取设备的操作模式
@@ -394,9 +433,13 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 #### `get_operate_mode()`
 
 - **描述**: 查询设备的当前操作模式。
+
 - **返回值**:
   - `int` 或 `None`: 当前操作模式，若无响应则返回 `None`。
+  
 - **示例**:
+  
+  查询设备操作模式
   
   ```python
   mode = hub.get_operate_mode()
@@ -444,3 +487,62 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   ```python
   hardware_version = hub.get_hardware_version()
   ```
+
+
+
+### 注册用户回调
+
+#### `register_callback(cmd, callback)`
+
+- **描述**: 为指定的命令注册一个用户回调函数。当设备返回该命令的应答时，回调函数会被触发。
+
+- **参数**:
+
+  - cmd (int): 要注册回调的命令。
+  - callback (function): 当命令的 ACK 被接收到时执行的回调函数。回调函数应接受两个参数：
+    - channel (int): 触发回调的通道编号。
+    - status (int): 通道的状态值。
+
+- **返回值:**
+
+  - 无返回值。
+
+- **注意事项**:
+
+  - 如果 cmd 不在支持的命令列表中，将记录警告日志，并不会注册回调。
+  - 回调函数的签名应与设备返回的数据结构匹配。
+
+  | CMD宏                           | 含义                       |
+  | :------------------------------ | :------------------------- |
+  | CMD_GET_CHANNEL_POWER_STATUS    | 获取通道电源开关值         |
+  | CMD_SET_CHANNEL_POWER           | 控制通道电源               |
+  | CMD_SET_CHANNEL_POWER_INTERLOCK | 控制通道电源互锁           |
+  | CMD_SET_CHANNEL_DATALINE        | 控制通道数据线             |
+  | CMD_GET_CHANNEL_DATALINE_STATUS | 获取通道数据线状态         |
+  | CMD_GET_CHANNEL_VOLTAGE         | 获取通道电压               |
+  | CMD_GET_CHANNEL_CURRENT         | 获取通道电流               |
+  | CMD_SET_BUTTON_CONTROL          | 启用/禁用 按键控制         |
+  | CMD_GET_BUTTON_CONTROL_STATUS   | 获取按键控制状态           |
+  | CMD_SET_DEFAULT_POWER_STATUS    | 设置通道默认电源状态       |
+  | CMD_GET_DEFAULT_POWER_STATUS    | 获取通道默认电源状态       |
+  | CMD_SET_DEFAULT_DATALINE_STATUS | 设置通道默认数据连接状态   |
+  | CMD_GET_DEFAULT_DATALINE_STATUS | 获取通道默认数据连接状态   |
+  | CMD_SET_AUTO_RESTORE            | 启用/禁用 断电保存         |
+  | CMD_GET_AUTO_RESTORE_STATUS     | 获取断电保存是否启用       |
+  | CMD_SET_OPERATE_MODE            | 设置设备工作模式 普通/互锁 |
+  | CMD_GET_OPERATE_MODE            | 获取设备工作模式           |
+  | CMD_FACTORY_RESET               | 恢复出厂设置               |
+  | CMD_GET_FIRMWARE_VERSION        | 获取固件版本号             |
+  | CMD_GET_HARDWARE_VERSION        | 获取硬件版本号             |
+
+- **示例**:
+
+  设置按键回调，当按键按下时，产生回调
+
+  ```python
+  def button_press_callback(channel, status):
+      print("Button press detected on channel", channel, "with power status", status)
+  
+  hub.register_callback(CMD_GET_CHANNEL_POWER_STATUS, button_press_callback)
+  ```
+

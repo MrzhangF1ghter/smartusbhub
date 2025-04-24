@@ -118,7 +118,7 @@ def main():
             for i in range(1, 5):
                 hub.set_channel_power_interlock(i)
                 print("interlock control,turn on channel", i)
-                time.sleep(0.5)
+                time.sleep(interval)
         hub.set_channel_power_interlock(None)
         
 if __name__ == "__main__":
