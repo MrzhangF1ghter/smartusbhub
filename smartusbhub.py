@@ -5,6 +5,8 @@
 # author: EmbeddedTec studio
 # email:embeddedtec@outlook.com
 
+# protocol examples:
+
 # Single Channel ON/OFF   send                ack                
 #     ch1_on              55 5A 01 01 01 03   55 5A 01 01 01 03 
 #     ch2_on              55 5A 01 02 01 04   55 5A 01 02 01 04 
@@ -26,10 +28,22 @@
 #     ch_24_off           55 5A 01 0A 00 0B   55 5A 01 0A 00 0B 
 
 # Get digital level       [channel,value]     
-#     ch1_get_level       55 5A 00 01 00 01   55 5A 00 01 00 01 [OFF]     55 5A 00 01 01 02 [ON]
-#     ch2_get_level       55 5A 00 02 00 02   55 5A 00 02 00 02 [OFF]     55 5A 00 02 01 03 [ON]
-#     ch3_get_level       55 5A 00 04 00 04   55 5A 00 04 00 04 [OFF]     55 5A 00 04 01 05 [ON]
-#     ch4_get_level       55 5A 00 08 00 08   55 5A 00 08 00 08 [OFF]     55 5A 00 08 01 09 [ON]
+#     ch1_get_level       55 5A 00 01 00 01   
+#                                             55 5A 00 01 00 01 [OFF]     
+#                                             55 5A 00 01 01 02 [ON]
+
+#     ch2_get_level       55 5A 00 02 00 02   
+#                                             55 5A 00 02 00 02 [OFF]     
+#                                             55 5A 00 02 01 03 [ON]
+
+#     ch3_get_level       55 5A 00 04 00 04  
+#                                             55 5A 00 04 00 04 [OFF]     
+#                                             55 5A 00 04 01 05 [ON]
+
+#     ch4_get_level       55 5A 00 08 00 08   
+#                                             55 5A 00 08 00 08 [OFF]     
+#                                             55 5A 00 08 01 09 [ON]
+
 #     ch_all_get_level    55 5A 00 0F 00 0F   55 5A 00 01 00 01 55 5A 00 02 00 02 55 5A 00 04 00 04 55 5A 00 08 00 08 
 
 # Initerlock mode         [channel,0x01]
@@ -67,10 +81,21 @@
 #     ch_dataline_all_off 55 5A 05 0F 00 14   55 5A 05 0F 00 14 
 
 # Get Channel Dataline    [channel,value]     
-#     ch1_get_data_status 55 5A 08 01 00 09   55 5A 08 01 00 09[disconnect]   55 5A 08 01 01 0A[connected]
-#     ch2_get_data_status 55 5A 08 02 00 0A   55 5A 08 02 00 0A[disconnect]   55 5A 08 02 01 0B[connected]
-#     ch3_get_data_status 55 5A 08 04 00 0C   55 5A 08 04 00 0C[disconnect]   55 5A 08 04 01 0D[connected]
-#     ch4_get_data_status 55 5A 08 08 00 10   55 5A 08 08 00 10[disconnect]   55 5A 08 08 01 11[connected]
+#     ch1_get_data_status 55 5A 08 01 00 09           
+#                                             55 5A 08 01 00 09[disconnect]   
+#                                             55 5A 08 01 01 0A[connected]
+
+#     ch2_get_data_status 55 5A 08 02 00 0A   
+#                                             55 5A 08 02 00 0A[disconnect]   
+#                                             55 5A 08 02 01 0B[connected]
+
+#     ch3_get_data_status 55 5A 08 04 00 0C   
+#                                             55 5A 08 04 00 0C[disconnect]   
+#                                             55 5A 08 04 01 0D[connected]
+
+#     ch4_get_data_status 55 5A 08 08 00 10   
+#                                             55 5A 08 08 00 10[disconnect]   
+#                                             55 5A 08 08 01 11[connected]
 
 #     All Channel
 #     ch_all_get_dataline 55 5A 08 0F 00 17   
@@ -80,73 +105,108 @@
 #     enable_btn_control  55 5A 09 00 01 0A   55 5A 09 00 01 0A
 
 # Get Button control Mode [0x00,value]
-#     get_btn_control     55 5A 0A 00 00 0A   55 5A 0A 00 00 0A[disable]      55 5A 0A 00 01 0B[enable]
+#     get_btn_control     55 5A 0A 00 00 0A   55 5A 0A 00 00 0A [disable] 55 5A 0A 00 01 0B[enable]
 
 # Set default power status [channel,enable,value] protocol_v2
-#     ch1_set_default_power_status_enable_on      55 5A 0B 01 01 01 0E   55 5A 0B 01 01 01 0E [channel 1 default power status enable,value is on]
-#     ch2_set_default_power_status_enable_on      55 5A 0B 02 01 01 0F   55 5A 0B 02 01 01 0F [channel 2 default power status enable,value is on]
-#     ch3_set_default_power_status_enable_on      55 5A 0B 04 01 01 11   55 5A 0B 04 01 01 11 [channel 3 default power status enable,value is on]
-#     ch4_set_default_power_status_enable_on      55 5A 0B 08 01 01 15   55 5A 0B 08 01 01 15 [channel 4 default power status enable,value is on]
-#     all_ch_set_default_power_status_enable_on   55 5A 0B 0F 01 01 1C   55 5A 0B 0F 01 01 1C [all default power status enable,value is on]
+#     ch1_set_default_power_status_enable_on      55 5A 0B 01 01 01 0E    55 5A 0B 01 01 01 0E [default power status enable,value is on]
+#     ch2_set_default_power_status_enable_on      55 5A 0B 02 01 01 0F    55 5A 0B 02 01 01 0F [default power status enable,value is on]
+#     ch3_set_default_power_status_enable_on      55 5A 0B 04 01 01 11    55 5A 0B 04 01 01 11 [default power status enable,value is on]
+#     ch4_set_default_power_status_enable_on      55 5A 0B 08 01 01 15    55 5A 0B 08 01 01 15 [default power status enable,value is on]
+#     all_ch_set_default_power_status_enable_on   55 5A 0B 0F 01 01 1C    55 5A 0B 0F 01 01 1C [all default power status enable,value is on]
 
-#     ch1_set_default_power_status_enable_off     55 5A 0B 01 01 00 0D   55 5A 0B 01 01 00 0D [channel 1 default power status enable,value is off]
-#     ch2_set_default_power_status_enable_off     55 5A 0B 02 01 00 0E   55 5A 0B 02 01 00 0E [channel 2 default power status enable,value is off]
-#     ch3_set_default_power_status_enable_off     55 5A 0B 04 01 00 10   55 5A 0B 04 01 00 10 [channel 3 default power status enable,value is off]
-#     ch4_set_default_power_status_enable_off     55 5A 0B 08 01 00 14   55 5A 0B 08 01 00 14 [channel 4 default power status enable,value is off]
-#     all_ch_set_default_power_status_enable_off  55 5A 0B 0F 01 00 1B   55 5A 0B 0F 01 00 1B [all default power status enable,value is off]
+#     ch1_set_default_power_status_enable_off     55 5A 0B 01 01 00 0D    55 5A 0B 01 01 00 0D [default power status enable,value is off]
+#     ch2_set_default_power_status_enable_off     55 5A 0B 02 01 00 0E    55 5A 0B 02 01 00 0E [default power status enable,value is off]
+#     ch3_set_default_power_status_enable_off     55 5A 0B 04 01 00 10    55 5A 0B 04 01 00 10 [default power status enable,value is off]
+#     ch4_set_default_power_status_enable_off     55 5A 0B 08 01 00 14    55 5A 0B 08 01 00 14 [default power status enable,value is off]
+#     all_ch_set_default_power_status_enable_off  55 5A 0B 0F 01 00 1B    55 5A 0B 0F 01 00 1B [all default power status enable,value is off]
 
-#     ch1_set_default_power_status_disable        55 5A 0B 01 00 00 0C   55 5A 0B 01 00 0C [channel 1 default power status disable]
-#     ch2_set_default_power_status_disable        55 5A 0B 02 00 00 0D   55 5A 0B 02 00 0D [channel 2 default power status disable]
-#     ch3_set_default_power_status_disable        55 5A 0B 04 00 00 0F   55 5A 0B 04 00 0F [channel 3 default power status disable]
-#     ch4_set_default_power_status_disable        55 5A 0B 08 00 00 13   55 5A 0B 08 00 13 [channel 4 default power status disable]
-#     all_ch_set_default_power_status_enable_off  55 5A 0B 0F 00 00 1A   55 5A 0B 0F 00 00 1A [all default power status enable,value is off]
+#     ch1_set_default_power_status_disable        55 5A 0B 01 00 00 0C    55 5A 0B 01 00 0C [default power status disable]
+#     ch2_set_default_power_status_disable        55 5A 0B 02 00 00 0D    55 5A 0B 02 00 0D [default power status disable]
+#     ch3_set_default_power_status_disable        55 5A 0B 04 00 00 0F    55 5A 0B 04 00 0F [default power status disable]
+#     ch4_set_default_power_status_disable        55 5A 0B 08 00 00 13    55 5A 0B 08 00 13 [default power status disable]
+#     all_ch_set_default_power_status_disable     55 5A 0B 0F 00 00 1A    55 5A 0B 0F 00 00 1A [all default power status enable,value is off]
 
-# Get default power status [channel,enable,value] protocol_v2
-#     ch1_get_default_power_status                55 5A 0C 01 00 00 0D   55 5A 0C 01 00 0D [channel 1 default power status is disabled]
-#     ch2_get_default_power_status                55 5A 0C 02 00 00 0E   55 5A 0C 02 00 0E [channel 2 default power status is disabled]
-#     ch3_get_default_power_status                55 5A 0C 04 00 00 10   55 5A 0C 04 00 10 [channel 3 default power status is disabled]
-#     ch4_get_default_power_status                55 5A 0C 08 00 00 14   55 5A 0C 08 00 14 [channel 4 default power status is disabled]
-#     all_ch_get_default_power_status             55 5A 0C 0F 00 00 1B   
+# Get default power status [channel,enable,value] protocol_v2                     
+#     ch1_get_default_power_status                55 5A 0C 01 00 00 0D            
+#                                                                         55 5A 0C 01 00 00 0D [default power status disabled, poweroff]    
+#                                                                         55 5A 0C 01 01 01 0F [default power status enable, poweron]
+
+#     ch2_get_default_power_status                55 5A 0C 02 00 00 0E    
+#                                                                         55 5A 0C 02 00 00 0E [default power status disabled, poweroff]    
+#                                                                         55 5A 0C 02 01 01 10 [default power status enable, poweron]
+
+#     ch3_get_default_power_status                55 5A 0C 04 00 00 10    
+#                                                                         55 5A 0C 04 00 00 10 [default power status disabled, poweroff]   
+#                                                                         55 5A 0C 04 01 01 12 [default power status enable, poweron]
+
+#     ch4_get_default_power_status                55 5A 0C 08 00 00 14    
+#                                                                         55 5A 0C 08 00 00 14 [default power status disabled, poweroff]    
+#                                                                         55 5A 0C 08 01 01 16 [default power status enable, poweron]
+#     all_ch_get_default_power_status             55 5A 0C 0F 00 00 1B
 
 # Set default dataline status [channel,enable,value] protocol_v2
-#     ch1_set_default_dataline_status_enable_on   55 5A 0D 01 01 01 10   55 5A 0D 01 01 01 10 [channel 1 default dataline status enable,value is connect]
-#     ch2_set_default_dataline_status_enable_on   55 5A 0D 02 01 01 11   55 5A 0D 02 01 01 11 [channel 2 default dataline status enable,value is connect]
-#     ch3_set_default_dataline_status_enable_on   55 5A 0D 04 01 01 13   55 5A 0D 04 01 01 13 [channel 3 default dataline status enable,value is connect]
-#     ch4_set_default_dataline_status_enable_on   55 5A 0D 08 01 01 17   55 5A 0D 08 01 01 17 [channel 4 default dataline status enable,value is connect]
+#     ch1_set_default_dataline_status_enable_on   55 5A 0D 01 01 01 10    55 5A 0D 01 01 01 10 [default dataline status enable, connected]
+#     ch2_set_default_dataline_status_enable_on   55 5A 0D 02 01 01 11    55 5A 0D 02 01 01 11 [default dataline status enable, connected]
+#     ch3_set_default_dataline_status_enable_on   55 5A 0D 04 01 01 13    55 5A 0D 04 01 01 13 [default dataline status enable, connected]
+#     ch4_set_default_dataline_status_enable_on   55 5A 0D 08 01 01 17    55 5A 0D 08 01 01 17 [default dataline status enable, connected]
+#     all_ch_set_default_power_status_enable_on   55 5A 0D 0F 01 01 1E    55 5A 0D 0F 01 01 1E [all default dataline status enable, connected]
 
-#     ch1_set_default_dataline_status_enable_off  55 5A 0D 01 01 00 0F   55 5A 0D 01 01 01 0F [channel 1 default dataline status enable,value is connect]
-#     ch2_set_default_dataline_status_enable_off  55 5A 0D 02 01 00 10   55 5A 0D 02 01 01 10 [channel 2 default dataline status enable,value is connect]
-#     ch3_set_default_dataline_status_enable_off  55 5A 0D 04 01 00 12   55 5A 0D 04 01 01 12 [channel 3 default dataline status enable,value is connect]
-#     ch4_set_default_dataline_status_enable_off  55 5A 0D 08 01 00 16   55 5A 0D 08 01 01 16 [channel 4 default dataline status enable,value is connect]
-#     all_ch_set_default_power_status_enable_off  55 5A 0D 0F 01 00 1D   55 5A 0D 0F 01 00 1D [all default dataline status enable,value is disconnect]
+#     ch1_set_default_dataline_status_enable_off  55 5A 0D 01 01 00 0F    55 5A 0D 01 01 01 0F [default dataline status enable, connected]
+#     ch2_set_default_dataline_status_enable_off  55 5A 0D 02 01 00 10    55 5A 0D 02 01 01 10 [default dataline status enable, connected]
+#     ch3_set_default_dataline_status_enable_off  55 5A 0D 04 01 00 12    55 5A 0D 04 01 01 12 [default dataline status enable, connected]
+#     ch4_set_default_dataline_status_enable_off  55 5A 0D 08 01 00 16    55 5A 0D 08 01 01 16 [default dataline status enable, connected]
+#     all_ch_set_default_power_status_enable_off  55 5A 0D 0F 01 00 1D    55 5A 0D 0F 01 00 1D [all default dataline status enable, disconnected]
 
-#     ch1_set_default_dataline_status_disable     55 5A 0D 01 00 00 0E   55 5A 0D 01 00 00 0E [channel 1 default dataline status disable,value is fix to connect]
-#     ch2_set_default_dataline_status_disable     55 5A 0D 02 00 00 0F   55 5A 0D 02 00 00 0F [channel 2 default dataline status disable,value is fix to connect]
-#     ch3_set_default_dataline_status_disable     55 5A 0D 04 00 00 11   55 5A 0D 04 00 00 11 [channel 3 default dataline status disable,value is fix to connect]
-#     ch4_set_default_dataline_status_disable     55 5A 0D 08 00 00 15   55 5A 0D 08 00 00 15 [channel 4 default dataline status disable,value is fix to connect]
+#     ch1_set_default_dataline_status_disable     55 5A 0D 01 00 00 0E    55 5A 0D 01 00 00 0E [default dataline status disable, connected]
+#     ch2_set_default_dataline_status_disable     55 5A 0D 02 00 00 0F    55 5A 0D 02 00 00 0F [default dataline status disable, connected]
+#     ch3_set_default_dataline_status_disable     55 5A 0D 04 00 00 11    55 5A 0D 04 00 00 11 [default dataline status disable, connected]
+#     ch4_set_default_dataline_status_disable     55 5A 0D 08 00 00 15    55 5A 0D 08 00 00 15 [default dataline status disable, connected]
+#     all_ch_set_default_dataline_status_disable  55 5A 0D 0F 00 01 1D    55 5A 0D 0F 00 01 1D [all default dataline status disable, connected]
 
 # Get default dataline status [channel,enable,value] protocol_v2
-#     ch1_get_default_dataline_status             55 5A 0E 01 00 01 10  55 5A 0E 01 00 01 10 [channel 1 default dataline status is disabled,value is fix to connected]
-#     ch2_get_default_dataline_status             55 5A 0E 02 00 01 11  55 5A 0E 02 00 01 11 [channel 2 default dataline status is disabled,value is fix to connected]
-#     ch3_get_default_dataline_status             55 5A 0E 04 00 01 13  55 5A 0E 04 00 01 13 [channel 3 default dataline status is disabled,value is fix to connected]
-#     ch4_get_default_dataline_status             55 5A 0E 08 00 01 17  55 5A 0E 08 00 01 17 [channel 4 default dataline status is disabled,value is fix to connected]
+#     ch1_get_default_dataline_status             55 5A 0E 01 00 00 0F            
+#                                                                         55 5A 0E 01 00 01 10 [default dataline status disabled, dataline connected]    
+#                                                                         55 5A 0E 01 01 00 10 [default dataline status enabled, dataline disconnected]    
+#                                                                         55 5A 0E 01 01 01 11 [default dataline status enabled, dataline connected]
+
+#     ch2_get_default_dataline_status             55 5A 0E 02 00 00 10    
+#                                                                         55 5A 0E 02 00 01 11 [default dataline status disabled, dataline connected]    
+#                                                                         55 5A 0E 02 01 00 11 [default dataline status enabled, dataline disconnected]    
+#                                                                         55 5A 0E 02 01 01 12 [default dataline status enabled, dataline connected]
+
+#     ch3_get_default_dataline_status             55 5A 0E 04 00 00 12    
+#                                                                         55 5A 0E 04 00 01 13 [default dataline status disabled, dataline connected]    
+#                                                                         55 5A 0E 04 01 00 13 [default dataline status enabled, dataline disconnected]    
+#                                                                         55 5A 0E 04 00 01 13 [default dataline status enabled, dataline connected]
+
+#     ch4_get_default_dataline_status             55 5A 0E 08 00 00 16    
+#                                                                         55 5A 0E 08 00 01 17 [default dataline status disabled, dataline connected]    
+#                                                                         55 5A 0E 08 00 01 17 [default dataline status enabled, dataline disconnected]    
+#                                                                         55 5A 0E 08 00 01 17 [default dataline status enabled, dataline connected]
+
+#     all_ch_get_default_dataline_status          55 5A 0E 0F 00 00 1D
     
 # Set auto restore [0x00,value]
 #     enable auto restore                         55 5A 0F 00 01 10   55 5A 0F 00 01 10
 #     disable auto restore                        55 5A 0F 00 00 0F   55 5A 0F 00 00 0F
 
-# Get auto restore state                          55 5A 10 00 00 10   55 5A 10 00 01 11[enable]   55 5A 10 00 00 10[disable]
+# Get auto restore state                          55 5A 10 00 00 10   
+#                                                                     55 5A 10 00 01 11[enable]   
+#                                                                     55 5A 10 00 00 10[disable]
 
 # Set Operate Mode [0x00,mode]
 #     oper_mode_normal    55 5A 06 00 00 06   55 5A 06 00 00 06
 #     oper_mode_interlock 55 5A 06 00 01 07   55 5A 06 00 01 07
 
 # Get Operate Mode        55 5A 07 00 00 07
-#     oper_mode_normal                        55 5A 07 00 00 07
-#     oper_mode_interlock                     55 5A 07 00 01 08
+#                                             55 5A 07 00 00 07 [normal]
+#                                             55 5A 07 00 01 08 [interlock]
 
-# Get software version    55 5A FD 00 00 FD   55 5A FD 00 0F 0C //SW_VERSION
-# Get hardware version    55 5A FE 00 00 FE   55 5A FE 00 03 01 //HW_VERSION
+# Factory Reset           55 5A FC 00 00 FC   55 5A FC 00 00 FC
+
+# Get software version    55 5A FD 00 00 FD   55 5A FD 00 0F 0C
+
+# Get hardware version    55 5A FE 00 00 FE   55 5A FE 00 03 01
 
 import serial
 import serial.tools.list_ports
@@ -224,7 +284,7 @@ logger.addHandler(ch)
 
 class SmartUSBHub:
     """
-    SmartUSBHub provides a high-level interface for interacting with an industrial Smart USB Hub via UART.
+    SmartUSBHub Lib provides a high-level interface for interacting with an industrial Smart USB Hub via UART.
 
     This class enables robust per-port control of power and data connections, voltage/current monitoring,
     configuration of default states, and factory-level resets.
@@ -267,7 +327,6 @@ class SmartUSBHub:
             CMD_GET_HARDWARE_VERSION: threading.Event(),
         }
         
-        # 用户回调字典
         self.callbacks = {cmd: None for cmd in self.ack_events.keys()}
         
         self.poweroff_recover = None
@@ -339,7 +398,7 @@ class SmartUSBHub:
         port_list = []
 
         for port in ports:
-            if port.vid == 0x1A86 and port.pid == 0xfe0c:  # 筛选特定 VID 和 PID
+            if port.vid == 0x1A86 and port.pid == 0xfe0c:
                 port_list.append(port.device)
 
         return port_list
@@ -372,7 +431,6 @@ class SmartUSBHub:
         signal.signal(signal.SIGINT, self._signal_handler)
         self.uart_recv_thread = threading.Thread(target=self._uart_recv_task)
         self.uart_recv_thread.start()
-        print("SmartUSBHub started.")
     
     def is_connected(self):
         """

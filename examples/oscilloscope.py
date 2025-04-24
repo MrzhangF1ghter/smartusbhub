@@ -52,7 +52,7 @@ class OscilloscopeApp(QtWidgets.QWidget):
             'current': np.zeros((len(self.channels), 100)),
             'voltage': np.zeros((len(self.channels), 100))
         }
-        # 设置window title
+        # Set window title
         self.setWindowTitle("Smart USB Hub Oscilloscope")
         self.layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.layout)
@@ -70,7 +70,7 @@ class OscilloscopeApp(QtWidgets.QWidget):
 
             # Create PlotWidget and add to layout
             plot_widget = pg.PlotWidget()
-            plot_widget.setYRange(0, 5500)  # 电压范围 0 - 5500 mV
+            plot_widget.setYRange(0, 5500)  # Voltage range 0 - 5500 mV
             plot_widget.setLabel("left", f"Channel {self.channels[i]}")
 
             # Create label
@@ -113,9 +113,9 @@ class OscilloscopeApp(QtWidgets.QWidget):
             row_layout.addWidget(plot_widget)
             self.layout.addLayout(row_layout)
 
-        # get channels status
+        # Get initial channel power status
         self.get_channels_status()
-        # enable timer for data update
+        # Start timer to update data periodically
         self.timer = QtCore.QTimer()
         self.timer.setTimerType(QtCore.Qt.PreciseTimer)
         self.timer.timeout.connect(self.update_data)
@@ -172,9 +172,9 @@ class OscilloscopeApp(QtWidgets.QWidget):
         if self.hub.is_connected() is False:
             self.on_connection_lost()
             return
-        # get voltage data and update curve and label
+        # Update voltage data, curve, and label
         for i, channel in enumerate(self.channels):
-            # Fetch new data
+            # Fetch new value
             new_voltage = self.hub.get_channel_voltage(channel)
             if new_voltage is not None:
                 # Update data arrays
@@ -183,12 +183,12 @@ class OscilloscopeApp(QtWidgets.QWidget):
                 # Update curves
                 self.curves['voltage'][i].setData(self.data['voltage'][i])
 
-                # update voltage label
+                # Update voltage label
                 voltage_in_volts = new_voltage / 1000.0
                 self.labels['voltage'][i].setText(f"{voltage_in_volts:.3f} V")
                 self.labels['voltage'][i].setPos(0, new_voltage-300)
 
-            # Fetch new data
+            # Fetch new value
             new_current = self.hub.get_channel_current(channel)
             if new_current is not None:
                 # Update data arrays
@@ -197,7 +197,7 @@ class OscilloscopeApp(QtWidgets.QWidget):
                 # Update curves
                 self.curves['current'][i].setData(self.data['current'][i])
 
-                # update current label
+                # Update current label
                 current_in_ma = new_current / 1000.0
                 self.labels['current'][i].setText(f"{current_in_ma:.3f} A")
                 self.labels['current'][i].setPos(0, new_current-300)
