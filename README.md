@@ -8,13 +8,13 @@
 
 smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 
-使用前请先了解smartusbhub，详情请阅读[智能USB集线器_使用指南](https://github.com/MrzhangF1ghter/smartusbhub/document/智能USB集线器_使用指南.md)
+使用前请先了解smartusbhub，详情请阅读[智能USB集线器_使用指南](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/智能USB集线器_使用指南.md)
 
 > [!NOTE]
 >
 > 此smartusbhub python库只是用于测试用途，如果要集成到生产环境，建议自行实现通信控制。
 >
-> 协议文档请查阅： [智能USB集线器_使用指南 协议章节](https://github.com/MrzhangF1ghter/smartusbhub/document/智能USB集线器_使用指南.md)
+> 协议文档请查阅： [智能USB集线器_使用指南 协议章节](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/智能USB集线器_使用指南.md)
 >
 > 最简单的控制demo：[simple_serial.py](./examples/simple_serial.py)
 
