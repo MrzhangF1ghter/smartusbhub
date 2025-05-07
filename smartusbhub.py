@@ -347,6 +347,8 @@ class SmartUSBHub:
         self.channel_voltages = {}
         self.channel_currents = {}
 
+        self.disconnect_callback = None
+
         self._start()
         self.get_device_info()
 
@@ -358,6 +360,15 @@ class SmartUSBHub:
         logger.info(f"Firmware version: V1.{self.firmware_version}")
         logger.info(f"Operate mode: {'normal' if self.operate_mode == 0 else 'interlock'}")
         logger.info(f"button control: {'enable' if self.button_control_status == 1 else 'disabled'}")
+
+    def register_disconnect_callback(self, callback):
+        """
+        Registers a callback to be called when the hub is disconnected.
+        Args:
+            callback (function): The callback function to execute on disconnect.
+        """
+        self.disconnect_callback = callback
+
 
     def register_callback(self, cmd, callback):
         """
@@ -422,7 +433,7 @@ class SmartUSBHub:
 
         logger.error("No Smart USB Hub found.")
         return None
-        
+    
     def _start(self):
         """
         Starts background threads and signal handlers for UART communication and SIGINT handling.
@@ -432,6 +443,16 @@ class SmartUSBHub:
         self.uart_recv_thread = threading.Thread(target=self._uart_recv_task)
         self.uart_recv_thread.start()
     
+    def disconnect(self):
+        """
+        Disconnects from the device and stops the UART receive thread.
+        """
+        self.stop_event.set()
+        self.uart_recv_thread.join(timeout=1)
+        if self.ser and self.ser.is_open:
+            self.ser.flush()
+            self.ser.close()
+        logger.info("hub is diconnected")
     def is_connected(self):
         """
         Check if the device's serial port is connected and open.
@@ -510,63 +531,72 @@ class SmartUSBHub:
         """
         buffer = bytearray()
         while not self.stop_event.is_set():
-            if self.ser.in_waiting > 0:
-                buffer.extend(self.ser.read(self.ser.in_waiting))
-                logger.debug(f"rx data: {buffer.hex()}")
-                while len(buffer) >= 6:
-                    result = self._parse_protocol_frame(buffer)
-                    if result is not None:
-                        cmd, channel, value, length = result
+            try:
+                if self.ser is not None and self.ser.in_waiting > 0:
+                    buffer.extend(self.ser.read(self.ser.in_waiting))
+                    logger.debug(f"rx data: {buffer.hex()}")
+                    while len(buffer) >= 6:
+                        result = self._parse_protocol_frame(buffer)
+                        if result is not None:
+                            cmd, channel, value, length = result
 
-                        logger.debug(f"Parsed CMD: {cmd:#04x}, Channel: {channel:#04x}, Value: {value}")
+                            logger.debug(f"Parsed CMD: {cmd:#04x}, Channel: {channel:#04x}, Value: {value}")
 
-                        if cmd == CMD_SET_CHANNEL_POWER:
-                            self._handle_set_channel_power_status()
-                        if cmd == CMD_GET_CHANNEL_POWER_STATUS:
-                            self._handle_get_channel_power_status(channel, value)
-                        if cmd == CMD_SET_CHANNEL_POWER_INTERLOCK:
-                            self._handle_power_interlock_control()
-                        elif cmd == CMD_GET_CHANNEL_VOLTAGE:
-                            self._handle_get_channel_voltage(channel, value)
-                        elif cmd == CMD_GET_CHANNEL_CURRENT:
-                            self._handle_get_channel_current(channel, value)
-                        elif cmd == CMD_SET_CHANNEL_DATALINE:
-                            self._handle_set_channel_dataline(channel, value)
-                        elif cmd == CMD_GET_CHANNEL_DATALINE_STATUS:
-                            self._handle_get_channel_dataline(channel, value)
-                        elif cmd == CMD_SET_BUTTON_CONTROL:
-                            self._handle_set_button_control()
-                        elif cmd == CMD_GET_BUTTON_CONTROL_STATUS:
-                            self._handle_get_button_control(value)
-                        elif cmd == CMD_SET_DEFAULT_POWER_STATUS:
-                            self._handle_set_default_power_status(channel,value)
-                        elif cmd == CMD_GET_DEFAULT_POWER_STATUS:
-                            self._handle_get_default_power_status(channel,value)
-                        elif cmd == CMD_SET_DEFAULT_DATALINE_STATUS:
-                            self._handle_set_default_dataline_status(channel,value)
-                        elif cmd == CMD_GET_DEFAULT_DATALINE_STATUS:
-                            self._handle_get_default_dataline_status(channel,value)
-                        elif cmd == CMD_SET_AUTO_RESTORE:
-                            self._handle_set_auto_restore()
-                        elif cmd == CMD_GET_AUTO_RESTORE_STATUS:
-                            self._handle_get_auto_restore_status(value)
-                        elif cmd == CMD_GET_OPERATE_MODE:
-                            self._handle_get_operate_mode(value)
-                        elif cmd == CMD_SET_OPERATE_MODE:
-                            self._handle_set_operate_mode()
-                        elif cmd == CMD_FACTORY_RESET:
-                            self._handle_factory_reset()
-                        elif cmd == CMD_GET_FIRMWARE_VERSION:
-                            self._handle_firmware_version(value)
-                        elif cmd == CMD_GET_HARDWARE_VERSION:
-                            self._handle_hardware_version(value)
-                        if cmd in self.ack_events:
-                            self._invoke_callback(cmd,channel,value)
-                            self.ack_events[cmd].set()
+                            if cmd == CMD_SET_CHANNEL_POWER:
+                                self._handle_set_channel_power_status()
+                            if cmd == CMD_GET_CHANNEL_POWER_STATUS:
+                                self._handle_get_channel_power_status(channel, value)
+                            if cmd == CMD_SET_CHANNEL_POWER_INTERLOCK:
+                                self._handle_power_interlock_control()
+                            elif cmd == CMD_GET_CHANNEL_VOLTAGE:
+                                self._handle_get_channel_voltage(channel, value)
+                            elif cmd == CMD_GET_CHANNEL_CURRENT:
+                                self._handle_get_channel_current(channel, value)
+                            elif cmd == CMD_SET_CHANNEL_DATALINE:
+                                self._handle_set_channel_dataline(channel, value)
+                            elif cmd == CMD_GET_CHANNEL_DATALINE_STATUS:
+                                self._handle_get_channel_dataline(channel, value)
+                            elif cmd == CMD_SET_BUTTON_CONTROL:
+                                self._handle_set_button_control()
+                            elif cmd == CMD_GET_BUTTON_CONTROL_STATUS:
+                                self._handle_get_button_control(value)
+                            elif cmd == CMD_SET_DEFAULT_POWER_STATUS:
+                                self._handle_set_default_power_status(channel,value)
+                            elif cmd == CMD_GET_DEFAULT_POWER_STATUS:
+                                self._handle_get_default_power_status(channel,value)
+                            elif cmd == CMD_SET_DEFAULT_DATALINE_STATUS:
+                                self._handle_set_default_dataline_status(channel,value)
+                            elif cmd == CMD_GET_DEFAULT_DATALINE_STATUS:
+                                self._handle_get_default_dataline_status(channel,value)
+                            elif cmd == CMD_SET_AUTO_RESTORE:
+                                self._handle_set_auto_restore()
+                            elif cmd == CMD_GET_AUTO_RESTORE_STATUS:
+                                self._handle_get_auto_restore_status(value)
+                            elif cmd == CMD_GET_OPERATE_MODE:
+                                self._handle_get_operate_mode(value)
+                            elif cmd == CMD_SET_OPERATE_MODE:
+                                self._handle_set_operate_mode()
+                            elif cmd == CMD_FACTORY_RESET:
+                                self._handle_factory_reset()
+                            elif cmd == CMD_GET_FIRMWARE_VERSION:
+                                self._handle_firmware_version(value)
+                            elif cmd == CMD_GET_HARDWARE_VERSION:
+                                self._handle_hardware_version(value)
+                            if cmd in self.ack_events:
+                                self._invoke_callback(cmd,channel,value)
+                                self.ack_events[cmd].set()
 
-                        del buffer[:length]
-                    else:
-                        buffer.pop(0)
+                            del buffer[:length]
+                        else:
+                            buffer.pop(0)
+            except (OSError, AttributeError,serial.SerialException) as e:
+                logger.error(f"Error reading from UART: {e}")
+                self.ser = None
+                if self.disconnect_callback:
+                    self.disconnect_callback()
+                self.stop_event.set()
+                logger.error("UART disconnected")
+                break
             time.sleep(0.01)
 
     def _convert_channel(self, channel_mask):

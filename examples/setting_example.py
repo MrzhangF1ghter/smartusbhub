@@ -113,6 +113,9 @@ def main():
     else:
         print("Factory reset failed.")
     print("\r\nSetting example completed.")
+
+    hub.disconnect()
+    
     sys.exit(0)
     
 
