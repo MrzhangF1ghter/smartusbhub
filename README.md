@@ -1,6 +1,6 @@
 # SmartUSBHub python library
 
-文档版本：V1.9
+文档版本：V1.91
 
 [TOC]
 
@@ -62,7 +62,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 2. 安装依赖库
     `pip install -r requirements.txt`
 
-3. 将随附的数据线接到设备短边侧的<u>设备通信口</u>USB-C，另外一端接到主机的USB端口上，连接后主机将会把设备识别成:
+3. 将随附的USB差分信号线开关接到设备短边侧的<u>设备通信口</u>USB-C，另外一端接到主机的USB端口上，连接后主机将会把设备识别成:
 
    - Windows平台:  `COMx`
    - Linux平台: `/dev/ttyACMx`
@@ -79,7 +79,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 `smartusbhub python library`库包含多个例程，其存放在`examples`目录下，目前有以下例子：
 
 - `power_control_example`：展示如何控制指定通道的电源
-- `dataline_control_example`：展示如何控制指定通道的数据线通断（保持电源供电）
+- `dataline_control_example`：展示如何控制指定通道的USB差分信号线开关通断（保持电源供电）
 - `voltage_monitor_example`：展示如何获取指定通道的电压值
 - `current_monitor_example`：展示如何获取指定通道的电流值
 - `setting_example`:展示如何配置设置项
@@ -162,9 +162,11 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - **描述**: 扫描可用的 Smart USB Hub 设备，并连接到第一个有效设备。
 - **返回值**:
+  
   - SmartUSBHub 实例（如果找到设备），否则返回 `None`。
-
+  
 - **示例**:
+  
   ```python
   hub = SmartUSBHub.scan_and_connect()
   ```
@@ -173,14 +175,28 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - **描述**: 连接到指定的Smart USB Hub 设备。
 
-- 参数:
+- **参数:**
 
   - [port](str): 要连接的串口名称。
 
-- 示例:
+- **示例:**
 
   ```python
   hub.connect("/dev/cu.usbmodem132301")
+  ```
+
+
+
+### 设备断开链接
+
+#### `disconnect()`
+
+- **描述**:断开当前的Smart USB Hub 设备。
+
+- **示例:**
+
+  ```python
+  hub.disconnect()
   ```
 
 
@@ -194,8 +210,12 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   - `*channels` (int): 要控制的通道。
   - state (int): `1` 开启电源，`0` 关闭电源。
 
+- **返回值**:
+
+  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+
 - **示例**:
-  
+
   ```python
   hub.set_channel_power(1, 2, state=1)
   ```
@@ -209,7 +229,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 - **描述**: 查询指定通道的电源状态。
 - **参数**:
   
-  - `*channels` (int): 要查询的通道。
+  - `*channels` (int): 要查询的通道，可变参数形式，范围 1~4。
 - **返回值**:
   - `dict` 或 `int` 或 `None`: 如果查询多个通道，返回包含通道状态的字典；如果查询单个通道，返回该通道的状态；若超时则返回 `None`。
 - **示例**:
@@ -225,11 +245,13 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - **描述**: 设置指定通道或所有通道的互锁模式。
 - **参数**:
+  
   - channel (int 或 `None`): 要设置的通道。如果为 `None`，则关闭所有通道。
-
+  
 - **返回值**:
-  - bool: 如果命令被确认返回 `True`，否则返回 `False`。
-
+  
+  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+  
 - **示例**:
   
   ```python
@@ -238,15 +260,19 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 控制通道数据开关
+### 控制通道USB差分信号线开关
 
 #### `set_channel_dataline(*channels, state)`
 
-- **描述**: 设置指定通道的数据线状态。
+- **描述**: 设置指定通道的USB差分信号线开关状态。
 
 - **参数**:
-  - `*channels` (int): 要更新的通道。
+  - `*channels` (int): 要更新的通道，可变参数形式，范围 1~4。
   - state (int): `1` 连通 D+ D-的物理连接， `0` 断开D+ D-的物理连接。
+
+- **返回值**:
+  
+  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
 
 - **示例**:
   
@@ -257,12 +283,12 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   ```
   
   
-### 获取通道数据状态
+### 获取通道USB差分信号线开关状态
 #### `get_channel_dataline_status(*channels)`
-- **描述**: 查询指定通道的数据线状态。
+- **描述**: 查询指定通道的USB差分信号线开关状态。
 
 - **参数**:
-  - `*channels` (int): 要查询的通道。
+  - `*channels` (int): 要查询的通道，可变参数形式，范围 1~4。
   
 - **返回值**:
   - `dict` 或 `None`: 包含通道状态的字典，若超时则返回 `None`。
@@ -307,6 +333,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   - channel (int): 要查询的通道。
 
 - **返回值**:
+  
   - `int` 或 `None`: 通道的电流值(mA)，若超时则返回 `None`。
 - **示例**:
   
@@ -326,7 +353,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - **参数**:
 
-  - `*channels` (int): 要设置的通道。
+  - `*channels` (int): 要设置的通道，可变参数形式，范围 1~4。
   - enable (int): `1` 启用默认状态， `0` 禁用默认状态。
   - status (int): 1 默认打开电源，0 默认关闭电源
 
@@ -344,9 +371,40 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   hub.set_default_dataline_status(1,2,3,4,enable=0)
   ```
 
-  
 
-### 设置通道数据线的上电默认状态
+
+### 获取通道电源的上电默认状态
+
+#### `get_default_power_status(self,*channels)`
+
+- **描述**: 查询一个或多个通道电源的默认上电状态
+
+- **参数**:
+
+  - `*channels` (int): 要查询的通道，可变参数形式，范围 1~4。
+
+- **返回值**:
+
+  - `dict` 或 `None`:  {通道号: {"enabled": 是否启用, "value": 状态}}，其中 enabled 为 0（禁用）或 1（启用），value 为 0（默认关闭）或 1（默认开启）。
+  - 若超时则返回 `None`。
+
+- **示例**:
+
+  获取通道1、2、3、4的电源上电默认状态
+
+  ```python
+  hub.get_default_power_status(1,2,3,4)
+  ```
+
+  返回：
+
+  ```python
+  {1: {'enabled': 0, 'value': 0}, 2: {'enabled': 0, 'value': 0}, 3: {'enabled': 0, 'value': 0}, 4: {'enabled': 0, 'value': 0}}
+  ```
+
+
+
+### 设置通道USB差分信号线开关的上电默认状态
 
 #### `set_default_power_status(*channels,enable,status)`
 
@@ -354,10 +412,14 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - **参数**:
 
-  - `*channels` (int): 要设置的通道。
+  - `*channels` (int): 要设置的通道，可变参数形式，范围 1~4。
   - enable (int): `1` 启用默认状态， `0` 禁用默认状态。
   - status (int): 1 默认打开电源，0 默认关闭电源
 
+- **返回值**:
+
+  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+  
 - **示例**:
 
   通道1、2、3、4上电默认打开
@@ -366,7 +428,39 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   hub.set_default_dataline_status(1,2,3,4,enable=1,status=0)
   ```
 
-  
+
+
+
+### 获取通道USB差分信号线开关的上电默认状态
+
+#### `get_default_dataline_status(self,*channels)`
+
+- **描述**: 查询一个或多个通道USB差分信号线开关的上电默认状态
+
+- **参数**:
+
+  - `*channels` (int): 要查询的通道，可变参数形式，范围 1~4。
+
+- **返回值**:
+
+  - `dict` 或 `None`:  {通道号: {"enabled": 是否启用, "value": 状态}}，其中 enabled 为 0（禁用）或 1（启用），value 为 0（默认关闭）或 1（默认开启）。
+  - 若超时则返回 `None`。
+
+- **示例**:
+
+  获取通道1、2、3、4的USB差分信号线开关的上电默认状态
+
+  ```python
+  hub.get_default_dataline_status(1,2,3,4)
+  ```
+
+  返回：
+
+  ```python
+  {1: {'enabled': 0, 'value': 1}, 2: {'enabled': 0, 'value': 1}, 3: {'enabled': 0, 'value': 1}, 4: {'enabled': 0, 'value': 1}}
+  ```
+
+
 
 ### 设置按钮控制
 
@@ -377,6 +471,10 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 - **参数**:
   - enable (bool): `True` 启用按钮，`False` 禁用按钮。
 
+- **返回值**:
+  
+  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+  
 - **示例**:
 
   设置按钮为启用
@@ -413,18 +511,21 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   
   - mode (int): 操作模式（`0` 为普通模式，`1` 为互锁模式）。
   
-  **注意:**
+- **返回值**:
+  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
   
+
+- **注意:**
   - 互锁模式下，控制只能用互锁指令。
-  
+
 - **示例**:
-  
+
   设置设备为普通模式
-  
+
   ```python
   hub.set_operate_mode(0)
   ```
-  
+
 
 
 
@@ -512,28 +613,28 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   - 如果 cmd 不在支持的命令列表中，将记录警告日志，并不会注册回调。
   - 回调函数的签名应与设备返回的数据结构匹配。
 
-  | CMD宏                           | 含义                       |
-  | :------------------------------ | :------------------------- |
-  | CMD_GET_CHANNEL_POWER_STATUS    | 获取通道电源开关值         |
-  | CMD_SET_CHANNEL_POWER           | 控制通道电源               |
-  | CMD_SET_CHANNEL_POWER_INTERLOCK | 控制通道电源互锁           |
-  | CMD_SET_CHANNEL_DATALINE        | 控制通道数据线             |
-  | CMD_GET_CHANNEL_DATALINE_STATUS | 获取通道数据线状态         |
-  | CMD_GET_CHANNEL_VOLTAGE         | 获取通道电压               |
-  | CMD_GET_CHANNEL_CURRENT         | 获取通道电流               |
-  | CMD_SET_BUTTON_CONTROL          | 启用/禁用 按键控制         |
-  | CMD_GET_BUTTON_CONTROL_STATUS   | 获取按键控制状态           |
-  | CMD_SET_DEFAULT_POWER_STATUS    | 设置通道默认电源状态       |
-  | CMD_GET_DEFAULT_POWER_STATUS    | 获取通道默认电源状态       |
-  | CMD_SET_DEFAULT_DATALINE_STATUS | 设置通道默认数据连接状态   |
-  | CMD_GET_DEFAULT_DATALINE_STATUS | 获取通道默认数据连接状态   |
-  | CMD_SET_AUTO_RESTORE            | 启用/禁用 断电保存         |
-  | CMD_GET_AUTO_RESTORE_STATUS     | 获取断电保存是否启用       |
-  | CMD_SET_OPERATE_MODE            | 设置设备工作模式 普通/互锁 |
-  | CMD_GET_OPERATE_MODE            | 获取设备工作模式           |
-  | CMD_FACTORY_RESET               | 恢复出厂设置               |
-  | CMD_GET_FIRMWARE_VERSION        | 获取固件版本号             |
-  | CMD_GET_HARDWARE_VERSION        | 获取硬件版本号             |
+  | CMD宏                           | 含义                          |
+  | :------------------------------ | :---------------------------- |
+  | CMD_GET_CHANNEL_POWER_STATUS    | 获取通道电源开关值            |
+  | CMD_SET_CHANNEL_POWER           | 控制通道电源                  |
+  | CMD_SET_CHANNEL_POWER_INTERLOCK | 控制通道电源互锁              |
+  | CMD_SET_CHANNEL_DATALINE        | 控制通道USB差分信号线开关     |
+  | CMD_GET_CHANNEL_DATALINE_STATUS | 获取通道USB差分信号线开关状态 |
+  | CMD_GET_CHANNEL_VOLTAGE         | 获取通道电压                  |
+  | CMD_GET_CHANNEL_CURRENT         | 获取通道电流                  |
+  | CMD_SET_BUTTON_CONTROL          | 启用/禁用 按键控制            |
+  | CMD_GET_BUTTON_CONTROL_STATUS   | 获取按键控制状态              |
+  | CMD_SET_DEFAULT_POWER_STATUS    | 设置通道默认电源状态          |
+  | CMD_GET_DEFAULT_POWER_STATUS    | 获取通道默认电源状态          |
+  | CMD_SET_DEFAULT_DATALINE_STATUS | 设置通道默认数据连接状态      |
+  | CMD_GET_DEFAULT_DATALINE_STATUS | 获取通道默认数据连接状态      |
+  | CMD_SET_AUTO_RESTORE            | 启用/禁用 断电保存            |
+  | CMD_GET_AUTO_RESTORE_STATUS     | 获取断电保存是否启用          |
+  | CMD_SET_OPERATE_MODE            | 设置设备工作模式 普通/互锁    |
+  | CMD_GET_OPERATE_MODE            | 获取设备工作模式              |
+  | CMD_FACTORY_RESET               | 恢复出厂设置                  |
+  | CMD_GET_FIRMWARE_VERSION        | 获取固件版本号                |
+  | CMD_GET_HARDWARE_VERSION        | 获取硬件版本号                |
 
 - **示例**:
 

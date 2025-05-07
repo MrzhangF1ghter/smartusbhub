@@ -826,14 +826,19 @@ class SmartUSBHub:
 
         Args:
             mode (int): The desired operating mode.
+
+        Returns:
+            bool: True if command was acknowledged, False otherwise.
         """
         self._send_packet(CMD_SET_OPERATE_MODE, None, mode)
         ack_event = self.ack_events[CMD_SET_OPERATE_MODE]
         ack_event.clear()
         if ack_event.wait(self.com_timeout):
             logger.debug("set_operate_mode ACK")
+            return True
         else:
             logger.error("set_operate_mode No ACK!")
+            return False
 
     def get_operate_mode(self):
         """
@@ -983,6 +988,9 @@ class SmartUSBHub:
             value (int): New data line state.
             *channels (int): Channels to update.
             state (int): 1 to enable data line, 0 to disable.
+
+        Returns:
+            bool: True if command was acknowledged, False otherwise.
         """
         self._send_packet(CMD_SET_CHANNEL_DATALINE, channels, state)
         ack_event = self.ack_events[CMD_SET_CHANNEL_DATALINE]
@@ -1020,6 +1028,9 @@ class SmartUSBHub:
 
         Args:
             enable (bool): True to enable buttons, False to disable.
+
+        Returns:
+            bool: True if command was acknowledged, False otherwise.
         """
         data_val = 1 if enable else 0
 
@@ -1028,9 +1039,10 @@ class SmartUSBHub:
         ack_event.clear()
         if ack_event.wait(self.com_timeout):
             logger.debug("set_button_control ACK")
-            return self.button_control_status
+            return True
         else:
             logger.error("set_button_control No ACK!")
+            return False
 
     def get_button_control_status(self):
         """
