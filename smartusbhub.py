@@ -351,7 +351,7 @@ class SmartUSBHub:
 
         self._start()
         self.get_device_info()
-
+        
         if self.get_operate_mode is None:
             logger.error("Failed to get operate mode.")
             sys.exit(1)
@@ -452,7 +452,6 @@ class SmartUSBHub:
         if self.ser and self.ser.is_open:
             self.ser.flush()
             self.ser.close()
-        logger.info("hub is diconnected")
     def is_connected(self):
         """
         Check if the device's serial port is connected and open.
@@ -826,7 +825,6 @@ class SmartUSBHub:
 
         Args:
             mode (int): The desired operating mode.
-
         Returns:
             bool: True if command was acknowledged, False otherwise.
         """
@@ -835,10 +833,8 @@ class SmartUSBHub:
         ack_event.clear()
         if ack_event.wait(self.com_timeout):
             logger.debug("set_operate_mode ACK")
-            return True
         else:
             logger.error("set_operate_mode No ACK!")
-            return False
 
     def get_operate_mode(self):
         """
@@ -988,9 +984,6 @@ class SmartUSBHub:
             value (int): New data line state.
             *channels (int): Channels to update.
             state (int): 1 to enable data line, 0 to disable.
-
-        Returns:
-            bool: True if command was acknowledged, False otherwise.
         """
         self._send_packet(CMD_SET_CHANNEL_DATALINE, channels, state)
         ack_event = self.ack_events[CMD_SET_CHANNEL_DATALINE]
@@ -1039,10 +1032,9 @@ class SmartUSBHub:
         ack_event.clear()
         if ack_event.wait(self.com_timeout):
             logger.debug("set_button_control ACK")
-            return True
+            return self.button_control_status
         else:
             logger.error("set_button_control No ACK!")
-            return False
 
     def get_button_control_status(self):
         """

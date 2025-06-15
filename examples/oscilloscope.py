@@ -15,7 +15,7 @@ import numpy as np
 import sys
 from PyQt5 import QtWidgets, QtCore, QtSerialPort
 
-#pack app: pyinstaller --hidden-import=smartusbhub --paths=.. oscilloscope.py --onefile --distpath ../app
+# pyinstaller -F -w oscilloscope.py --name HubOscilloscope --paths=.. --distpath ../app
 
 class SerialPortSelector(QtWidgets.QDialog):
     def __init__(self, parent=None):
