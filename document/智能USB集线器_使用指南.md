@@ -1,12 +1,12 @@
 # 智能USB集线器 使用指南
 
-[English Version]()
+[English Version](./smartusbhub_user_guide.md)
 
 ![view1](assets/view1.png)
 
-本文档适用型号：
+本文档适用型号：`SmartUSBHub_V1.3a`
 
-`SmartUSBHub_V1.3a`
+本文档更新日期：2024年6月19日
 
 
 
@@ -2343,7 +2343,9 @@ typedef enum
 
 **Q**:没有找到串口设备
 
-**A**:电脑是否为windows7或更早之前的版本？如果是，请安装legacy driver；检查是否将`[5]设备通信口`连接至主机接口<img src="assets/image-20250614203937364.png" alt="image-20250614203937364" style="zoom:33%;" />
+**A**:电脑是否为windows7或更早之前的版本？如果是，请安装legacy driver；检查是否将`[5]设备通信口`连接至主机接口
+
+<img src="assets/image-20250614203937364.png" alt="image-20250614203937364" style="zoom:33%;" />
 
 
 
@@ -2351,7 +2353,9 @@ typedef enum
 
 **A**:检查接入的设备功率是否过高？
 
-如果超过电脑USB口的输出功率，则需要将足够功率的5V的电源适配器接到`[4]辅助供电端口`进行额外的供电。<img src="assets/image-20250614202517699.png" alt="image-20250614202517699" style="zoom:33%;" />
+如果超过电脑USB口的输出功率，则需要将足够功率的5V的电源适配器接到`[4]辅助供电端口`进行额外的供电。
+
+<img src="assets/image-20250614202517699.png" alt="image-20250614202517699" style="zoom:33%;" />
 
 
 
