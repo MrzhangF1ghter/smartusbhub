@@ -90,9 +90,7 @@
 
 ## 连接说明
 
-![image-20250501214323034](assets/image-20250501214323034.png)
-
-
+![connection_guide_cn](assets/connection_guide_cn.png)
 
 ## 设备接口
 
