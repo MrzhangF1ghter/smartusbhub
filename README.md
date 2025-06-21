@@ -1,120 +1,122 @@
 # SmartUSBHub python library
 
-文档版本：V1.91
+[简体中文](./README_cn.md)
 
-[TOC]
+![view1](assets/view1.png)**This document applies to model:** SmartUSBHub_V1.3a
 
-## 简介
+**Last updated on:** June 21, 2025
 
-smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
 
-使用前请先了解smartusbhub，详情请阅读[智能USB集线器_使用指南](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/智能USB集线器_使用指南.md)
+
+## Introduction
+
+SmartUSBHub is a USB 2.0 4-port hub that can be controlled via a serial port.
+
+Before using, please familiarize yourself with SmartUSBHub. For details, see the  [smartusbhub_user_guide](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/smartusbhub_user_guide.md)
 
 > [!NOTE]
 >
-> 此smartusbhub python库只是用于测试用途，如果要集成到生产环境，建议自行实现通信控制。
->
-> 协议文档请查阅： [智能USB集线器_使用指南 协议章节](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/智能USB集线器_使用指南.md)
->
-> 最简单的控制demo：[simple_serial.py](./examples/simple_serial.py)
+> If you don't want to control the SmartUSBHub by using the python library, you can refer the most simplest control demo: [simple_serial.py](./examples/simple_serial.py)
 
 
 
-## 环境部署
+## Environment Setup
 
-### 获取最新的库
+### Get the Latest Library
 
-把此代码仓库克隆到本地,假设你的工程名字为`my_project`  
+Clone [this](https://github.com/MrzhangF1ghter/smartusbhub) repository to your local project, assuming your project folder is named `my_project`:
 
 ```shell
 cd my_project
 git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 ```
 
-库目录结构如下：
+Library structure:
 
 ```shell
 .
-├── README.md					# 文档
-├── examples					# 例程
-├── apps							# 已经编译好的例程
-├── requirements.txt	# 安装依赖
-└── smartusbhub.py 		# 功能源码
+├── README.md                # Documentation
+├── examples                 # Demo examples
+├── apps                     # Precompiled demo binaries
+├── requirements.txt         # Dependency list
+└── smartusbhub.py           # Core functionality source code
 ```
 
 
 
-### 设置虚拟环境
+### Setup Virtual Environment
 
-设置python虚拟环境（推荐）
+Create a Python virtual environment (recommended):
 `python -m venv venv`
 
-1. 进入python虚拟环境
+1. Activate the Python virtual environment:
 
-   - 对于Windows平台:
+   - On Windows:
 
     `.\venv\Scripts\activate.bat`
 
-   - 对于unix平台:
+   - On Unix:
 
     `source ./venv/bin/activate`
 
-2. 安装依赖库
+2. Install dependencies:
     `pip install -r requirements.txt`
 
-3. 将随附的USB差分信号线开关接到设备短边侧的<u>设备通信口</u>USB-C，另外一端接到主机的USB端口上，连接后主机将会把设备识别成:
+3. Connect the included USB-A to USB-C data cable to the `Command Port`, and plug the other end into the host’s USB port. Once connected, the host will recognize the device as follows:
 
-   - Windows平台:  `COMx`
-   - Linux平台: `/dev/ttyACMx`
-   - mac平台: `/dev/cu.usbmodemx`
+   - On Windows:  `COMx`
+   - On Linux: `/dev/ttyACMx` or `/dev/cu.usbmodemx`
+   - On macOS: `/dev/cu.usbmodemx`
 
 > [!NOTE]
 >
-> 若要数据传输，除了连接<u>设备通信口</u>，还需要连接<u>数据上行口</u>。
+> In addition to connecting the  `Command Port`, you must also connect the  `USB upstream port` for USB data transfer.
+>
+> ![connection_guide](assets/connection_guide.png)
 
 
 
-### 运行例程
+### Run Examples
 
-`smartusbhub python library`库包含多个例程，其存放在`examples`目录下，目前有以下例子：
+`smartusbhub` Python library includes several usage examples in the `examples` directory:
 
-- `power_control_example`：展示如何控制指定通道的电源
-- `dataline_control_example`：展示如何控制指定通道的USB差分信号线开关通断（保持电源供电）
-- `voltage_monitor_example`：展示如何获取指定通道的电压值
-- `current_monitor_example`：展示如何获取指定通道的电流值
-- `setting_example`:展示如何配置设置项
-- `user_callback_example`：展示如何添加用户回调
-- `oscilloscope`：一个简单的GUI示波器，可控制通道电源开关、电压及电流采集
+- `power_control_example`:Demonstrates how to control the power supply of a specified port.
+- `dataline_control_example`:Demonstrates how to toggle the USB differential signal line switch of a specified port for data connect/disconnect while keeping power enabled.
+- `voltage_monitor_example`:Demonstrates how to retrieve the voltage value of a specified port.
+- `current_monitor_example`:Demonstrates how to retrieve the current value of a specified port.
+- `setting_example`: Demonstrates how to configure parameters.
+- `user_callback_example`:Demonstrates how to add user callbacks for specfic command.
+- `oscilloscope`:A Qt GUI-based oscilloscope that allows control of channel power switching, as well as voltage and current acquisition.
 
 ![oscilloscope](./assets/oscilloscope.png)
 
-<center>图：示波器demo</center>
+<center>Figure: Oscilloscope app</center>
 
 
 
-若要运行demo，请执行以下指令：
+To run a demo, execute the following commands:
 
-- 激活虚拟环境：
+- Activate the virtual environment:
 
-  - Linux/macOS用户：
+  - Linux/macOS:
 
     ```
      source ./venv/bin/activate
     ```
 
-  - Windows 用户：
+  - Windows :
 
     ```shell
     .\venv\Scripts\activate.bat
     ```
 
-- 进入examples文件夹：
+- Navigate to the examples folder:
 
   ```
   cd ./examples/
   ```
 
-- 运行demo，例如：
+- Run a demo (for example):
 
   ```shell
   python oscilloscope.py
@@ -122,13 +124,13 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
   
 
-### 集成到你的项目中
+### Integrating with Your Project
 
-通过导入smartusbhub库即可即成到你的项目之中。
+You can integrate this library into your project by importing the smartusbhub module.
 
-1. 按照前面的章节 *使用方法*配置: 步骤 1 到 5.
+1. Follow the configuration steps from the earlier sections (steps 1 through 5) to set up the environment.
 
-2. 导入`smartusbhub`库到你的工程.
+2. Import the smartusbhub library into your project:
 
    ```python
    import sys
@@ -136,36 +138,36 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
    from smartusbhub import SmartUSBHub
    ```
 
-3. 初始化`SmartUSBhub`实例:
+3. Initialize a `SmartUSBhub`instance:
 
-   - 通过自动扫描连接设备：
+   - By automatically scanning and connecting to the device:
 
      ```python
      hub = SmartUSBHub.scan_and_connect()
      ```
 
-   - 通过指定串口号连接设备：
+   - By specifying the serial port to connect to the device:
 
      ```python
-     hub = SmartUSBHub("串口路径")
-     例子：
+     hub = SmartUSBHub("serial port path")
+     Example:
      hub = SmartUSBHub("/dev/cu.usbmodem132301")
      ```
 
 
 
-## **用户接口**
+## **User Interface**
 
-### 设备连接
+### **Device Connection**
 
 #### `scan_and_connect()`
 
-- **描述**: 扫描可用的 Smart USB Hub 设备，并连接到第一个有效设备。
-- **返回值**:
+- **Description**: Scans for available Smart USB Hub devices and connects to the first one found.
+- **Return Value**:
   
-  - SmartUSBHub 实例（如果找到设备），否则返回 `None`。
+  - SmartUSBHub instance (if a device is found), otherwise returns None.
   
-- **示例**:
+- **Example**:
   
   ```python
   hub = SmartUSBHub.scan_and_connect()
@@ -173,13 +175,13 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 #### `connect(port)`
 
-- **描述**: 连接到指定的Smart USB Hub 设备。
+- **Description**: Connects to the specified Smart USB Hub device.
 
-- **参数:**
+- **Parameters:**
 
-  - [port](str): 要连接的串口名称。
+  - [port](str): The serial port name to connect to.
 
-- **示例:**
+- **Example:**
 
   ```python
   hub.connect("/dev/cu.usbmodem132301")
@@ -187,13 +189,13 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 设备断开链接
+### **Device Disconnection**
 
 #### `disconnect()`
 
-- **描述**:断开当前的Smart USB Hub 设备。
+- **Description**: Disconnects the current Smart USB Hub device.
 
-- **示例:**
+- **Example:**
 
   ```python
   hub.disconnect()
@@ -201,20 +203,21 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 控制通道电源开关
+### **Channel Power Control**
 
 #### `set_channel_power(*channels, state)`
 
-- **描述**: 设置指定通道的电源状态。
-- **参数**:
-  - `*channels` (int): 要控制的通道。
-  - state (int): `1` 开启电源，`0` 关闭电源。
+- **Description**: Sets the power state of the specified channel(s).
 
-- **返回值**:
+- **Parameters**:
+  - `*channels` (int): The channel(s) to control.
+  - state (int): `1` to turn the power，`0` to turn the power off.
 
-  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+- **Return Value**:
 
-- **示例**:
+  - bool: Returns `True` if the command is successful, otherwise `False`.
+
+- **Example**:
 
   ```python
   hub.set_channel_power(1, 2, state=1)
@@ -222,37 +225,37 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 获取通道电源状态
+### Getting Channel Power Status
 
 #### `get_channel_power_status(*channels)`
 
-- **描述**: 查询指定通道的电源状态。
-- **参数**:
+- **Description**: Queries the power status of the specified channel(s).
+- **Parameters**:
   
-  - `*channels` (int): 要查询的通道，可变参数形式，范围 1~4。
-- **返回值**:
-  - `dict` 或 `int` 或 `None`: 如果查询多个通道，返回包含通道状态的字典；如果查询单个通道，返回该通道的状态；若超时则返回 `None`。
-- **示例**:
+  - `*channels` (int): The channel(s) to query.
+- **Return Value**:
+  - `dict` or `int` or `None`: If querying multiple channels, returns a dictionary of channel statuses; if querying a single channel, returns that channel’s status; if a timeout occurs, returns `None`.
+- **Example**:
   ```python
   status = hub.get_channel_power_status(1, 2)
   ```
 
 
 
-### 控制通道电源互锁
+### Channel Power Interlock Control
 
 #### `set_channel_power_interlock(channel)`
 
-- **描述**: 设置指定通道或所有通道的互锁模式。
-- **参数**:
+- **Description**: Sets the interlock mode for the specified channel or all channels.
+- **Parameters**:
   
-  - channel (int 或 `None`): 要设置的通道。如果为 `None`，则关闭所有通道。
+  - channel (int or `None`): The channel to set. If None, all channels will be turned off.
   
-- **返回值**:
+- **Return Value**:
   
-  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+  - bool: Returns True if the command is successful, otherwise False.
   
-- **示例**:
+- **Example**:
   
   ```python
   hub.set_channel_power_interlock(1)
@@ -260,42 +263,42 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 控制通道USB差分信号线开关
+### Controlling Channel USB Data Line Switch
 
 #### `set_channel_dataline(*channels, state)`
 
-- **描述**: 设置指定通道的USB差分信号线开关状态。
+- **Description**: Sets the USB data line (D+ and D-) connection state for the specified channel(s).
 
-- **参数**:
-  - `*channels` (int): 要更新的通道，可变参数形式，范围 1~4。
-  - state (int): `1` 连通 D+ D-的物理连接， `0` 断开D+ D-的物理连接。
+- **Parameters**:
+  - `*channels` (int): The channel(s) to update.
+  - state (int): `1`  to connect the D+ and D- lines, `0` to disconnect the D+ and D- lines.
 
-- **返回值**:
+- **Return Value**:
   
-  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+  - bool: Returns `True` if the command is successful, otherwise `False`.
 
-- **示例**:
+- **Example**:
   
-  连通 通道1 的数据信号
+  Connect the data lines of channel 1:
   
   ```python
   hub.set_channel_dataline(1,state=1)
   ```
   
   
-### 获取通道USB差分信号线开关状态
+### Getting Channel USB Data Line Status
 #### `get_channel_dataline_status(*channels)`
-- **描述**: 查询指定通道的USB差分信号线开关状态。
+- **Description**: Queries the USB data line switch status of the specified channel(s).
 
-- **参数**:
-  - `*channels` (int): 要查询的通道，可变参数形式，范围 1~4。
+- **Parameters**:
+  - `*channels` (int): The channel(s) to query.
   
-- **返回值**:
-  - `dict` 或 `None`: 包含通道状态的字典，若超时则返回 `None`。
+- **Return Value**:
+  - `dict` or `None`: A dictionary containing each channel’s data line status; if a timeout occurs, returns `None`.
   
-- **示例**:
+- **Example**:
   
-  获取 通道2 的数据信号连接状态
+  Get the data line connection status of channels 1 and 2:
   
   ```python
   status = hub.get_channel_dataline_status(1, 2)
@@ -303,19 +306,19 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 获取通道电压
+### Getting Channel Voltage
 
 #### `get_channel_voltage(channel)`
 
-- **描述**: 查询单个通道的电压。
-- **参数**:
-  - channel (int): 要查询的通道。
+- **Description**: Queries the voltage of a single channel.
+- **Parameters**:
+  - channel (int): The channel(s) to query.
 
-- **返回值**:
-  - `int` 或 `None`: 通道的电压值(mV)，若超时则返回 `None`。
-- **示例**:
+- **Return Value**:
+  - `int` or `None`: The voltage value of the channel (in mV); if a timeout occurs, returns `None`.
+- **Example**:
   
-  获取 通道1 的 电压值
+  Get the voltage of channel 1:
   
   ```python
   voltage = hub.get_channel_voltage(1)
@@ -324,20 +327,21 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 获取通道电流
+### Getting Channel Current
 
 #### `get_channel_current(channel)`
 
-- **描述**: 查询单个通道的电流。
-- **参数**:
-  - channel (int): 要查询的通道。
-
-- **返回值**:
+- **Description**: Queries the current of a single channel.
+- **Parameters**:
   
-  - `int` 或 `None`: 通道的电流值(mA)，若超时则返回 `None`。
-- **示例**:
+  - channel (int): The channel(s) to query.
   
-  获取 通道1 的 电流值
+- **Return Value**:
+  
+  - `int` or `None`: The current value of the channel (in mA); if a timeout occurs, returns `None`.
+- **Example**:
+  
+  Get the current of channel 1:
   
   ```python
   current = hub.get_channel_current(1)
@@ -345,27 +349,27 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 设置通道电源的上电默认状态
+### Setting Channel Power-On Default State
 
 #### `set_default_power_status(*channels,enable,status)`
 
-- **描述**: 设置指定通道的上电默认电源状态。
+- **Description**: Sets the power-on default power state for the specified channel(s).
 
-- **参数**:
+- **Parameters**:
 
-  - `*channels` (int): 要设置的通道，可变参数形式，范围 1~4。
-  - enable (int): `1` 启用默认状态， `0` 禁用默认状态。
-  - status (int): 1 默认打开电源，0 默认关闭电源
+  - `*channels` (int): The channel(s) to configure.
+  - enable (int): `1` to enable using the default state, `0` to disable using the default state.
+  - status (int): `1` for default power ON, `0` for default power OFF.
 
-- **示例**:
+- **Example**:
 
-  通道1、2、3、4上电默认打开
+  Channels 1, 2, 3, 4 default power ON at startup:
 
   ```python
   hub.set_default_dataline_status(1,2,3,4,enable=1,status=0)
   ```
 
-  通道1、2、3、4上电不使用默认值
+  Channels 1, 2, 3, 4 do not use default values at startup:
 
   ```python
   hub.set_default_dataline_status(1,2,3,4,enable=0)
@@ -373,30 +377,30 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 获取通道电源的上电默认状态
+### **Getting Channel Power-On Default State**
 
 #### `get_default_power_status(self,*channels)`
 
-- **描述**: 查询一个或多个通道电源的默认上电状态
+- **Description**: Queries the power-on default power state of one or multiple channels.
 
-- **参数**:
+- **Parameters**:
 
-  - `*channels` (int): 要查询的通道，可变参数形式，范围 1~4。
+  - `*channels` (int): The channel(s) to query.
 
-- **返回值**:
+- **Return Value**:
 
-  - `dict` 或 `None`:  {通道号: {"enabled": 是否启用, "value": 状态}}，其中 enabled 为 0（禁用）或 1（启用），value 为 0（默认关闭）或 1（默认开启）。
-  - 若超时则返回 `None`。
+  - dict or None: A dictionary in the format {channel: {"enabled": enabled_flag, "value": state}}, where enabled is 0 (disabled) or 1 (enabled), and value is 0 (default OFF) or 1 (default ON). 
+  - Returns None if a timeout occurs.
 
-- **示例**:
+- **Example**:
 
-  获取通道1、2、3、4的电源上电默认状态
+  Channels 1, 2, 3, 4 default power ON at startup:
 
   ```python
   hub.get_default_power_status(1,2,3,4)
   ```
 
-  返回：
+  Returns:
 
   ```python
   {1: {'enabled': 0, 'value': 0}, 2: {'enabled': 0, 'value': 0}, 3: {'enabled': 0, 'value': 0}, 4: {'enabled': 0, 'value': 0}}
@@ -404,57 +408,57 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 设置通道USB差分信号线开关的上电默认状态
+### Setting Channel USB Data Line Power-On Default State
 
-#### `set_default_power_status(*channels,enable,status)`
+#### `set_default_dataline_status(*channels,enable,status)`
 
-- **描述**: 设置指定通道的上电默认电源状态。
+- **Description**: Sets the power-on default state of the USB data line connection for the specified channel(s).
 
-- **参数**:
+- **Parameters**:
 
-  - `*channels` (int): 要设置的通道，可变参数形式，范围 1~4。
-  - enable (int): `1` 启用默认状态， `0` 禁用默认状态。
-  - status (int): 1 默认打开电源，0 默认关闭电源
+  - `*channels` (int): The channel(s) to configure.
+  - enable (int): `1` to enable using the default state, `0` to disable using the default state.
+  - status (int): `1` for default data line connected, `0` for default data line disconnected.
 
-- **返回值**:
+- **Return Value**:
 
-  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+  - bool: Returns `True` if the command is successful, otherwise `False`.
   
-- **示例**:
+- **Example**:
 
-  通道1、2、3、4上电默认打开
+  Channels 1, 2, 3, 4 default data line connected at startup:
 
   ```python
-  hub.set_default_dataline_status(1,2,3,4,enable=1,status=0)
+  hub.set_default_dataline_status(1,2,3,4,enable=1,status=1)
   ```
 
 
 
 
-### 获取通道USB差分信号线开关的上电默认状态
+### Getting Channel USB Data Line Power-On Default State
 
 #### `get_default_dataline_status(self,*channels)`
 
-- **描述**: 查询一个或多个通道USB差分信号线开关的上电默认状态
+- **Description**: Queries the power-on default state of the USB data line connection for one or multiple channels.
 
-- **参数**:
+- **Parameters**:
 
-  - `*channels` (int): 要查询的通道，可变参数形式，范围 1~4。
+  - `*channels` (int): The channel(s) to query.
 
-- **返回值**:
+- **Return Value**:
 
-  - `dict` 或 `None`:  {通道号: {"enabled": 是否启用, "value": 状态}}，其中 enabled 为 0（禁用）或 1（启用），value 为 0（默认关闭）或 1（默认开启）。
-  - 若超时则返回 `None`。
+  - `dict` or `None`: A dictionary in the format {channel: {"enabled": enabled_flag, "value": state}}, where enabled is 0 (disabled) or 1 (enabled), and value is 0 (default disconnected) or 1 (default connected). 
+  - Returns `None` if a timeout occurs.
 
-- **示例**:
+- **Example**:
 
-  获取通道1、2、3、4的USB差分信号线开关的上电默认状态
+  Get the power-on default USB data line state of channels 1, 2, 3, 4:
 
   ```python
   hub.get_default_dataline_status(1,2,3,4)
   ```
 
-  返回：
+  Returns:
 
   ```python
   {1: {'enabled': 0, 'value': 1}, 2: {'enabled': 0, 'value': 1}, 3: {'enabled': 0, 'value': 1}, 4: {'enabled': 0, 'value': 1}}
@@ -462,22 +466,23 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 设置按钮控制
+### Setting Button Control
 
 #### `set_button_control(enable)`
 
-- **描述**: 启用或禁用集线器的物理按钮。
+- **Description**: Enables or disables the hub’s physical button.
 
-- **参数**:
-  - enable (bool): `True` 启用按钮，`False` 禁用按钮。
-
-- **返回值**:
+- **Parameters**:
   
-  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+  - enable (bool): `True` to enable the button, `False` to disable the button.
   
-- **示例**:
+- **Return Value**:
+  
+  - bool: Returns `True` if the command is successful, otherwise `False`.
+  
+- **Example**:
 
-  设置按钮为启用
+  Enable the button:
 
   ```python
   hub.set_button_control(True)
@@ -485,16 +490,16 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 获取按钮控制状态
+### Getting Button Control Status
 
 #### `get_button_control_status()`
 
-- **描述**: 查询集线器的物理按钮是否启用。
-- **返回值**:
-  - `int` 或 `None`: `1` 表示启用，`0` 表示禁用，若无响应则返回 `None`。
-- **示例**:
+- **Description**: Queries whether the hub’s physical button is enabled.
+- **Return Value**:
+  - `int` or `None`: `1` if enabled, `0` if disabled. Returns None if no response.
+- **Example**:
   
-  查询按钮是否启用
+  Check if the button is enabled:
   
   ```python
   status = hub.get_button_control_status()
@@ -502,25 +507,24 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 设置设备的操作模式
+### Setting Device Operating Mode
 
 #### `set_operate_mode(mode)`
 
-- **描述**: 设置设备的操作模式。
-- **参数**:
+- **Description**: Sets the device’s operating mode.
+- **Parameters**:
   
-  - mode (int): 操作模式（`0` 为普通模式，`1` 为互锁模式）。
+  - mode (int): Operating mode (0 for normal mode, 1 for interlock mode).
   
-- **返回值**:
-  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+- **Return Value**:
+  - bool: Returns `True` if the command is successful, otherwise `False`.
   
-
 - **注意:**
-  - 互锁模式下，控制只能用互锁指令。
+  - In interlock mode, control can only be done using interlock commands.
 
-- **示例**:
+- **Example**:
 
-  设置设备为普通模式
+  Set the device to normal mode:
 
   ```python
   hub.set_operate_mode(0)
@@ -529,18 +533,18 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 获取设备的操作模式
+### Getting Device Operating Mode
 
 #### `get_operate_mode()`
 
-- **描述**: 查询设备的当前操作模式。
+- **Description**: Queries the device’s current operating mode.
 
-- **返回值**:
-  - `int` 或 `None`: 当前操作模式，若无响应则返回 `None`。
+- **Return Value**:
+  - `int` or `None`: The current operating mode. Returns `None` if no response.
   
-- **示例**:
+- **Example**:
   
-  查询设备操作模式
+  Check the device’s operating mode:
   
   ```python
   mode = hub.get_operate_mode()
@@ -548,14 +552,14 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 获取设备信息
+### Getting Device Information
 
 #### `get_device_info()`
 
-- **描述**: 获取集线器的 ID、硬件版本、固件版本、操作模式和按钮控制状态。
-- **返回值**:
-  - `dict`: 包含设备信息的字典。
-- **示例**:
+- **Description**: Retrieves the hub’s ID, hardware version, firmware version, operating mode, and button control status.
+- **Return Value**:
+  - `dict`: A dictionary containing the device information.
+- **Example**:
   ```python
   info = hub.get_device_info()
   print(info)
@@ -563,82 +567,83 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 获取固件版本
+### Getting Firmware Version
 
 #### `get_firmware_version()`
 
-- **描述**: 查询设备的固件版本。
-- **返回值**:
-  - `int` 或 `None`: 固件版本，若无响应则返回 `None`。
-- **示例**:
+- **Description**: Queries the device’s firmware version.
+- **Return Value**:
+  - `int` or `None`: The firmware version. Returns None if no response.
+- **Example**:
   ```python
   firmware_version = hub.get_firmware_version()
   ```
 
 
 
-### 获取硬件版本
+### Getting Hardware Version
 
 #### `get_hardware_version()`
 
-- **描述**: 查询设备的硬件版本。
-- **返回值**:
-  - `int` 或 `None`: 硬件版本，若无响应则返回 `None`。
-- **示例**:
+- **Description**: Queries the device’s hardware version.
+- **Return Value**:
+  - `int` or `None`: The hardware version. Returns `None` if no response.
+- **Example**:
   ```python
   hardware_version = hub.get_hardware_version()
   ```
 
 
 
-### 注册用户回调
+### Registering User Callback
 
 #### `register_callback(cmd, callback)`
 
-- **描述**: 为指定的命令注册一个用户回调函数。当设备返回该命令的应答时，回调函数会被触发。
+- **Description**: Registers a user callback function for a specified command. When the device returns an ACK for that command, the callback function will be triggered.
 
-- **参数**:
+- **Parameters**:
 
-  - cmd (int): 要注册回调的命令。
-  - callback (function): 当命令的 ACK 被接收到时执行的回调函数。回调函数应接受两个参数：
-    - channel (int): 触发回调的通道编号。
-    - status (int): 通道的状态值。
+  - cmd (int): The command for which to register the callback.
+  - callback (function): The callback function to execute when the command’s ACK is received. The callback function should accept two parameters:
+    - channel (int): The channel number that triggered the callback.
+    - status (int): The status value of that channel.
 
-- **返回值:**
+- **Return Value:**
 
-  - 无返回值。
+  - (None)
 
-- **注意事项**:
+- **Notes**:
 
-  - 如果 cmd 不在支持的命令列表中，将记录警告日志，并不会注册回调。
-  - 回调函数的签名应与设备返回的数据结构匹配。
+  - If cmd is not in the supported command list, a warning will be logged and the callback will not be registered.
 
-  | CMD宏                           | 含义                          |
-  | :------------------------------ | :---------------------------- |
-  | CMD_GET_CHANNEL_POWER_STATUS    | 获取通道电源开关值            |
-  | CMD_SET_CHANNEL_POWER           | 控制通道电源                  |
-  | CMD_SET_CHANNEL_POWER_INTERLOCK | 控制通道电源互锁              |
-  | CMD_SET_CHANNEL_DATALINE        | 控制通道USB差分信号线开关     |
-  | CMD_GET_CHANNEL_DATALINE_STATUS | 获取通道USB差分信号线开关状态 |
-  | CMD_GET_CHANNEL_VOLTAGE         | 获取通道电压                  |
-  | CMD_GET_CHANNEL_CURRENT         | 获取通道电流                  |
-  | CMD_SET_BUTTON_CONTROL          | 启用/禁用 按键控制            |
-  | CMD_GET_BUTTON_CONTROL_STATUS   | 获取按键控制状态              |
-  | CMD_SET_DEFAULT_POWER_STATUS    | 设置通道默认电源状态          |
-  | CMD_GET_DEFAULT_POWER_STATUS    | 获取通道默认电源状态          |
-  | CMD_SET_DEFAULT_DATALINE_STATUS | 设置通道默认数据连接状态      |
-  | CMD_GET_DEFAULT_DATALINE_STATUS | 获取通道默认数据连接状态      |
-  | CMD_SET_AUTO_RESTORE            | 启用/禁用 断电保存            |
-  | CMD_GET_AUTO_RESTORE_STATUS     | 获取断电保存是否启用          |
-  | CMD_SET_OPERATE_MODE            | 设置设备工作模式 普通/互锁    |
-  | CMD_GET_OPERATE_MODE            | 获取设备工作模式              |
-  | CMD_FACTORY_RESET               | 恢复出厂设置                  |
-  | CMD_GET_FIRMWARE_VERSION        | 获取固件版本号                |
-  | CMD_GET_HARDWARE_VERSION        | 获取硬件版本号                |
+  
 
-- **示例**:
+  | CMD                             | **Meaning**                                  |
+  | :------------------------------ | :------------------------------------------- |
+  | CMD_GET_CHANNEL_POWER_STATUS    | Get channel power status                     |
+  | CMD_SET_CHANNEL_POWER           | Control channel power                        |
+  | CMD_SET_CHANNEL_POWER_INTERLOCK | Control channel power interlock              |
+  | CMD_SET_CHANNEL_DATALINE        | Control channel USB data line switch         |
+  | CMD_GET_CHANNEL_DATALINE_STATUS | Get channel USB data line switch status      |
+  | CMD_GET_CHANNEL_VOLTAGE         | Get channel voltage                          |
+  | CMD_GET_CHANNEL_CURRENT         | Get channel current                          |
+  | CMD_SET_BUTTON_CONTROL          | Enable/disable button control                |
+  | CMD_GET_BUTTON_CONTROL_STATUS   | Get button control status                    |
+  | CMD_SET_DEFAULT_POWER_STATUS    | Set channel default power status             |
+  | CMD_GET_DEFAULT_POWER_STATUS    | Get channel default power status             |
+  | CMD_SET_DEFAULT_DATALINE_STATUS | Set channel default data line status         |
+  | CMD_GET_DEFAULT_DATALINE_STATUS | Get channel default data line status         |
+  | CMD_SET_AUTO_RESTORE            | Enable/disable power-loss auto restore       |
+  | CMD_GET_AUTO_RESTORE_STATUS     | Get power-loss auto restore status           |
+  | CMD_SET_OPERATE_MODE            | Set device operating mode (normal/interlock) |
+  | CMD_GET_OPERATE_MODE            | Get device operating mode                    |
+  | CMD_FACTORY_RESET               | Restore factory settings                     |
+  | CMD_GET_FIRMWARE_VERSION        | Get firmware version                         |
+  | CMD_GET_HARDWARE_VERSION        | Get hardware version                         |
 
-  设置按键回调，当按键按下时，产生回调
+- **Example**:
+
+  Set a button press callback; when the button is pressed, a callback is triggered:
 
   ```python
   def button_press_callback(channel, status):
