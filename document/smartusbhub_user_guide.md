@@ -68,7 +68,7 @@ It can be widely used in various R&D, testing, production, and device management
 - **Current Measurement**: Each channel has independent current sensing capability, suitable for device status monitoring and power consumption evaluation.
 - **Interlock Control**: An interlock mode can be enabled to ensure only one channel is powered at any time.
 - **Power-On Default State**: Each channel’s default power and data connection state on power-up can be configured individually.
-- **Power-Loss State Retention**: Each channel can be configured to remember its state when power is lost and restore it on power-up.
+- **Power-Loss State Persistence**: Each channel can be configured to remember its state when power is lost and restore it on power-up.
 - **Configurable Button Function**: The physical button functionality for each channel can be enabled or disabled.
 - **Permission Management**: Supports setting an access password (*to be supported in future firmware updates*).
 - **Firmware Upgrade**: Supports one-click OTA updates for continuous feature additions and bug fixes.
@@ -106,7 +106,7 @@ It can be widely used in various R&D, testing, production, and device management
 >
 > - [Button 1] For 6 seconds: Restore factory settings.
 >
-> - [Button 2] For 3 seconds: Enable/disable power-loss state retention feature.
+> - [Button 2] For 3 seconds: Enable/disable power-loss state Persistence feature.
 
 
 
@@ -272,7 +272,7 @@ This device uses a standard USB CDC interface and requires no driver. Just plug 
 
 ### **Dimensions**
 
-10.6 × 4.6 × 1.46 cm (L × W × H)
+10.6 × 4.6 × 1.8 cm (L × W × H)
 
 
 
@@ -337,7 +337,7 @@ This device uses a standard USB CDC interface and requires no driver. Just plug 
 | Button 1 (hold while powering on) | Enter firmware upgrade mode                                  |             |
 | Button 1 (long press > 6 s)       | Restore factory settings                                     |             |
 | Button 1 (long press > 3 s)       | Toggle operating mode (Normal/Interlock, persists after power cycle) | Normal Mode |
-| Button 2 (long press > 3 s)       | Enable/Disable power-loss state retention (remember channel state) | Disabled    |
+| Button 2 (long press > 3 s)       | Enable/Disable power-loss state Persistence (remember channel state) | Disabled    |
 
 
 
@@ -345,30 +345,34 @@ This device uses a standard USB CDC interface and requires no driver. Just plug 
 
 **The device uses a simple request-response communication protocol for control. The available commands are:**
 
-| **Function**                     | **CMD** | **Description**                                            |
-| :------------------------------- | ------- | ---------------------------------------------------------- |
-| Control channel power            | 0x01    | Control the VBUS power state of a specified channel        |
-| Query channel power state        | 0x00    | Query whether a channel’s VBUS power is on                 |
-| Control power in interlock mode  | 0x02    | In interlock mode, only allow one channel on at a time     |
-| Query voltage                    | 0x03    | Query the channel’s VBUS voltage (unit: mV)                |
-| Query current                    | 0x04    | Query the channel’s current (unit: mA)                     |
-| Control USB data lines           | 0x05    | Control whether D+/D− are connected                        |
-| Query USB data line status       | 0x08    | Query the current on/off status of D+/D−                   |
-| Set button control permission    | 0x09    | Enable or disable the physical button control              |
-| Query button control permission  | 0x0A    | Query whether button control is enabled                    |
-| Set power default state          | 0x0B    | Configure the default on/off state of VBUS after power-up  |
-| Query power default state        | 0x0C    | Query the channel’s power default state                    |
-| Set data default state           | 0x0D    | Configure the default on/off state of D+/D− after power-up |
-| Query data default state         | 0x0E    | Query the default state of D+/D−                           |
-| Set power-loss state retention   | 0x0F    | Enable/disable remembering channel state on power loss     |
-| Query power-loss retention state | 0x10    | Query if power-loss state retention is enabled             |
-| Set operation mode               | 0x06    | Switch Normal/Interlock mode                               |
-| Query operation mode             | 0x07    | Query the current operating mode                           |
-| Restore factory settings         | 0xFC    | Restore factory settings                                   |
-| Query firmware version           | 0xFD    | Query the device firmware version                          |
-| Query hardware version           | 0xFE    | Query the current hardware version                         |
+| **Function**                       | **CMD** | **Description**                                              |
+| :--------------------------------- | ------- | ------------------------------------------------------------ |
+| Control channel power              | 0x01    | Control the VBUS power state of a specified channel          |
+| Query channel power state          | 0x00    | Query whether a channel’s VBUS power is on                   |
+| Control power in interlock mode    | 0x02    | In interlock mode, only allow one channel on at a time       |
+| Query voltage                      | 0x03    | Query the channel’s VBUS voltage (unit: mV)                  |
+| Query current                      | 0x04    | Query the channel’s current (unit: mA)                       |
+| Control USB data lines             | 0x05    | Control whether D+/D− are connected                          |
+| Query USB data line status         | 0x08    | Query the current on/off status of D+/D−                     |
+| Set button control permission      | 0x09    | Enable or disable the physical button control                |
+| Query button control permission    | 0x0A    | Query whether button control is enabled                      |
+| Set power default state            | 0x0B    | Configure the default on/off state of VBUS after power-up    |
+| Query power default state          | 0x0C    | Query the channel’s power default state                      |
+| Set data default state             | 0x0D    | Configure the default on/off state of D+/D− after power-up   |
+| Query data default state           | 0x0E    | Query the default state of D+/D−                             |
+| Set power-loss state Persistence   | 0x0F    | Enable/disable remembering channel state on power loss       |
+| Query power-loss Persistence state | 0x10    | Query if power-loss state Persistence is enabled             |
+| Set Device Address                 | 0x11    | Set the device address, used to identify and distinguish hubs in multi-hub setups |
+| Get Device Address                 | 0x12    | Retrieve the device address, used to identify and distinguish hubs in multi-hub setups |
+| Set operation mode                 | 0x06    | Switch Normal/Interlock mode                                 |
+| Query operation mode               | 0x07    | Query the current operating mode                             |
+| Restore factory settings           | 0xFC    | Restore factory settings                                     |
+| Query firmware version             | 0xFD    | Query the device firmware version                            |
+| Query hardware version             | 0xFE    | Query the current hardware version                           |
 
 
+
+## Frame format
 
 **The protocol frame format for control, query, interlock, and set commands is:**
 
@@ -381,6 +385,14 @@ This device uses a standard USB CDC interface and requires no driver. Just plug 
 | **Header1** | **Header2** | **CMD**              | **Channel No.**           | **Value [15:8] (MSB)** | **Value [7:0] (LSB)** | **SUM8 Checksum** |
 | ----------- | ----------- | -------------------- | ------------------------- | ---------------------- | --------------------- | ----------------- |
 | **0x55**    | **0x5A**    | **[0x01 0x02 0x03]** | **[0x01 0x02 0x04 0x08]** | **MSB**                | **LSB**               | **CMD+CH+VAL**    |
+
+
+
+| **Header1** | **Header2** | **CMD**                  | DATA[1-3]                       | **SUM8 校验和**  |
+| ----------- | ----------- | ------------------------ | ------------------------------- | ---------------- |
+| 0x55        | 0x5A        | Refer to the command set | depends on the specific command | CMD+CH+data[1-3] |
+
+
 
 
 
@@ -449,6 +461,13 @@ typedef enum
 > ```
 > 55 5A 01 FF FF FF 
 > ```
+
+#### **Data Field Description:**
+
+| data[0]     | data[1]             |
+| ----------- | ------------------- |
+| Channel ID  | Channel Power State |
+| `Channel_e` | 0 (OFF), 1 (ON)     |
 
 
 
@@ -634,6 +653,13 @@ typedef enum
 
 ### **Query Channel Power State (CMD: 0x00)**
 
+#### **Data Field Description:**
+
+| data[0]     | data[1]             |
+| ----------- | ------------------- |
+| Channel ID  | Channel Power State |
+| `Channel_e` | 0 (OFF), 1 (ON)     |
+
 
 
 #### **Query Channel 1 Power State**
@@ -769,7 +795,14 @@ The device can control the connectivity of the D+ and D− differential pair for
 >
 > - By default, each channel’s USB data (D+/D−) lines are connected unless the user sends a control command (CMD: 0x05) to manually disconnect them.
 >
-> - If power-loss state retention is enabled, the data line on/off state will be remembered.
+> - If power-loss state Persistence is enabled, the data line on/off state will be remembered.
+
+#### **Data Field Description:**
+
+| data[0]     | data[1]                 |
+| ----------- | ----------------------- |
+| Channel ID  | Channel Data Line State |
+| `Channel_e` | 0 (OFF), 1 (ON)         |
 
 
 
@@ -927,6 +960,13 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 ### **Query Channel USB Data Line State (CMD: 0x08)**
 
+#### **Data Field Description:**
+
+| data[0]     | data[1]                 |
+| ----------- | ----------------------- |
+| Channel ID  | Channel Data Line State |
+| `Channel_e` | 0 (OFF), 1 (ON)         |
+
 
 
 #### **Query Channel 1 Data Line State**
@@ -1064,6 +1104,13 @@ The device can control the connectivity of the D+ and D− differential pair for
 | Closed        | Closed        | **Open**      | Closed        |
 | Closed        | Closed        | Closed        | **Open**      |
 
+#### **Data Field Description:**
+
+| data[0]     | data[1]             |
+| ----------- | ------------------- |
+| Channel ID  | Channel Power State |
+| `Channel_e` | 0 (OFF), 1 (ON)     |
+
 
 
 #### **Turn On Channel 1 Power (others off)**
@@ -1148,9 +1195,20 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 ### **Query Channel Voltage (CMD: 0x03)**
 
-**The device can measure the output voltage (VBUS) of each channel, which can be used to check if the bus is functioning normally.**
 
-*Voltage resolution is 0.1 V*
+
+> [!NOTE]
+>
+> - The device can measure the output voltage (VBUS) of each channel, which can be used to check if the bus is functioning normally.
+> - The voltage unit is mV (millivolts).
+> - Voltage resolution is 0.1 V
+
+#### **Data Field Description:**
+
+| data[0]     | data[1]                     | data[2]                    |
+| ----------- | --------------------------- | -------------------------- |
+| Channel ID  | Channel Voltage value[15:8] | Channel Voltage value[7:0] |
+| `Channel_e` | -                           | -                          |
 
 
 
@@ -1228,9 +1286,18 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 ### **Query Channel Current (CMD: 0x04)**
 
-**The device can measure the current of each channel, which can be used to assess the device’s operating status.**
+> [!NOTE]
+>
+> - The device can measure the current of each channel, which can be used to assess the device’s operating status.
+> - The current unit is mA (milliamps).
+> - Current resolution is 0.1 A
 
-*Current resolution is 0.1 A*
+#### **Data Field Description:**
+
+| data[0]     | data[1]                      | data[2]                     |
+| ----------- | ---------------------------- | --------------------------- |
+| Channel ID  | Channel Current value [15:8] | Channel Current value [7:0] |
+| `Channel_e` | -                            | -                           |
 
 
 
@@ -1318,6 +1385,13 @@ The device can control the connectivity of the D+ and D− differential pair for
 >
 > - This setting is retained after power off.
 
+#### **Data Field Description:**
+
+| data[0] | data[1]               |
+| ------- | --------------------- |
+| Fixed   | Enable Button Control |
+| 0x00    | 0 (false), 1 (true)   |
+
 
 
 #### **Disable Control via Buttons**
@@ -1380,9 +1454,16 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 > [!NOTE]
 >
-> - When determining channel states after power-up, the default state has higher priority than the power-loss retention feature. If the default state feature is enabled, even if the power-loss retention feature is also enabled, the system on power-up will still use the default state to decide each channel’s power or data on/off status.
->- When the default state feature is disabled, the channels’ power-on state will be decided by the power-loss retention setting. If power-loss retention is also disabled (default configuration), then upon power-up all channels will default to OFF.
+> - When determining channel states after power-up, the default state has higher priority than the power-loss Persistence feature. If the default state feature is enabled, even if the power-loss Persistence feature is also enabled, the system on power-up will still use the default state to decide each channel’s power or data on/off status.
+>- When the default state feature is disabled, the channels’ power-on state will be decided by the power-loss Persistence setting. If power-loss Persistence is also disabled (default configuration), then upon power-up all channels will default to OFF.
 > - Factory default configuration: all channel power outputs are `OFF`.
+
+#### **Data Field Description:**
+
+| data[0]     | data[1]                    | data[2]             |
+| ----------- | -------------------------- | ------------------- |
+| Channel ID  | Enable Default Power State | Default Power Value |
+| `Channel_e` | 0 (false), 1 (true)        | 0 (OFF), 1 (ON)     |
 
 
 
@@ -1639,6 +1720,13 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 ### **Query Channel Power Default State (CMD: 0x0C)**
 
+#### **Data Field Description:**
+
+| data[0]     | data[1]                    | data[2]             |
+| ----------- | -------------------------- | ------------------- |
+| Channel ID  | Enable Default Power State | Default Power Value |
+| `Channel_e` | 0 (false), 1 (true)        | 0 (OFF), 1 (ON)     |
+
 
 
 #### **Query Channel 1 Power Default State**
@@ -1785,11 +1873,18 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 > [!NOTE]
 >
-> - When determining channel states after power-up, the default state has higher priority than the power-loss retention feature. If the default state feature is enabled, even if the power-loss retention feature is also enabled, the system on power-up will still use the default state to decide each channel’s power or data on/off status.
+> - When determining channel states after power-up, the default state has higher priority than the power-loss Persistence feature. If the default state feature is enabled, even if the power-loss Persistence feature is also enabled, the system on power-up will still use the default state to decide each channel’s power or data on/off status.
 >
-> - When the default state feature is disabled, the channels’ power-on state will be decided by the power-loss retention setting. If power-loss retention is also disabled (default configuration), then upon power-up all channels will default to OFF.
+> - When the default state feature is disabled, the channels’ power-on state will be decided by the power-loss Persistence setting. If power-loss Persistence is also disabled (default configuration), then upon power-up all channels will default to OFF.
 >
 > - Factory default configuration: all channels’ data lines are connected by default.
+
+#### **Data Field Description:**
+
+| data[0]     | data[1]                        | data[2]                     |
+| ----------- | ------------------------------ | --------------------------- |
+| Channel ID  | Enable Default Data Line State | Default Data Line Value     |
+| `Channel_e` | 0 (false), 1 (true)            | 0 (disconnect), 1 (connect) |
 
 
 
@@ -2049,6 +2144,13 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 ### **Query Default Data Connectivity State (CMD: 0x0E)**
 
+#### **Data Field Description:**
+
+| data[0]     | data[1]                              | data[2]                     |
+| ----------- | ------------------------------------ | --------------------------- |
+| Channel ID  | Enable Default Data Connection State | Default Connection Value    |
+| `Channel_e` | 0 (false), 1 (true)                  | 0 (disconnect), 1 (connect) |
+
 
 
 #### **Query Channel 1 Data Default State**
@@ -2211,15 +2313,20 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 
 
-### **Set Power-Loss State Retention (CMD: 0x0F)**
+### **Set Power-Loss State Persistence (CMD: 0x0F)**
 
 > [!NOTE]
 >
 > This feature can be toggled by long-pressing `Button [2]`. When enabled, the current channel states will be saved, and upon re-powering, all channels will restore to their state before power loss.
 
+#### **Data Field Description:**
 
+| data[0] | data[1]                      |
+| ------- | ---------------------------- |
+| Fixed   | Enable Power-Off Persistence |
+| 0x00    | 0 (false), 1 (true)          |
 
-#### **Enable Power-Loss State Retention**
+#### **Enable Power-Loss State Persistence**
 
 
 **Command**:
@@ -2236,7 +2343,7 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 
 
-#### **Disable Power-Loss State Retention**
+#### **Disable Power-Loss State Persistence**
 
 
 **Command**:
@@ -2253,7 +2360,15 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 
 
-### **Query Power-Loss State Retention (CMD: 0x10)**
+### **Query Power-Loss State Persistence (CMD: 0x10)**
+
+#### **Data Field Description:**
+
+| data[0] | data[1]                      |
+| ------- | ---------------------------- |
+| Fixed   | Enable Power-Off Persistence |
+| 0x00    | 0 (false), 1 (true)          |
+
 
 
 **Command**:
@@ -2264,17 +2379,102 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 **Response**:
 
-- **Power-loss retention enabled:**
+- **Power-loss Persistence enabled:**
 
 ```
 55 5A 10 00 01 11
 ```
 
-- **Power-loss retention disabled:**
+- **Power-loss Persistence disabled:**
 
 ```
 55 5A 10 00 00 10
 ```
+
+
+
+### Set Device Address (CMD: 0x11)
+
+> [!NOTE]
+>
+> - The device address is used to identify and distinguish each hub when multiple hubs are connected.
+> - The address is user-defined and must be in the range: `0x0000 - 0xFFFF`.
+> - The default address is `0x0000`.
+>
+> **Usage:**
+>
+> 1. Assign a unique device address to each hub (this only needs to be done once).
+> 2. In your program, sequentially read the device addresses of all connected hubs and bind them to their respective serial ports or instances.
+> 3. After completing the above steps, each hub will have a clear and consistent index and mapping.
+
+
+
+#### **Connection Topology**
+
+##### Topology Structure 1
+
+TBD
+
+##### Topology Structure 2
+
+TBD
+
+
+
+#### **Data Field Description:**
+
+| data[0]        | data[1]       |
+| -------------- | ------------- |
+| Address [15–8] | Address [7–0] |
+
+
+
+#### **Example**:
+
+> Set the hubs device  address to `0x0001`
+>
+> **Command**:
+>
+> ```
+> 55 5A 11 00 01 12
+> ```
+>
+> **Response**:
+>
+> ```
+> 55 5A 11 00 01 12
+> ```
+
+
+
+### Get Device Address (CMD: 0x12)
+
+#### **Data Field Description:**
+
+| data[0]    | data[1]   |
+|------------|-----------|
+| Address [15–8] | Address [7–0] |
+| -          | -         |
+
+
+
+#### **Example**:
+
+> Get the hub's device address
+>
+> **Command**:
+>
+> ```
+> 55 5A 12 00 00 12
+> ```
+>
+> **Response**:
+>
+> ```
+> 55 5A 12 00 01 13
+> ```
+>
+> The device address of this hub is: `0x0001`
 
 
 
@@ -2300,6 +2500,13 @@ The device can control the connectivity of the D+ and D− differential pair for
 >    | 0.25 s on, 0.25 s off          | Channel interlock mode            |
 >    | Momentary off flash (overlaid) | Receiving a control command frame |
 >    
+
+#### **Data Field Description:**
+
+| data[0] | data[1]                          |
+|---------|----------------------------------|
+| Fixed   | Operating Mode                   |
+| 0x00    | 0 (Normal Mode), 1 (Interlock Mode) |
 
 
 
@@ -2337,6 +2544,15 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 ### **Query Operation Mode (CMD: 0x07)**
 
+#### **Data Field Description:**
+
+| data[0] | data[1]                             |
+| ------- | ----------------------------------- |
+| Fixed   | Operating Mode                      |
+| 0x00    | 0 (Normal Mode), 1 (Interlock Mode) |
+
+
+
 **Command**:
 
 ```
@@ -2361,6 +2577,15 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 ### **Reset Factory Settings (CMD: 0xFC)**
 
+#### **Data Field Description:**
+
+| data[0] | data[1] |
+| ------- | ------- |
+| Fixed   | Fixed   |
+| 0x00    | 0x00    |
+
+
+
 **Command**:
 
 ```
@@ -2376,6 +2601,15 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 
 ### **Query Firmware Version (CMD: 0xFD)**
+
+#### **Data Field Description:**
+
+| data[0]        | data[1]       |
+| -------------- | ------------- |
+| Version [15–8] | Version [7–0] |
+| -              | -             |
+
+
 
 **Command**:
 
@@ -2394,6 +2628,15 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 
 ### **Query Hardware Version (CMD: 0xFE)**
+
+#### **Data Field Description:**
+
+| data[0]        | data[1]       |
+| -------------- | ------------- |
+| Version [15–8] | Version [7–0] |
+| -              | -             |
+
+
 
 **Command**:
 
@@ -2429,7 +2672,7 @@ The device can control the connectivity of the D+ and D− differential pair for
 | Power-On Default State               | The initial on/off state of each channel after power-up.     |
 | Default Power State                  | The default on/off state of VBUS power when the system powers on. |
 | Default Signal State                 | The default on/off state of D+/D− data lines when the system powers on. |
-| Power-Loss State Retention           | Whether the system saves the state before power loss and restores it after power-up. |
+| Power-Loss State Persistence         | Whether the system saves the state before power loss and restores it after power-up. |
 | Button Control Permission            | Whether physical button control of channels is allowed.      |
 | Upstream Port                        | The port that connects to the host (e.g., PC).               |
 | Downstream Port                      | The port that connects to a peripheral (USB device).         |
