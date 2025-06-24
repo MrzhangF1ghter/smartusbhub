@@ -4,14 +4,54 @@
 
 ![view1](assets/view1.png)**This document applies to model:** SmartUSBHub_V1.3a
 
-**Last updated on:** June 19, 2025
+**Last updated on:** June 24, 2025
 
 
+
+## **Key Features**
+
+The Smart USB Hub offers per-port power and data control, voltage/current sensing, and manual plug/unplug simulation—designed for development, testing, and device management.
+
+1. **Standard USB 2.0 Data Transfer**: Utilizes a USB 2.0 hub chip with MTT technology. Each port supports up to 480 Mbps (USB 2.0 high-speed), allowing it to function as a normal USB hub.
+
+2. **Programmable USB Port Switching**
+
+   - Independently control **VBUS power** and **D+/D− data lines** for each downstream port
+   - Simulates manual hot-plug behavior via button or serial command
+
+3. **Integrated Voltage and Current Monitoring**
+
+   - Each port supports real-time sensing of **voltage** and **current** for power analysis and device diagnostics
+
+4. **Software-Controllable & Multi-Platform Compatible**
+
+   - USB CDC-based serial command interface, provide Python libraries for quick control
+   - Supports on Windows, macOS, Linux platforms, no need additional drivers
+
+5. **Dual Operating Modes**
+
+   - **Normal Mode**: all ports can operate independently
+   - **Interlock Mode**: only one port is active at a time
+   - Each port supports customizable **power-on defaults** and **power-loss state retention**
+
+6. **Robust Hardware Interfaces**
+
+   - 1x USB-C upstream, 4x USB-A USB2.0 downstream, 1x serial control port, 1x auxiliary power input
+   - Supports up to 5V 4A per port, with overvoltage, overcurrent, reverse current, and ESD protection
+
+7. **Topology Support for Scalable Deployment**
+
+   - Supports hierarchical topologies with data/control port aggregation
+   - Each hub can be assigned a unique address for large-scale setups
+
+8. **Upgradeable and Secure**
+
+   - OTA firmware upgrade support
+   - Access control features planned for future firmware releases
+
+   
 
 ## **Application Scenarios**
-
-> The Smart USB Hub (USB-Serial Edition) integrates controllable power and data switching, voltage and current monitoring, etc.
-It can be widely used in various R&D, testing, production, and device management scenarios to enhance system flexibility and management efficiency.
 
 ### **Embedded Development**
 
@@ -54,25 +94,6 @@ It can be widely used in various R&D, testing, production, and device management
 ### **Remote Charging & Energy Management**
 
  - Implement scheduled charging and power monitoring for shared terminals, exhibition devices, etc.
-
-
-
-## **Features**
-
-- **Standard USB 2.0 Data Transfer**: Utilizes a USB 2.0 hub chip with MTT technology. Each port supports up to 480 Mbps (USB 2.0 high-speed), allowing it to function as a normal USB hub.
-- **Button Control**: Each downstream port’s VBUS power can be toggled via a physical button or via command, simulating a physical plug/unplug.
-- **Programmable Control**: The hub can be controlled using simple commands. Comes with a Python library, C library*, and demos, and provides host software for Windows, Ubuntu, and macOS for quick testing.
-- **Power Control**: Each channel’s VBUS power can be switched on/off by button or command, enabling simulated physical connection/disconnection.
-- **USB Differential Signal Control**: Supports independent on/off control of each port’s D+ and D− data lines. The data link can be disconnected while keeping power on, facilitating debugging and testing.
-- **Voltage Measurement**: Each channel has independent voltage sensing capability, suitable for device status monitoring and power consumption evaluation.
-- **Current Measurement**: Each channel has independent current sensing capability, suitable for device status monitoring and power consumption evaluation.
-- **Interlock Control**: An interlock mode can be enabled to ensure only one channel is powered at any time.
-- **Power-On Default State**: Each channel’s default power and data connection state on power-up can be configured individually.
-- **Power-Loss State Persistence**: Each channel can be configured to remember its state when power is lost and restore it on power-up.
-- **Configurable Button Function**: The physical button functionality for each channel can be enabled or disabled.
-- **Permission Management**: Supports setting an access password (*to be supported in future firmware updates*).
-- **Firmware Upgrade**: Supports one-click OTA updates for continuous feature additions and bug fixes.
-- **Multi-OS Compatibility**: Works with Windows, Linux, macOS without additional drivers (uses USB CDC standard virtual serial communication).
 
 
 
@@ -259,16 +280,6 @@ This device uses a standard USB CDC interface and requires no driver. Just plug 
 
 
 ## **Device Specifications**
-
-### **Main Features**
-
-- Genernic 4-port USB 2.0 hub
-- Each downstream port’s power can be toggled via its button
-- Command control of a specified downstream port’s power and data connection
-- Interlock mode: only one downstream port can be on at a time
-- Per-port voltage and current monitoring
-
-
 
 ### **Dimensions**
 
@@ -2413,11 +2424,26 @@ The device can control the connectivity of the D+ and D− differential pair for
 
 ##### Topology Structure 1
 
-TBD
+- The upstream data ports of multiple hubs are connected to a higher-level hub.
+- The control ports of multiple hubs are connected to a higher-level hub.
+- Two top-level hubs are connected to the host.
+
+The number of available downstream ports in this topology is *4n*.
+
+![Topology.001](./assets/Topology.001.png)
+
+
 
 ##### Topology Structure 2
 
-TBD
+- The upstream data port of the next hub is connected to the downstream data port of the previous hub.
+- The control ports of multiple hubs are connected to a higher-level hub.
+- The upstream data port of the first hub is connected to the host.
+- The top-level hub in the control chain is connected to the host.
+
+The number of available downstream ports in this topology is *3n+1*.
+
+![Topology.002](./assets/Topology.002.png)
 
 
 

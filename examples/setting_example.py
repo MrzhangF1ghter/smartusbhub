@@ -22,6 +22,12 @@ def main():
     
     print("Starting setting example...")
 
+    print("Set device address to 0x0000")
+    hub.set_device_address(0x0000)
+    #read back address
+    device_address = hub.get_device_address()
+    print("device address: 0x%04X" % device_address)
+
     print("\r\nEnabling default power status on specified channels with default power set to ON.")
     hub.set_default_power_status(1,2,3,4,enable=1,status=1)
     default_power_status = hub.get_default_power_status(1,2,3,4)
@@ -112,6 +118,7 @@ def main():
         print("Factory reset successful.")
     else:
         print("Factory reset failed.")
+
     print("\r\nSetting example completed.")
 
     hub.disconnect()

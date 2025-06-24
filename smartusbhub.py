@@ -4,6 +4,7 @@
 # version: 1.0
 # author: EmbeddedTec studio
 # email:embeddedtec@outlook.com
+# for more information: https://github.com/MrzhangF1ghter/smartusbhub
 
 # protocol examples:
 
@@ -202,6 +203,18 @@
 #                                             55 5A 07 00 00 07 [normal]
 #                                             55 5A 07 00 01 08 [interlock]
 
+# Set device address [MSB] [LSB]
+#     device address:0x0000     55 5A 11 00 00 11
+#     device address:0x0001     55 5A 11 00 01 12
+#     device address:0x0002     55 5A 11 00 02 13
+#     device address:0x0003     55 5A 11 00 03 14
+#     device address:0x1A01     55 5A 11 1A 01 2C
+
+# Get device address
+#     55 5A 12 00 00 12
+#                         55 5A 12 00 00 12  [device address:0x0000]
+#                         55 5A 12 00 01 13  [device address:0x0001]
+
 # Factory Reset           55 5A FC 00 00 FC   55 5A FC 00 00 FC
 
 # Get software version    55 5A FD 00 00 FD   55 5A FD 00 0F 0C
@@ -243,6 +256,9 @@ CMD_GET_AUTO_RESTORE_STATUS         = 0x10
 
 CMD_SET_OPERATE_MODE                = 0x06
 CMD_GET_OPERATE_MODE                = 0x07
+
+CMD_SET_DEVICE_ADDRESS              = 0x11
+CMD_GET_DEVICE_ADDRESS              = 0x12
 
 CMD_FACTORY_RESET                   = 0xFC   
 CMD_GET_FIRMWARE_VERSION            = 0xFD
@@ -287,7 +303,7 @@ class SmartUSBHub:
     SmartUSBHub Lib provides a high-level interface for interacting with an industrial Smart USB Hub via UART.
 
     This class enables robust per-port control of power and data connections, voltage/current monitoring,
-    configuration of default states, and factory-level resets.
+    configuration of default states, and factory resets.
 
     Suitable for automated test systems and development workflows in hardware engineering environments.
     """
@@ -322,6 +338,8 @@ class SmartUSBHub:
             CMD_GET_DEFAULT_DATALINE_STATUS: threading.Event(),
             CMD_SET_AUTO_RESTORE: threading.Event(),
             CMD_GET_AUTO_RESTORE_STATUS: threading.Event(),
+            CMD_SET_DEVICE_ADDRESS: threading.Event(),
+            CMD_GET_DEVICE_ADDRESS: threading.Event(),
             CMD_FACTORY_RESET:threading.Event(),
             CMD_GET_FIRMWARE_VERSION: threading.Event(),
             CMD_GET_HARDWARE_VERSION: threading.Event(),
@@ -341,11 +359,12 @@ class SmartUSBHub:
         self.channel_default_dataline_flag = {}
         self.channel_default_dataline_status = {}
 
-
         self.channel_power_status = {}
         self.channel_dataline_status = {}
         self.channel_voltages = {}
         self.channel_currents = {}
+
+        self.device_address = None
 
         self.disconnect_callback = None
 
@@ -575,6 +594,10 @@ class SmartUSBHub:
                                 self._handle_get_operate_mode(value)
                             elif cmd == CMD_SET_OPERATE_MODE:
                                 self._handle_set_operate_mode()
+                            elif cmd == CMD_SET_DEVICE_ADDRESS:
+                                self._handle_set_device_address()
+                            elif cmd == CMD_GET_DEVICE_ADDRESS:
+                                self._handle_get_device_address(channel,value)#msb lsb
                             elif cmd == CMD_FACTORY_RESET:
                                 self._handle_factory_reset()
                             elif cmd == CMD_GET_FIRMWARE_VERSION:
@@ -631,7 +654,9 @@ class SmartUSBHub:
         Returns:
             bytearray: The packet that was sent to the device.
         """
-        if channels is None:
+        if cmd is CMD_SET_DEVICE_ADDRESS:
+            channel_mask = channels
+        elif channels is None:
             channel_mask = 0
         else:
             # Convert channels to channel mask
@@ -778,6 +803,12 @@ class SmartUSBHub:
         else:
             logger.error("Invalid data for _handle_get_default_dataline_status")
 
+    def _handle_set_device_address(self):
+        logger.debug("_handle_set_device_address ACK")
+    def _handle_get_device_address(self, msb,lsb):
+        logger.debug("_handle_get_device_address ACK")
+        self.device_address = (msb << 8) | lsb
+        logger.debug(f"set device address: {self.device_address}")
     def _handle_factory_reset(self):
         logger.debug("_handle_factory_reset ACK")
 
@@ -808,9 +839,11 @@ class SmartUSBHub:
         self.operate_mode = self.get_operate_mode()
         self.auto_restore_status = self.get_auto_restore_status()
         self.button_control_status = self.get_button_control_status()
+        self.device_address = self.get_device_address()
 
         hub_info = {
             "id": self.port.split("/")[-1],
+            "address": self.device_address,
             "hardware_version": self.hardware_version,
             "firmware_version": self.firmware_version,
             "operate_mode": "normal" if self.operate_mode == 0 else "interlock" if self.operate_mode == 1 else "N/A",
@@ -833,8 +866,10 @@ class SmartUSBHub:
         ack_event.clear()
         if ack_event.wait(self.com_timeout):
             logger.debug("set_operate_mode ACK")
+            return True
         else:
             logger.error("set_operate_mode No ACK!")
+            return False
 
     def get_operate_mode(self):
         """
@@ -1032,9 +1067,10 @@ class SmartUSBHub:
         ack_event.clear()
         if ack_event.wait(self.com_timeout):
             logger.debug("set_button_control ACK")
-            return self.button_control_status
+            return True
         else:
             logger.error("set_button_control No ACK!")
+            return False
 
     def get_button_control_status(self):
         """
@@ -1169,7 +1205,7 @@ class SmartUSBHub:
             enable (bool): True to enable auto-restore; False to disable.
         
         Returns:
-            int or None: Returns the latest auto_restore_status if acknowledged, or None if no response.
+            bool: True if command was acknowledged, False otherwise.
         """
         data_val = 1 if enable else 0
 
@@ -1178,9 +1214,10 @@ class SmartUSBHub:
         ack_event.clear()
         if ack_event.wait(self.com_timeout):
             logger.debug("set_auto_restore ACK")
-            return self.auto_restore_status
+            return True
         else:
             logger.error("set_auto_restore No ACK!")
+            return False
 
     def get_auto_restore_status(self):
         """
@@ -1198,6 +1235,49 @@ class SmartUSBHub:
         else:
             logger.error("get_auto_restore_status No ACK!")
             return None
+
+    def set_device_address(self, address: int):
+        """
+        Set the device address (uint16) for this Hub.
+
+        Args:
+            address (int): 0x0000 - 0xFFFF
+        
+        Returns:
+            bool: True if command was acknowledged, False otherwise.
+        """
+        if not (0 <= address <= 0xFFFF):
+            raise ValueError("Address must be between 0x0000 and 0xFFFF")
+        lsb = address & 0xFF
+        msb = (address >> 8) & 0xFF
+        self._send_packet(CMD_SET_DEVICE_ADDRESS,msb,lsb)
+        ack_event = self.ack_events[CMD_SET_DEVICE_ADDRESS]
+        ack_event.clear()
+        if ack_event.wait(self.com_timeout):  
+            logger.debug("set_device_address ACK")
+            self.device_address = address
+            return True
+        else:
+            logger.error("set_device_address No ACK!")
+            return False
+
+    def get_device_address(self):
+        """
+        Get the current device address from the Hub.
+
+        Returns:
+            16-bit device address or None if no response.
+        """
+        self._send_packet(CMD_GET_DEVICE_ADDRESS, None, None)
+
+        ack_event = self.ack_events[CMD_GET_DEVICE_ADDRESS]
+        ack_event.clear()
+        if ack_event.wait(self.com_timeout):
+            logger.debug("get_device_address ACK")
+            return self.device_address
+        else:
+            logger.error("get_device_address No ACK!")
+            return None        
         
     def factory_reset(self):
         """

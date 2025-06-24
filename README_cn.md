@@ -4,17 +4,39 @@
 
 ![view1](assets/view1.png)本文档适用型号：`SmartUSBHub_V1.3a`
 
-本文档更新日期：2024年6月21日
-
-
+本文档更新日期：2024年6月24日
 
 
 
 ## 简介
-
-smartusbhub是一个能够通过串口控制的USB2.0 4口集线器。
-
+这是一个控制SmartUSBHub的python库
 使用前请先了解smartusbhub，详情请阅读[智能USB集线器_使用指南](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/智能USB集线器_使用指南.md)
+
+智能USB集线器能控制指定USB端口的电源和数据通断，模拟物理插拔USB设备。每个端口还具备电压电流采样功能，广泛应用于研发、测试、生产与设备管理场景。
+
+1. **标准USB 2.0 数据传输**
+   - 采用MTT技术的Hub芯片，每个端口均可达到480Mbps的USB2.0速率，可作为普通USB集线器使用
+2. **USB端口模拟插拔控制**
+   - 支持对每个下行端口的 **电源（VBUS）** 和 **数据（D+/D−）** 独立控制
+   - 可通过按键或指令模拟物理插拔操作，实现自动化测试或远程控制场景
+3. **电压与电流采样**
+   - 每个端口具备独立的 **电压、电流实时采集**，支持功耗分析与设备状态监测
+4. **通过串口指令实现可编程控制**
+   - 支持通过串口指令控制，提供 Python 控制库
+   - 兼容 Windows / macOS / Linux 平台，无需驱动（USB CDC）
+5. **多模式端口管理**
+   - 支持 **普通模式**（多通道同时控制）与 **互锁模式**（仅允许一个通道通电）切换
+   - 每端口可设置 **上电默认状态** 与 **断电状态记忆**
+6. **硬件接口灵活配置**
+   - 1路 USB-C 上行端口，4路 USB-A USB2.0 下行端口，1路串口控制口，1路辅助供电口
+   - 每口最高支持 5V 4A 供电，具备过压、过流、防倒灌、ESD保护
+7. **远程可管理性强**
+   - 支持集中控制多个 Hub 的 **数据链与控制链** 拓扑结构
+   - 每个设备支持地址配置，适用于树状级联的系统
+8. **固件可升级**
+   - 支持 OTA 升级，持续获得功能更新
+
+
 
 > [!NOTE]
 >
@@ -214,7 +236,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 - **描述**: 设置指定通道的电源状态。
 - **参数**:
   - `*channels` (int): 要控制的通道。
-  - state (int): `1` 开启电源，`0` 关闭电源。
+  - `state` (int): `1` 开启电源，`0` 关闭电源。
 
 - **返回值**:
 
@@ -252,11 +274,11 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 - **描述**: 设置指定通道或所有通道的互锁模式。
 - **参数**:
   
-  - channel (int 或 `None`): 要设置的通道。如果为 `None`，则关闭所有通道。
+  - `channel` (`int` 或 `None`): 要设置的通道。如果为 `None`，则关闭所有通道。
   
 - **返回值**:
   
-  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+  - `bool`: 如果命令设置成功返回 `True`，否则返回 `False`。
   
 - **示例**:
   
@@ -274,11 +296,11 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - **参数**:
   - `*channels` (int): 要更新的通道，可变参数形式，范围 1~4。
-  - state (int): `1` 连通 D+ D-的物理连接， `0` 断开D+ D-的物理连接。
+  - `state` (int): `1` 连通 D+ D-的物理连接， `0` 断开D+ D-的物理连接。
 
 - **返回值**:
   
-  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+  - `bool`: 如果命令设置成功返回 `True`，否则返回 `False`。
 
 - **示例**:
   
@@ -315,7 +337,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - **描述**: 查询单个通道的电压。
 - **参数**:
-  - channel (int): 要查询的通道。
+  - `channel` (int): 要查询的通道。
 
 - **返回值**:
   - `int` 或 `None`: 通道的电压值(mV)，若超时则返回 `None`。
@@ -336,7 +358,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - **描述**: 查询单个通道的电流。
 - **参数**:
-  - channel (int): 要查询的通道。
+  - `channel` (int): 要查询的通道。
 
 - **返回值**:
   
@@ -360,8 +382,8 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 - **参数**:
 
   - `*channels` (int): 要设置的通道，可变参数形式，范围 1~4。
-  - enable (int): `1` 启用默认状态， `0` 禁用默认状态。
-  - status (int): 1 默认打开电源，0 默认关闭电源
+  - `enable` (int): `1` 启用默认状态， `0` 禁用默认状态。
+  - `status` (int): 1 默认打开电源，0 默认关闭电源
 
 - **示例**:
 
@@ -419,12 +441,12 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 - **参数**:
 
   - `*channels` (int): 要设置的通道，可变参数形式，范围 1~4。
-  - enable (int): `1` 启用默认状态， `0` 禁用默认状态。
-  - status (int): 1 默认连接数据，0 默认断开数据
+  - `enable` (int): `1` 启用默认状态， `0` 禁用默认状态。
+  - `status` (int): 1 默认连接数据，0 默认断开数据
 
 - **返回值**:
 
-  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+  - `bool`: 如果命令设置成功返回 `True`，否则返回 `False`。
   
 - **示例**:
 
@@ -475,11 +497,12 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 - **描述**: 启用或禁用集线器的物理按钮。
 
 - **参数**:
-  - enable (bool): `True` 启用按钮，`False` 禁用按钮。
-
+  
+  - `enable` (bool): `True` 启用按钮，`False` 禁用按钮。
+  
 - **返回值**:
   
-  - bool: 如果命令设置成功返回 `True`，否则返回 `False`。
+  - `bool`: 如果命令设置成功返回 `True`，否则返回 `False`。
   
 - **示例**:
 
@@ -497,6 +520,7 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - **描述**: 查询集线器的物理按钮是否启用。
 - **返回值**:
+  
   - `int` 或 `None`: `1` 表示启用，`0` 表示禁用，若无响应则返回 `None`。
 - **示例**:
   
@@ -504,6 +528,54 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   
   ```python
   status = hub.get_button_control_status()
+  ```
+
+
+
+### 设置设备地址
+
+#### `set_device_address(address)`
+
+- **描述**: 设备地址用于在多台集线器连接的场景中，标识和区分各个集线器。
+
+- **参数**:
+
+  - `int` :地址的编号由用户自定义，其取值范围为: `0x0000 - 0xFFFF`
+
+- **返回值**:
+
+  - `int` 或 `None`: `1` 表示启用，`0` 表示禁用，若无响应则返回 `None`。
+
+- **提示**：
+
+  - 创建SmartUSBHub实例时会自动获取连接设备的地址，不同SmartUSBHub实例可以通过地址区分。
+
+- **示例**:
+
+  设置设备地址为`0x0001`
+
+  ```python
+  hub.set_device_address(0x0001)
+  ```
+
+
+
+### 获取设备地址
+
+#### `get_device_address(address)`
+
+- **描述**: 获取设备的地址
+
+- **返回值**:
+
+  - `int` 或 `None`: 设备地址，若无响应则返回 `None`。
+
+- **示例**:
+
+  查询设备地址
+
+  ```python
+  device_address = hub.get_device_address()
   ```
 
 

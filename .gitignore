@@ -7,3 +7,4 @@ build
 *.spec
 .vscode
 frame_generate.py
+pyproject.toml

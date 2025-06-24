@@ -4,15 +4,56 @@
 
 ![view1](assets/view1.png)**This document applies to model:** SmartUSBHub_V1.3a
 
-**Last updated on:** June 21, 2025
+**Last updated on:** June 24, 2025
 
 
 
 ## Introduction
 
-SmartUSBHub is a USB 2.0 4-port hub that can be controlled via a serial port.
-
 Before using, please familiarize yourself with SmartUSBHub. For details, see the  [smartusbhub_user_guide](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/smartusbhub_user_guide.md)
+
+
+
+The Smart USB Hub offers per-port power and data control, voltage/current sensing, and manual plug/unplug simulation—designed for development, testing, and device management.
+
+1. **Standard USB 2.0 Data Transfer**: Utilizes a USB 2.0 hub chip with MTT technology. Each port supports up to 480 Mbps (USB 2.0 high-speed), allowing it to function as a normal USB hub.
+
+2. **Programmable USB Port Switching**
+
+   - Independently control **VBUS power** and **D+/D− data lines** for each downstream port
+   - Simulates manual hot-plug behavior via button or serial command
+
+3. **Integrated Voltage and Current Monitoring**
+
+   - Each port supports real-time sensing of **voltage** and **current** for power analysis and device diagnostics
+
+4. **Software-Controllable & Multi-Platform Compatible**
+
+   - USB CDC-based serial command interface, provide Python libraries for quick control
+   - Supports on Windows, macOS, Linux platforms, no need additional drivers
+
+5. **Dual Operating Modes**
+
+   - **Normal Mode**: all ports can operate independently
+   - **Interlock Mode**: only one port is active at a time
+   - Each port supports customizable **power-on defaults** and **power-loss state retention**
+
+6. **Robust Hardware Interfaces**
+
+   - 1x USB-C upstream, 4x USB-A USB2.0 downstream, 1x serial control port, 1x auxiliary power input
+   - Supports up to 5V 4A per port, with overvoltage, overcurrent, reverse current, and ESD protection
+
+7. **Topology Support for Scalable Deployment**
+
+   - Supports hierarchical topologies with data/control port aggregation
+   - Each hub can be assigned a unique address for large-scale setups
+
+8. **Upgradeable and Secure**
+
+   - OTA firmware upgrade support
+   - Access control features planned for future firmware releases
+
+
 
 > [!NOTE]
 >
@@ -530,6 +571,52 @@ You can integrate this library into your project by importing the smartusbhub mo
   hub.set_operate_mode(0)
   ```
 
+
+
+### Set Device Address
+
+#### `set_device_address(address)`
+
+- **Description**: The device address is used to identify and distinguish each hub when multiple hubs are connected.
+
+- **Parameter**:
+
+  - `int`: The address is user-defined and should be within the range `0x0000 - 0xFFFF`.
+
+- **Return Value**:
+
+  - `int` or `None`: Returns `1` if successful, `0` if failed, or `None` if no response.
+
+- **Note**:
+
+  - When a `SmartUSBHub` instance is created, the device address is automatically retrieved. Different instances can be distinguished by their unique addresses.
+
+- **Example**:
+
+  Set the device address to `0x0001`:
+
+  ```python
+  hub.set_device_address(0x0001)
+
+
+
+### Get Device Address
+
+#### `get_device_address()`
+
+- **Description**: Retrieves the address of the connected device.
+
+- **Return Value**:
+
+  - `int` or `None`: The device address, or `None` if no response is received.
+
+- **Example**:
+
+  Query the device address:
+
+  ```python
+  device_address = hub.get_device_address()
+  ```
 
 
 
