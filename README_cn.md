@@ -2,9 +2,11 @@
 
 [English](./README.md)
 
-![view1](assets/view1.png)本文档适用型号：`SmartUSBHub_V1.3a`
+![view1](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/assets/view1.png?raw=true)
 
-本文档更新日期：2024年6月24日
+**本文档适用型号**：`SmartUSBHub_V1.3a`
+
+**本文档更新日期**：2024年6月24日
 
 
 
@@ -40,22 +42,49 @@
 
 > [!NOTE]
 >
-> 此smartusbhub python库只是用于测试用途，如果要集成到生产环境，建议自行实现通信控制。
->
 > 协议文档请查阅： [智能USB集线器_使用指南 协议章节](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/智能USB集线器_使用指南.md)
 >
-> 最简单的控制demo：[simple_serial.py](./examples/simple_serial.py)
+> 如果不想用python库，则可参考最简单的控制demo：[simple_serial.py](./examples/simple_serial.py)
 
 
 
 ## 环境部署
 
-### 获取最新的库
+### 1. 设置虚拟环境
 
-把此代码仓库克隆到本地,假设你的工程名字为`my_project`  
+在开发目录中，设置python虚拟环境（推荐）
+`python -m venv venv`
+
+1. 进入python虚拟环境
+
+   - 对于Windows平台:
+
+    `.\venv\Scripts\activate.bat`
+
+   - 对于unix平台:
+
+    `source ./venv/bin/activate`
+
+2. 安装依赖库
+    `pip install -r requirements.txt`
+
+
+
+### 2. 获取最新的库
+
+#### 方法1
+
+通过pip包管理工具获取
 
 ```shell
-cd my_project
+pip install smartusbhub
+```
+
+#### 方法2
+
+通过github获取
+
+```shell
 git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 ```
 
@@ -72,39 +101,49 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 设置虚拟环境
+### 3. 集成到你的项目中
 
-设置python虚拟环境（推荐）
-`python -m venv venv`
+通过导入smartusbhub库即可即成到你的项目之中。
 
-1. 进入python虚拟环境
+1. 导入`smartusbhub`库到你的工程.
 
-   - 对于Windows平台:
+   ```python
+   from smartusbhub import SmartUSBHub
+   ```
 
-    `.\venv\Scripts\activate.bat`
+2. 初始化`SmartUSBhub`实例:
 
-   - 对于unix平台:
+   - 通过自动扫描连接设备：
 
-    `source ./venv/bin/activate`
+     ```python
+     hub = SmartUSBHub.scan_and_connect()
+     ```
 
-2. 安装依赖库
-    `pip install -r requirements.txt`
+   - 通过指定串口号连接设备：
 
-3. 将随附的USBA-USBC 数据线接到`设备通信口`，另外一端接到主机的USB端口上，连接后主机将会把设备识别成:
+     ```python
+     hub = SmartUSBHub("串口路径")
+     #例子：
+     hub = SmartUSBHub("/dev/cu.usbmodem132301")
+     ```
 
-   - Windows平台:  `COMx`
-   - Linux平台: `/dev/ttyACMx`
-   - mac平台: `/dev/cu.usbmodemx`
 
-> [!NOTE]
->
-> 若要数据传输，除了连接`设备通信口`，还需要连接`数据上行口`。
+
+### 连接指南
+
+![connection_guide](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/assets/connection_guide_cn.png?raw=true)
+
+> 1. 将随附的USBA-USBC 数据线连接设备的`USB上行端口`与主机USB端口。该端口用于USB数据传输。
+> 2. 将随附的USBA-USBC 数据线连接设备的`指令控制口`与主机USB端口。该端口用于串口通信，连接后主机将会把设备识别成:
+>    - Windows平台:  `COMx`
+>    - Linux平台: `/dev/ttyACMx`
+>    - mac平台: `/dev/cu.usbmodemx`
 
 
 
 ### 运行例程
 
-`smartusbhub python library`库包含多个例程，其存放在`examples`目录下，目前有以下例子：
+`smartusbhub`库包含多个例程，其存放在`examples`目录下，目前有以下例子：
 
 - `power_control_example`：展示如何控制指定通道的电源
 - `dataline_control_example`：展示如何控制指定通道的USB差分信号线开关通断（保持电源供电）
@@ -148,37 +187,6 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   python oscilloscope.py
   ```
 
-  
-
-### 集成到你的项目中
-
-通过导入smartusbhub库即可即成到你的项目之中。
-
-1. 按照前面的章节 *使用方法*配置: 步骤 1 到 5.
-
-2. 导入`smartusbhub`库到你的工程.
-
-   ```python
-   import sys
-   sys.path.append('../')
-   from smartusbhub import SmartUSBHub
-   ```
-
-3. 初始化`SmartUSBhub`实例:
-
-   - 通过自动扫描连接设备：
-
-     ```python
-     hub = SmartUSBHub.scan_and_connect()
-     ```
-
-   - 通过指定串口号连接设备：
-
-     ```python
-     hub = SmartUSBHub("串口路径")
-     例子：
-     hub = SmartUSBHub("/dev/cu.usbmodem132301")
-     ```
 
 
 

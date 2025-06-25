@@ -2,7 +2,7 @@
 
 [简体中文](./README_cn.md)
 
-![view1](assets/view1.png)**This document applies to model:** SmartUSBHub_V1.3a
+![view1](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/assets/view1.png?raw=true)**This document applies to model:** SmartUSBHub_V1.3a
 
 **Last updated on:** June 24, 2025
 
@@ -40,12 +40,12 @@ The Smart USB Hub offers per-port power and data control, voltage/current sensin
 
 6. **Robust Hardware Interfaces**
 
-   - 1x USB-C upstream, 4x USB-A USB2.0 downstream, 1x serial control port, 1x auxiliary power input
+   - 1x USB-C upstream, 4x USB-A USB2.0 downstream, 1x serial command port, 1x auxiliary power input
    - Supports up to 5V 4A per port, with overvoltage, overcurrent, reverse current, and ESD protection
 
 7. **Topology Support for Scalable Deployment**
 
-   - Supports hierarchical topologies with data/control port aggregation
+   - Supports hierarchical topologies with data/Command Port aggregation
    - Each hub can be assigned a unique address for large-scale setups
 
 8. **Upgradeable and Secure**
@@ -109,11 +109,15 @@ Create a Python virtual environment (recommended):
    - On Linux: `/dev/ttyACMx` or `/dev/cu.usbmodemx`
    - On macOS: `/dev/cu.usbmodemx`
 
+
+
+### Connection Guide
+
+![connection_guide](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/assets/connection_guide.png?raw=true)
+
 > [!NOTE]
 >
 > In addition to connecting the  `Command Port`, you must also connect the  `USB upstream port` for USB data transfer.
->
-> ![connection_guide](assets/connection_guide.png)
 
 
 
@@ -129,7 +133,7 @@ Create a Python virtual environment (recommended):
 - `user_callback_example`:Demonstrates how to add user callbacks for specfic command.
 - `oscilloscope`:A Qt GUI-based oscilloscope that allows control of channel power switching, as well as voltage and current acquisition.
 
-![oscilloscope](./assets/oscilloscope.png)
+![oscilloscope](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/assets/oscilloscope.png?raw=true)
 
 <center>Figure: Oscilloscope app</center>
 

@@ -36,12 +36,12 @@ The Smart USB Hub offers per-port power and data control, voltage/current sensin
 
 6. **Robust Hardware Interfaces**
 
-   - 1x USB-C upstream, 4x USB-A USB2.0 downstream, 1x serial control port, 1x auxiliary power input
+   - 1x USB-C upstream, 4x USB-A USB2.0 downstream, 1x serial command port, 1x auxiliary power input
    - Supports up to 5V 4A per port, with overvoltage, overcurrent, reverse current, and ESD protection
 
 7. **Topology Support for Scalable Deployment**
 
-   - Supports hierarchical topologies with data/control port aggregation
+   - Supports hierarchical topologies with data/command port aggregation
    - Each hub can be assigned a unique address for large-scale setups
 
 8. **Upgradeable and Secure**
@@ -49,51 +49,48 @@ The Smart USB Hub offers per-port power and data control, voltage/current sensin
    - OTA firmware upgrade support
    - Access control features planned for future firmware releases
 
-   
+
+
+
+## Trusted by Industry Leaders
+
+*From consumer electronics to autonomous driving, from global smartphone leaders to high-performance chip design companies, SmartUSBHub is widely deployed in the R&D, automated testing, and production validation flows of top-tier enterprises.*
+
+SmartUSBHub is now used by **20+ global industry leaders**, Representative use cases include:
+
+- **Automotive Industry:** Used by over 3 of the global top 5 Tier 1 suppliers.
+- **Smartphone:** Used by over 3 of the top 5 global smartphone OEMs.
+- **Semiconductors & Chip Design:** Deployed by over 5 leading chip design companies worldwide.
+- **AI & Large Model Platforms:** Integrated into internal testing flows of at least 2 global AI tech giants.
+- **Telecom & IoT Equipment:** Adopted at scale by multiple leading global and regional vendors.
+
+
 
 ## **Application Scenarios**
 
-### **Embedded Development**
+### Embedded System Debugging
 
-- Test station control: remotely control the plug/unplug of debuggers like J-Link.
-- DUT debugging: remotely control USB port connections.
+- **Precise USB Enumeration Control:** Scripted USB port toggling allows for predefined enumeration sequences, ensuring key devices are recognized first in multi-device systems, enhancing repeatability in testing and predictability in boot processes.
+- **Remote Debugging & Reset:** Engineers frequently unplug and replug debug tools (e.g., J-Link) or USB devices to reset embedded targets. SmartUSBHub enables remote control of USB power and data, simulating plug/unplug events to reboot hung devices or trigger bootloader modes—particularly useful in unattended lab setups.
+- **Power Monitoring & Fault Diagnosis:** Real-time voltage and current monitoring helps detect issues such as sudden power loss or abnormal current draw. Engineers can identify hardware faults early by correlating power anomalies with test failures.
 
-### **Mobile Phone Development**
+### Automated Validation Testing
 
-- Driver testing: simulate plugging and unplugging of charging ports to verify interface functionality.
-- Software development and debugging: supports Android ADB and iOS Xcode environments, allowing one-click device reconnect for compile-and-run cycles.
+- **Reliability Testing:** SmartUSBHub can repeatedly toggle power and data lines to simulate plug/unplug and power loss scenarios, validating USB port resilience and firmware stability under stress (e.g., interrupted flash writes). No physical intervention is needed.
+- **Power Profiling:** Real-time logging of per-port voltage and current during automated test cases enables correlation with device behavior. Engineers can validate power consumption during standby and active modes, spotting overdraw or leakage issues.
+- **Test System Integration:** The Python API and serial command interface allow seamless integration into ATEs. Engineers can perform parallel or sequential control over multiple USB devices for batch reboots or firmware updates, improving test coverage and throughput.
 
-### **Chip Development**
+### Production Line Testing
 
-- USB IP feature verification: simulate physical connect/disconnect and exception handling to validate USB interface functions.
-- Electrical characteristic debugging: monitor power supply voltage/current and other key parameters to assist in chip debugging.
+- **Boost Production Throughput:** SmartUSBHub allows multiple DUTs to be tested simultaneously via software-controlled port toggling, eliminating the need for manual reconnection and increasing testing speed and efficiency.
+- **Automated Firmware Flash & Reboot:** Automated workflows can use SmartUSBHub to sequentially toggle USB data lines for firmware flashing, then power-cycle each device remotely. This reduces manual errors and ensures consistent execution across batches.
+- **Electrical Parameter Checks:** Per-port current monitoring enables the system to flag short circuits or overcurrent conditions, helping to isolate defective units in real-time.
 
-### **Automated Test Systems (ATE)**
+### USB Asset Management
 
-- Test DUT power cycling and data connection stability.
-- Integrated voltage and current monitoring, supporting DUT electrical characteristic tests.
-
-### Device Power & Status Monitoring
-
-- Real-time monitoring of the power consumption changes and USB connection status of connected devices.
-
-### **Unattended Device Maintenance**
-
-- Centrally manage USB peripherals (e.g., dongles) on Raspberry Pi clusters or servers.
-- Batch control charging and remote reboot to improve O&M efficiency.
-
-### **Asset Management**
-
-- Control the connection and authorization state of hardware assets like e-seals, license dongles, tax UKeys, etc.
-- In high-security scenarios (finance, government, data centers), achieve physical isolation and authorized control of USB ports.
-
-### **Smart Office and Conference Systems**
-
-- Manage connection and switching of meeting room USB peripherals (such as cameras, microphones).
-
-### **Remote Charging & Energy Management**
-
- - Implement scheduled charging and power monitoring for shared terminals, exhibition devices, etc.
+- **Secure Peripheral Authorization:** Control connections to sensitive devices like dongles, e-signature tokens, and tax UKeys, enabling physical-layer enable/disable logic for security-critical scenarios.
+- **Peripheral Switching in Shared Environments:** Manage USB peripherals like cameras, microphones, and KVMs in meeting rooms or data centers from a central controller.
+- **Hardware-Level Isolation & Auditability:** Ideal for finance and government sectors where physical USB disconnection is required for compliance or data security. Enables physical-layer access control and USB event traceability.
 
 
 
@@ -2425,7 +2422,7 @@ The device can control the connectivity of the D+ and D− differential pair for
 ##### Topology Structure 1
 
 - The upstream data ports of multiple hubs are connected to a higher-level hub.
-- The control ports of multiple hubs are connected to a higher-level hub.
+- The command ports of multiple hubs are connected to a higher-level hub.
 - Two top-level hubs are connected to the host.
 
 The number of available downstream ports in this topology is *4n*.
@@ -2437,7 +2434,7 @@ The number of available downstream ports in this topology is *4n*.
 ##### Topology Structure 2
 
 - The upstream data port of the next hub is connected to the downstream data port of the previous hub.
-- The control ports of multiple hubs are connected to a higher-level hub.
+- The command ports of multiple hubs are connected to a higher-level hub.
 - The upstream data port of the first hub is connected to the host.
 - The top-level hub in the control chain is connected to the host.
 

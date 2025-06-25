@@ -5,6 +5,9 @@
 *.log
 build
 *.spec
+*.egg-info
 .vscode
 frame_generate.py
 pyproject.toml
+dist
+
