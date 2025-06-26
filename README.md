@@ -4,7 +4,7 @@
 
 ![view1](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/assets/view1.png?raw=true)**This document applies to model:** SmartUSBHub_V1.3a
 
-**Last updated on:** June 24, 2025
+**Last updated on:** June 24, 2026
 
 
 
@@ -12,60 +12,97 @@
 
 Before using, please familiarize yourself with SmartUSBHub. For details, see the  [smartusbhub_user_guide](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/smartusbhub_user_guide.md)
 
+## **Overview**
+
+The SmartUSBHub is a 4-port, software-programmable USB 2.0 (480 Mbps) hub that offers per-port power and data control, as well as voltage and current sensing. It is designed for development, testing, and device management applications.
+
+1. **Programmable USB Port Switching**
+
+   - Individually enable or disable power and data lines on any downstream port
+   - Simulates manual hot-plug behavior via button or command/software
+
+2. **Voltage and Current Monitoring**
+
+   - Each port supports real-time voltage and current measurement for power analysis and device diagnostics
+
+3. **Software-Controllable & Multi-Platform Compatible**
+
+   - USB CDC-based serial command interface, provide Python libraries and software for easy integration
+   - Supports on Windows, macOS, Linux; no additional drivers required
+
+4. **Multiple Operating Modes**
+
+   - **Normal Mode**: all ports operate independently
+   - **Interlock Mode**: only one port is active at any time
+   - Each downstream port supports customizable **power-on defaults** and **power-loss state recover**
+
+5. **Topology Support for Scalable Deployment**
+   - Each hub can be assigned a unique address for large-scale, multi-hub configurations
+
+## Trusted by Industry Leaders
+
+*From consumer electronics to autonomous driving, from global smartphone leaders to high-performance chip design companies, SmartUSBHub is widely deployed in the R&D, automated testing, and production validation flows of top-tier enterprises.*
+
+SmartUSBHub is now used by **20+ global industry leaders**, Representative use cases include:
+
+- **Automotive Industry:** Used by over 3 of the global top 5 Tier 1 suppliers.
+- **Smartphone:** Used by over 3 of the top 5 global smartphone OEMs.
+- **Semiconductors & Chip Design:** Deployed by over 5 leading chip design companies worldwide.
+- **AI & Large Model Platforms:** Integrated into internal testing flows of at least 2 global AI tech giants.
+- **Telecom & IoT Equipment:** Adopted at scale by multiple leading global and regional vendors.
 
 
-The Smart USB Hub offers per-port power and data control, voltage/current sensing, and manual plug/unplug simulation—designed for development, testing, and device management.
 
-1. **Standard USB 2.0 Data Transfer**: Utilizes a USB 2.0 hub chip with MTT technology. Each port supports up to 480 Mbps (USB 2.0 high-speed), allowing it to function as a normal USB hub.
+### Connection Guide
 
-2. **Programmable USB Port Switching**
+![connection_guide](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/assets/connection_guide.png?raw=true)
 
-   - Independently control **VBUS power** and **D+/D− data lines** for each downstream port
-   - Simulates manual hot-plug behavior via button or serial command
-
-3. **Integrated Voltage and Current Monitoring**
-
-   - Each port supports real-time sensing of **voltage** and **current** for power analysis and device diagnostics
-
-4. **Software-Controllable & Multi-Platform Compatible**
-
-   - USB CDC-based serial command interface, provide Python libraries for quick control
-   - Supports on Windows, macOS, Linux platforms, no need additional drivers
-
-5. **Dual Operating Modes**
-
-   - **Normal Mode**: all ports can operate independently
-   - **Interlock Mode**: only one port is active at a time
-   - Each port supports customizable **power-on defaults** and **power-loss state retention**
-
-6. **Robust Hardware Interfaces**
-
-   - 1x USB-C upstream, 4x USB-A USB2.0 downstream, 1x serial command port, 1x auxiliary power input
-   - Supports up to 5V 4A per port, with overvoltage, overcurrent, reverse current, and ESD protection
-
-7. **Topology Support for Scalable Deployment**
-
-   - Supports hierarchical topologies with data/Command Port aggregation
-   - Each hub can be assigned a unique address for large-scale setups
-
-8. **Upgradeable and Secure**
-
-   - OTA firmware upgrade support
-   - Access control features planned for future firmware releases
+> [!NOTE]
+>
+> 1. Connect the included USB-A to USB-C cable between the device’s **USB upstream port** and a USB port on the host computer. This port is used for USB data transmission.Once connected, the device will appear as a Generic USB Hub.
+> 2. Connect the included USB-A to USB-C cable between the device’s **Command Port** and a USB port on the host computer. This port is used for serial communication. Once connected, the device will appear as:
+>    - On Windows: `COMx`
+>    - On Linux: `/dev/ttyACMx` or `/dev/cu.usbmodemx`
+>    - On macOS:  `/dev/cu.usbmodemx`
 
 
+
+## **Deployment**
 
 > [!NOTE]
 >
 > If you don't want to control the SmartUSBHub by using the python library, you can refer the most simplest control demo: [simple_serial.py](./examples/simple_serial.py)
 
+### Setup Virtual Environment
 
+In the development directory, create a Python virtual environment (recommended):
+`python -m venv venv`
 
-## Environment Setup
+1. Activate the Python virtual environment:
+
+   - On Windows:
+
+    `.\venv\Scripts\activate.bat`
+
+   - On Unix:
+
+    `source ./venv/bin/activate`
+
+2. Install dependencies (skip this step if using pip installation):
+   
+    `pip install -r requirements.txt`
+    
+    
 
 ### Get the Latest Library
 
-Clone [this](https://github.com/MrzhangF1ghter/smartusbhub) repository to your local project, assuming your project folder is named `my_project`:
+#### Method 1: Install via pip
+
+```shell
+pip install smartusbhub
+```
+
+#### Method 2: Clone from GitHub
 
 ```shell
 cd my_project
@@ -82,42 +119,6 @@ Library structure:
 ├── requirements.txt         # Dependency list
 └── smartusbhub.py           # Core functionality source code
 ```
-
-
-
-### Setup Virtual Environment
-
-Create a Python virtual environment (recommended):
-`python -m venv venv`
-
-1. Activate the Python virtual environment:
-
-   - On Windows:
-
-    `.\venv\Scripts\activate.bat`
-
-   - On Unix:
-
-    `source ./venv/bin/activate`
-
-2. Install dependencies:
-    `pip install -r requirements.txt`
-
-3. Connect the included USB-A to USB-C data cable to the `Command Port`, and plug the other end into the host’s USB port. Once connected, the host will recognize the device as follows:
-
-   - On Windows:  `COMx`
-   - On Linux: `/dev/ttyACMx` or `/dev/cu.usbmodemx`
-   - On macOS: `/dev/cu.usbmodemx`
-
-
-
-### Connection Guide
-
-![connection_guide](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/assets/connection_guide.png?raw=true)
-
-> [!NOTE]
->
-> In addition to connecting the  `Command Port`, you must also connect the  `USB upstream port` for USB data transfer.
 
 
 
@@ -143,24 +144,12 @@ To run a demo, execute the following commands:
 
 - Activate the virtual environment:
 
-  - Linux/macOS:
-
-    ```
-     source ./venv/bin/activate
-    ```
-
-  - Windows :
-
-    ```shell
-    .\venv\Scripts\activate.bat
-    ```
-
 - Navigate to the examples folder:
 
   ```
   cd ./examples/
   ```
-
+  
 - Run a demo (for example):
 
   ```shell
@@ -179,7 +168,7 @@ You can integrate this library into your project by importing the smartusbhub mo
 
    ```python
    import sys
-   sys.path.append('../')
+   sys.path.append('../')#if you install by pip,you don't need this
    from smartusbhub import SmartUSBHub
    ```
 
@@ -224,7 +213,7 @@ You can integrate this library into your project by importing the smartusbhub mo
 
 - **Parameters:**
 
-  - [port](str): The serial port name to connect to.
+  - `port`(str): The serial port name to connect to.
 
 - **Example:**
 
@@ -255,9 +244,10 @@ You can integrate this library into your project by importing the smartusbhub mo
 - **Description**: Sets the power state of the specified channel(s).
 
 - **Parameters**:
+  
   - `*channels` (int): The channel(s) to control.
   - state (int): `1` to turn the power，`0` to turn the power off.
-
+  
 - **Return Value**:
 
   - bool: Returns `True` if the command is successful, otherwise `False`.
@@ -308,7 +298,7 @@ You can integrate this library into your project by importing the smartusbhub mo
 
 
 
-### Controlling Channel USB Data Line Switch
+### Channel USB Data Line Control
 
 #### `set_channel_dataline(*channels, state)`
 
@@ -511,6 +501,50 @@ You can integrate this library into your project by importing the smartusbhub mo
 
 
 
+### Setting Device Auto Restore
+
+#### `set_auto_restore(enable)`
+
+- **Description**: Enables or disables the power down auto-restore feature.
+
+- **Parameters**:
+
+  - enable (bool): `True` to enable auto-restore; `False` to disable.
+
+- **Return Value**:
+
+  - bool: Returns `True` if the command is successful, otherwise `False`.
+
+- **Example**:
+
+  Enable auto restore:
+
+  ```python
+  hub.set_auto_restore(True)
+  ```
+
+
+
+### Getting Device Auto Restore state
+
+#### `get_auto_restore_status()`
+
+- **Description**: Queries whether auto-restore is enabled.
+
+- **Return Value**:
+
+  - int or None: 1 if auto-restore is enabled, 0 if disabled, or None if no response.
+
+- **Example**:
+
+  Get auto restore status:
+
+  ```python
+  status = hub.get_auto_restore()
+  ```
+
+
+
 ### Setting Button Control
 
 #### `set_button_control(enable)`
@@ -548,31 +582,6 @@ You can integrate this library into your project by importing the smartusbhub mo
   
   ```python
   status = hub.get_button_control_status()
-  ```
-
-
-
-### Setting Device Operating Mode
-
-#### `set_operate_mode(mode)`
-
-- **Description**: Sets the device’s operating mode.
-- **Parameters**:
-  
-  - mode (int): Operating mode (0 for normal mode, 1 for interlock mode).
-  
-- **Return Value**:
-  - bool: Returns `True` if the command is successful, otherwise `False`.
-  
-- **注意:**
-  - In interlock mode, control can only be done using interlock commands.
-
-- **Example**:
-
-  Set the device to normal mode:
-
-  ```python
-  hub.set_operate_mode(0)
   ```
 
 
@@ -624,6 +633,34 @@ You can integrate this library into your project by importing the smartusbhub mo
 
 
 
+### Setting Device Operating Mode
+
+#### `set_operate_mode(mode)`
+
+- **Description**: Sets the device’s operating mode.
+
+- **Parameters**:
+
+  - mode (int): Operating mode (0 for normal mode, 1 for interlock mode).
+
+- **Return Value**:
+
+  - bool: Returns `True` if the command is successful, otherwise `False`.
+
+- **Attention:**
+
+  - In interlock mode, control can only be done using interlock commands.
+
+- **Example**:
+
+  Set the device to normal mode:
+
+  ```python
+  hub.set_operate_mode(0)
+  ```
+
+
+
 ### Getting Device Operating Mode
 
 #### `get_operate_mode()`
@@ -655,6 +692,21 @@ You can integrate this library into your project by importing the smartusbhub mo
   info = hub.get_device_info()
   print(info)
   ```
+
+
+
+### Factory Reset
+
+#### `factory_reset()`
+
+- **Description**: reset the device to factory settings.
+- **Return Value**:
+  - bool: Returns `True` if the command is successful, otherwise `False`.
+- **Example**:
+
+```python
+hub.factory_reset()
+```
 
 
 
@@ -709,28 +761,30 @@ You can integrate this library into your project by importing the smartusbhub mo
 
   
 
-  | CMD                             | **Meaning**                                  |
-  | :------------------------------ | :------------------------------------------- |
-  | CMD_GET_CHANNEL_POWER_STATUS    | Get channel power status                     |
-  | CMD_SET_CHANNEL_POWER           | Control channel power                        |
-  | CMD_SET_CHANNEL_POWER_INTERLOCK | Control channel power interlock              |
-  | CMD_SET_CHANNEL_DATALINE        | Control channel USB data line switch         |
-  | CMD_GET_CHANNEL_DATALINE_STATUS | Get channel USB data line switch status      |
-  | CMD_GET_CHANNEL_VOLTAGE         | Get channel voltage                          |
-  | CMD_GET_CHANNEL_CURRENT         | Get channel current                          |
-  | CMD_SET_BUTTON_CONTROL          | Enable/disable button control                |
-  | CMD_GET_BUTTON_CONTROL_STATUS   | Get button control status                    |
-  | CMD_SET_DEFAULT_POWER_STATUS    | Set channel default power status             |
-  | CMD_GET_DEFAULT_POWER_STATUS    | Get channel default power status             |
-  | CMD_SET_DEFAULT_DATALINE_STATUS | Set channel default data line status         |
-  | CMD_GET_DEFAULT_DATALINE_STATUS | Get channel default data line status         |
-  | CMD_SET_AUTO_RESTORE            | Enable/disable power-loss auto restore       |
-  | CMD_GET_AUTO_RESTORE_STATUS     | Get power-loss auto restore status           |
-  | CMD_SET_OPERATE_MODE            | Set device operating mode (normal/interlock) |
-  | CMD_GET_OPERATE_MODE            | Get device operating mode                    |
-  | CMD_FACTORY_RESET               | Restore factory settings                     |
-  | CMD_GET_FIRMWARE_VERSION        | Get firmware version                         |
-  | CMD_GET_HARDWARE_VERSION        | Get hardware version                         |
+  | CMD                             | **Meaning**                                                  |
+  | :------------------------------ | :----------------------------------------------------------- |
+  | CMD_GET_CHANNEL_POWER_STATUS    | Get channel power status                                     |
+  | CMD_SET_CHANNEL_POWER           | Control channel power                                        |
+  | CMD_SET_CHANNEL_POWER_INTERLOCK | Control channel power interlock                              |
+  | CMD_SET_CHANNEL_DATALINE        | Control channel USB data line switch                         |
+  | CMD_GET_CHANNEL_DATALINE_STATUS | Get channel USB data line switch status                      |
+  | CMD_GET_CHANNEL_VOLTAGE         | Get channel voltage                                          |
+  | CMD_GET_CHANNEL_CURRENT         | Get channel current                                          |
+  | CMD_SET_BUTTON_CONTROL          | Enable/disable button control                                |
+  | CMD_GET_BUTTON_CONTROL_STATUS   | Get button control status                                    |
+  | CMD_SET_DEFAULT_POWER_STATUS    | Set channel default power status                             |
+  | CMD_GET_DEFAULT_POWER_STATUS    | Get channel default power status                             |
+  | CMD_SET_DEFAULT_DATALINE_STATUS | Set channel default data line status                         |
+  | CMD_GET_DEFAULT_DATALINE_STATUS | Get channel default data line status                         |
+  | CMD_SET_AUTO_RESTORE            | Enable/disable power-loss auto restore                       |
+  | CMD_GET_AUTO_RESTORE_STATUS     | Get power-loss auto restore status                           |
+  | CMD_SET_DEVICE_ADDRESS          | Set the device address, used to identify and distinguish hubs in multi-hub setups |
+  | CMD_GET_DEVICE_ADDRESS          | Get the device address, used to identify and distinguish hubs in multi-hub setups |
+  | CMD_SET_OPERATE_MODE            | Set device operating mode (normal/interlock)                 |
+  | CMD_GET_OPERATE_MODE            | Get device operating mode                                    |
+  | CMD_FACTORY_RESET               | Restore factory settings                                     |
+  | CMD_GET_FIRMWARE_VERSION        | Get firmware version                                         |
+  | CMD_GET_HARDWARE_VERSION        | Get hardware version                                         |
 
 - **Example**:
 

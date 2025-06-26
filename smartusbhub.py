@@ -276,7 +276,7 @@ OPERATE_MODE_INTERLOCK = 1
 # Configure logging
 logger = logging.getLogger(__name__)
 # log level
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
 
 # Create console handler with a higher log level
 ch = colorlog.StreamHandler()
@@ -840,6 +840,8 @@ class SmartUSBHub:
         self.auto_restore_status = self.get_auto_restore_status()
         self.button_control_status = self.get_button_control_status()
         self.device_address = self.get_device_address()
+        self.channel_default_power_status = self.get_default_power_status(1,2,3,4)
+        self.channel_default_dataline_status = self.get_default_dataline_status(1,2,3,4)
 
         hub_info = {
             "id": self.port.split("/")[-1],

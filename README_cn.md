@@ -6,51 +6,71 @@
 
 **本文档适用型号**：`SmartUSBHub_V1.3a`
 
-**本文档更新日期**：2024年6月24日
+**本文档更新日期**：2024年6月26日
 
 
 
 ## 简介
-这是一个控制SmartUSBHub的python库
-使用前请先了解smartusbhub，详情请阅读[智能USB集线器_使用指南](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/智能USB集线器_使用指南.md)
-
-智能USB集线器能控制指定USB端口的电源和数据通断，模拟物理插拔USB设备。每个端口还具备电压电流采样功能，广泛应用于研发、测试、生产与设备管理场景。
-
-1. **标准USB 2.0 数据传输**
-   - 采用MTT技术的Hub芯片，每个端口均可达到480Mbps的USB2.0速率，可作为普通USB集线器使用
-2. **USB端口模拟插拔控制**
-   - 支持对每个下行端口的 **电源（VBUS）** 和 **数据（D+/D−）** 独立控制
-   - 可通过按键或指令模拟物理插拔操作，实现自动化测试或远程控制场景
-3. **电压与电流采样**
-   - 每个端口具备独立的 **电压、电流实时采集**，支持功耗分析与设备状态监测
-4. **通过串口指令实现可编程控制**
-   - 支持通过串口指令控制，提供 Python 控制库
-   - 兼容 Windows / macOS / Linux 平台，无需驱动（USB CDC）
-5. **多模式端口管理**
-   - 支持 **普通模式**（多通道同时控制）与 **互锁模式**（仅允许一个通道通电）切换
-   - 每端口可设置 **上电默认状态** 与 **断电状态记忆**
-6. **硬件接口灵活配置**
-   - 1路 USB-C 上行端口，4路 USB-A USB2.0 下行端口，1路串口控制口，1路辅助供电口
-   - 每口最高支持 5V 4A 供电，具备过压、过流、防倒灌、ESD保护
-7. **远程可管理性强**
-   - 支持集中控制多个 Hub 的 **数据链与控制链** 拓扑结构
-   - 每个设备支持地址配置，适用于树状级联的系统
-8. **固件可升级**
-   - 支持 OTA 升级，持续获得功能更新
+这是一个控制SmartUSBHub的Python库，如果不想用python库，则可参考最简单的控制demo：[simple_serial.py](./examples/simple_serial.py)
+使用前请先了解SmartUSBHub详细信息，详情请阅读[智能USB集线器_使用指南](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/智能USB集线器_使用指南.md)
 
 
 
-> [!NOTE]
->
-> 协议文档请查阅： [智能USB集线器_使用指南 协议章节](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/智能USB集线器_使用指南.md)
->
-> 如果不想用python库，则可参考最简单的控制demo：[simple_serial.py](./examples/simple_serial.py)
+## 产品概述
+
+SmartUSBHub是一个4端口的可编程USB2.0(480Mbps)集线器，每个下游端口均可独立控制电源和数据通道，同时具备电压/电流测量功能，适用于开发、测试和设备管理。
+
+1. **独立电源/数据控制，模拟热插拔：** SmartUSBHub 每个下游端口支持 **电源（VBUS）** 和 **数据（D+ / D-）** 的独立控制，可通过指令模拟物理插拔USB设备 。工程师无需手动插拔即可远程控制USB设备的连接/断开，实现自动化测试或远程重启设备，极大提升调试和测试效率。
+
+2. **电压/电流监测：** 该集线器提供每端口实时电压、电流采集功能 。这意味着用户可以随时监控各被测设备的供电电压及电流，辅助进行设备功耗分析与状态监测。在测试中若出现异常电压跌落或电流过载，工程师能够及时发现并定位问题。
+
+3. **开源软件生态，易于集成：** SmartUSBHub 提供了开源的协议、控制软件和 Python 控制库，兼容 Windows/macOS/Linux 等主流操作系统 。得益于标准串口指令接口和开放的API，用户可将其无缝集成到现有的自动化测试平台或脚本中（通过Python、CLI等），轻松将USB端口控制纳入自动化流程，加速开发测试周期。
+
+4. **多模式端口管理**
+
+  - 支持 **普通模式**（多通道同时控制）与 **互锁模式**（仅允许操作一个通道）
+
+  - 每端口可设置 **上电默认状态** 与 **断电状态记忆**
+
+5. **扩展性强**
+
+  - 支持集中控制多个SmartUSBHub的拓扑结构
+
+  - 每个设备支持地址配置，适用于级联系统
 
 
 
-## 环境部署
+## 被行业验证的选择
 
-### 1. 设置虚拟环境
+*从消费电子到自动驾驶，从全球领先的消费电子品牌到高性能芯片设计公司，SmartUSBHub 已广泛应用于多个行业头部企业的研发流程、自动化测试系统与产线测试场景中。*
+
+SmartUSBHub 目前已被**全球 20+ 家行业头部企业**广泛采用，其客户涵盖以下代表性领域：
+
+- **汽车行业：** 全球 Tier 1 前五大供应商中，超三家在使用
+- **智能手机行业：** 全球出货量前五的终端品牌中，超三家在使用
+- **半导体与芯片设计：** 全球领先芯片设计公司中，超五家在使用
+- **人工智能与大模型平台：** 全球领先企业中，超两家在使用
+- **通信与物联网设备制造：** 全球/区域多家龙头企业在使用
+
+
+
+## 连接指南
+
+![connection_guide](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/assets/connection_guide_cn.png?raw=true)
+
+> 1. 将随附的USBA-USBC 数据线连接设备的`USB上行端口`与主机USB端口。该端口用于USB数据传输。
+> 2. 将随附的USBA-USBC 数据线连接设备的`指令控制口`与主机USB端口。该端口用于串口通信，连接后主机将会把设备识别成:
+>    - Windows平台:  `COMx`
+>    - Linux平台: `/dev/ttyACMx`
+>    - mac平台: `/dev/cu.usbmodemx`
+
+
+
+
+
+## 部署
+
+### 设置虚拟环境
 
 在开发目录中，设置python虚拟环境（推荐）
 `python -m venv venv`
@@ -65,24 +85,20 @@
 
     `source ./venv/bin/activate`
 
-2. 安装依赖库
+2. 安装依赖库（如果通过pip安装，则不需要执行此步骤）
     `pip install -r requirements.txt`
 
 
 
-### 2. 获取最新的库
+### 获取最新的库
 
-#### 方法1
-
-通过pip包管理工具获取
+#### **方法1**: 通过pip包管理工具获取
 
 ```shell
 pip install smartusbhub
 ```
 
-#### 方法2
-
-通过github获取
+#### **方法2**: 通过github获取
 
 ```shell
 git clone https://github.com/MrzhangF1ghter/smartusbhub.git
@@ -94,14 +110,14 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 .
 ├── README.md					# 文档
 ├── examples					# 例程
-├── apps							# 已经编译好的例程
+├── apps							# 已经编译好的GUI demo
 ├── requirements.txt	# 安装依赖
 └── smartusbhub.py 		# 功能源码
 ```
 
 
 
-### 3. 集成到你的项目中
+### 集成到项目
 
 通过导入smartusbhub库即可即成到你的项目之中。
 
@@ -129,24 +145,12 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 连接指南
-
-![connection_guide](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/assets/connection_guide_cn.png?raw=true)
-
-> 1. 将随附的USBA-USBC 数据线连接设备的`USB上行端口`与主机USB端口。该端口用于USB数据传输。
-> 2. 将随附的USBA-USBC 数据线连接设备的`指令控制口`与主机USB端口。该端口用于串口通信，连接后主机将会把设备识别成:
->    - Windows平台:  `COMx`
->    - Linux平台: `/dev/ttyACMx`
->    - mac平台: `/dev/cu.usbmodemx`
-
-
-
-### 运行例程
+## 运行例程
 
 `smartusbhub`库包含多个例程，其存放在`examples`目录下，目前有以下例子：
 
 - `power_control_example`：展示如何控制指定通道的电源
-- `dataline_control_example`：展示如何控制指定通道的USB差分信号线开关通断（保持电源供电）
+- `dataline_control_example`：展示如何控制指定通道的USB数据开关通断（保持电源供电）
 - `voltage_monitor_example`：展示如何获取指定通道的电压值
 - `current_monitor_example`：展示如何获取指定通道的电流值
 - `setting_example`:展示如何配置设置项
@@ -163,24 +167,12 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 - 激活虚拟环境：
 
-  - Linux/macOS用户：
-
-    ```
-     source ./venv/bin/activate
-    ```
-
-  - Windows 用户：
-
-    ```shell
-    .\venv\Scripts\activate.bat
-    ```
-
 - 进入examples文件夹：
 
   ```
   cd ./examples/
   ```
-
+  
 - 运行demo，例如：
 
   ```shell
@@ -296,11 +288,11 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
 
 
-### 控制通道USB差分信号线开关
+### 控制通道USB数据开关
 
 #### `set_channel_dataline(*channels, state)`
 
-- **描述**: 设置指定通道的USB差分信号线开关状态。
+- **描述**: 设置指定通道的USB数据开关状态。
 
 - **参数**:
   - `*channels` (int): 要更新的通道，可变参数形式，范围 1~4。
@@ -319,9 +311,9 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   ```
   
   
-### 获取通道USB差分信号线开关状态
+### 获取通道USB数据开关状态
 #### `get_channel_dataline_status(*channels)`
-- **描述**: 查询指定通道的USB差分信号线开关状态。
+- **描述**: 查询指定通道的USB数据开关状态。
 
 - **参数**:
   - `*channels` (int): 要查询的通道，可变参数形式，范围 1~4。
@@ -494,6 +486,50 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
 
   ```python
   {1: {'enabled': 0, 'value': 1}, 2: {'enabled': 0, 'value': 1}, 3: {'enabled': 0, 'value': 1}, 4: {'enabled': 0, 'value': 1}}
+  ```
+
+
+
+### 设置断电状态记忆
+
+#### `set_auto_restore(enable)`
+
+- **描述**: 启用或禁用断电状态恢复。
+
+- **参数**:
+
+  - `enable` (bool): `True` 启用，`False` 禁用。
+
+- **返回值**:
+
+  - `bool`: 如果命令设置成功返回 `True`，否则返回 `False`。
+
+- **示例**:
+
+  启用断电状态恢复
+
+  ```python
+  hub.set_auto_restore(True)
+  ```
+
+
+
+### 设置断电状态记忆
+
+#### `get_auto_restore_status()`
+
+- **描述**: 查询是否启用断电状态恢复
+
+- **返回值**:
+
+  - int 或 None: 1 表示启用, 0 表示禁用, None 表示设备无响应.
+
+- **示例**:
+
+  启用断电状态恢复
+
+  ```python
+  status = hub.get_auto_restore()
   ```
 
 
@@ -698,28 +734,30 @@ git clone https://github.com/MrzhangF1ghter/smartusbhub.git
   - 如果 cmd 不在支持的命令列表中，将记录警告日志，并不会注册回调。
   - 回调函数的签名应与设备返回的数据结构匹配。
 
-  | CMD宏                           | 含义                          |
-  | :------------------------------ | :---------------------------- |
-  | CMD_GET_CHANNEL_POWER_STATUS    | 获取通道电源开关值            |
-  | CMD_SET_CHANNEL_POWER           | 控制通道电源                  |
-  | CMD_SET_CHANNEL_POWER_INTERLOCK | 控制通道电源互锁              |
-  | CMD_SET_CHANNEL_DATALINE        | 控制通道USB差分信号线开关     |
-  | CMD_GET_CHANNEL_DATALINE_STATUS | 获取通道USB差分信号线开关状态 |
-  | CMD_GET_CHANNEL_VOLTAGE         | 获取通道电压                  |
-  | CMD_GET_CHANNEL_CURRENT         | 获取通道电流                  |
-  | CMD_SET_BUTTON_CONTROL          | 启用/禁用 按键控制            |
-  | CMD_GET_BUTTON_CONTROL_STATUS   | 获取按键控制状态              |
-  | CMD_SET_DEFAULT_POWER_STATUS    | 设置通道默认电源状态          |
-  | CMD_GET_DEFAULT_POWER_STATUS    | 获取通道默认电源状态          |
-  | CMD_SET_DEFAULT_DATALINE_STATUS | 设置通道默认数据连接状态      |
-  | CMD_GET_DEFAULT_DATALINE_STATUS | 获取通道默认数据连接状态      |
-  | CMD_SET_AUTO_RESTORE            | 启用/禁用 断电保存            |
-  | CMD_GET_AUTO_RESTORE_STATUS     | 获取断电保存是否启用          |
-  | CMD_SET_OPERATE_MODE            | 设置设备工作模式 普通/互锁    |
-  | CMD_GET_OPERATE_MODE            | 获取设备工作模式              |
-  | CMD_FACTORY_RESET               | 恢复出厂设置                  |
-  | CMD_GET_FIRMWARE_VERSION        | 获取固件版本号                |
-  | CMD_GET_HARDWARE_VERSION        | 获取硬件版本号                |
+  | CMD宏                           | 含义                                                         |
+  | :------------------------------ | :----------------------------------------------------------- |
+  | CMD_GET_CHANNEL_POWER_STATUS    | 获取通道电源开关值                                           |
+  | CMD_SET_CHANNEL_POWER           | 控制通道电源                                                 |
+  | CMD_SET_CHANNEL_POWER_INTERLOCK | 控制通道电源互锁                                             |
+  | CMD_SET_CHANNEL_DATALINE        | 控制通道USB数据开关                                          |
+  | CMD_GET_CHANNEL_DATALINE_STATUS | 获取通道USB数据开关状态                                      |
+  | CMD_GET_CHANNEL_VOLTAGE         | 获取通道电压                                                 |
+  | CMD_GET_CHANNEL_CURRENT         | 获取通道电流                                                 |
+  | CMD_SET_BUTTON_CONTROL          | 启用/禁用 按键控制                                           |
+  | CMD_GET_BUTTON_CONTROL_STATUS   | 获取按键控制状态                                             |
+  | CMD_SET_DEFAULT_POWER_STATUS    | 设置通道默认电源状态                                         |
+  | CMD_GET_DEFAULT_POWER_STATUS    | 获取通道默认电源状态                                         |
+  | CMD_SET_DEFAULT_DATALINE_STATUS | 设置通道默认数据连接状态                                     |
+  | CMD_GET_DEFAULT_DATALINE_STATUS | 获取通道默认数据连接状态                                     |
+  | CMD_SET_AUTO_RESTORE            | 启用/禁用 断电保存                                           |
+  | CMD_GET_AUTO_RESTORE_STATUS     | 获取断电保存是否启用                                         |
+  | CMD_SET_DEVICE_ADDRESS          | 设置设备的地址，用于在多台集线器连接的场景中，标识和区分各个集线器 |
+  | CMD_GET_DEVICE_ADDRESS          | 获取设备的地址，用于在多台集线器连接的场景中，标识和区分各个集线器 |
+  | CMD_SET_OPERATE_MODE            | 设置设备工作模式 普通/互锁                                   |
+  | CMD_GET_OPERATE_MODE            | 获取设备工作模式                                             |
+  | CMD_FACTORY_RESET               | 恢复出厂设置                                                 |
+  | CMD_GET_FIRMWARE_VERSION        | 获取固件版本号                                               |
+  | CMD_GET_HARDWARE_VERSION        | 获取硬件版本号                                               |
 
 - **示例**:
 

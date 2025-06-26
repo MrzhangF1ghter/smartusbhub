@@ -8,49 +8,32 @@
 
 
 
-## **Key Features**
+## **Overview**
 
-The Smart USB Hub offers per-port power and data control, voltage/current sensing, and manual plug/unplug simulation—designed for development, testing, and device management.
+The SmartUSBHub is a 4-port, software-programmable USB 2.0 (480 Mbps) hub that offers per-port power and data control, as well as voltage and current sensing. It is designed for development, testing, and device management applications.
 
-1. **Standard USB 2.0 Data Transfer**: Utilizes a USB 2.0 hub chip with MTT technology. Each port supports up to 480 Mbps (USB 2.0 high-speed), allowing it to function as a normal USB hub.
+1. **Programmable USB Port Switching**
 
-2. **Programmable USB Port Switching**
+   - Individually enable or disable power and data lines on any downstream port
+   - Simulates manual hot-plug behavior via button or command/software
 
-   - Independently control **VBUS power** and **D+/D− data lines** for each downstream port
-   - Simulates manual hot-plug behavior via button or serial command
+2. **Voltage and Current Monitoring**
 
-3. **Integrated Voltage and Current Monitoring**
+   - Each port supports real-time voltage and current measurement for power analysis and device diagnostics
 
-   - Each port supports real-time sensing of **voltage** and **current** for power analysis and device diagnostics
+3. **Software-Controllable & Multi-Platform Compatible**
 
-4. **Software-Controllable & Multi-Platform Compatible**
+   - USB CDC-based serial command interface, provide Python libraries and software for easy integration
+   - Supports on Windows, macOS, Linux; no additional drivers required
 
-   - USB CDC-based serial command interface, provide Python libraries for quick control
-   - Supports on Windows, macOS, Linux platforms, no need additional drivers
+4. **Multiple Operating Modes**
 
-5. **Dual Operating Modes**
+   - **Normal Mode**: all ports operate independently
+   - **Interlock Mode**: only one port is active at any time
+   - Each downstream port supports customizable **power-on defaults** and **power-loss state recover**
 
-   - **Normal Mode**: all ports can operate independently
-   - **Interlock Mode**: only one port is active at a time
-   - Each port supports customizable **power-on defaults** and **power-loss state retention**
-
-6. **Robust Hardware Interfaces**
-
-   - 1x USB-C upstream, 4x USB-A USB2.0 downstream, 1x serial command port, 1x auxiliary power input
-   - Supports up to 5V 4A per port, with overvoltage, overcurrent, reverse current, and ESD protection
-
-7. **Topology Support for Scalable Deployment**
-
-   - Supports hierarchical topologies with data/command port aggregation
-   - Each hub can be assigned a unique address for large-scale setups
-
-8. **Upgradeable and Secure**
-
-   - OTA firmware upgrade support
-   - Access control features planned for future firmware releases
-
-
-
+5. **Topology Support for Scalable Deployment**
+   - Each hub can be assigned a unique address for large-scale, multi-hub configurations
 
 ## Trusted by Industry Leaders
 
@@ -371,7 +354,7 @@ This device uses a standard USB CDC interface and requires no driver. Just plug 
 | Set power-loss state Persistence   | 0x0F    | Enable/disable remembering channel state on power loss       |
 | Query power-loss Persistence state | 0x10    | Query if power-loss state Persistence is enabled             |
 | Set Device Address                 | 0x11    | Set the device address, used to identify and distinguish hubs in multi-hub setups |
-| Get Device Address                 | 0x12    | Retrieve the device address, used to identify and distinguish hubs in multi-hub setups |
+| Get Device Address                 | 0x12    | Get the device address, used to identify and distinguish hubs in multi-hub setups |
 | Set operation mode                 | 0x06    | Switch Normal/Interlock mode                                 |
 | Query operation mode               | 0x07    | Query the current operating mode                             |
 | Restore factory settings           | 0xFC    | Restore factory settings                                     |
