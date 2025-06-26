@@ -1,6 +1,6 @@
 # 智能USB集线器 使用指南
 
-[English Version](./smartusbhub_user_guide.md)
+[English Version](./SmartUSBHub_UserGuide.md)
 
 ![view1](assets/view1.png)
 
