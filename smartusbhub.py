@@ -276,7 +276,7 @@ OPERATE_MODE_INTERLOCK = 1
 # Configure logging
 logger = logging.getLogger(__name__)
 # log level
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
 
 # Create console handler with a higher log level
 ch = colorlog.StreamHandler()

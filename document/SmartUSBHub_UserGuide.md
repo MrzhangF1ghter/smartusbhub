@@ -12,26 +12,23 @@
 
 The SmartUSBHub is a 4-port, software-programmable USB 2.0 (480 Mbps) hub that offers per-port power and data control, as well as voltage and current sensing. It is designed for development, testing, and device management applications.
 
-1. **Programmable USB Port Switching**
-
+1. **Per-Port USB Power & Data Control**
    - Individually enable or disable power and data lines on any downstream port
    - Simulates manual hot-plug behavior via button or command/software
-
+   
 2. **Voltage and Current Monitoring**
-
    - Each port supports real-time voltage and current measurement for power analysis and device diagnostics
-
+   
 3. **Software-Controllable & Multi-Platform Compatible**
 
    - USB CDC-based serial command interface, provide Python libraries and software for easy integration
    - Supports on Windows, macOS, Linux; no additional drivers required
 
 4. **Multiple Operating Modes**
-
    - **Normal Mode**: all ports operate independently
    - **Interlock Mode**: only one port is active at any time
    - Each downstream port supports customizable **power-on defaults** and **power-loss state recover**
-
+   
 5. **Topology Support for Scalable Deployment**
    - Each hub can be assigned a unique address for large-scale, multi-hub configurations
 
