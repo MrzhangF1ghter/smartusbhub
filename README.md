@@ -12,7 +12,7 @@
 
 - Before using, please familiarize yourself with the details of SmartUSBHub. For more information, read the  [smartusbhub_user_guide](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/smartusbhub_user_guide.md)
 
-- If you prefer direct software control, download the software suit here: [software suit](https://github.com/MrzhangF1ghter/smartusbhub_app).
+- If you prefer direct software control, download the software suit here: [software suite](https://github.com/MrzhangF1ghter/smartusbhub_app).
 
 - This is a Python library for controlling SmartUSBHub. If you do not wish to use the Python library, you can refer to the simplest control demo: [simple_serial.py](./examples/simple_serial.py).
 
