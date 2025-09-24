@@ -160,7 +160,7 @@ SmartUSBHub 目前已被**全球 20+ 家行业头部企业**广泛采用，其�
 
 > [!NOTE]
 >
-> 对于<u>Windows7</u>及之前版本的Windows操作系统，需安装驱动，驱动存放在为`windows7_xp_driver`文件夹中。
+> 对于<u>Windows 7</u>及之前版本的Windows操作系统，需打驱动补丁，详情请参考[win7系统安装CDC驱动](https://www.bilibili.com/opus/718376457737338952)
 
 
 

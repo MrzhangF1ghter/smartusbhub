@@ -1,4 +1,4 @@
-# **Smart USB Hub User Guide**
+# Smart USB Hub User Guide
 
 [简体中文](./智能USB集线器_使用指南.md)
 
@@ -183,7 +183,7 @@ This device uses a standard USB CDC interface and requires no driver. Just plug 
 
 > [!NOTE]
 >
-> For Windows 7 and earlier versions of Windows, a driver needs to be installed. The driver is located in the `windows7_xp_driver` folder.
+> For Windows 7 and earlier versions of Windows, driver needs to be patched. See this guide for more information [CDC Driver patch](https://www.bilibili.com/opus/718376457737338952)
 
 
 

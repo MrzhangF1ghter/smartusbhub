@@ -10,9 +10,15 @@
 
 ## Introduction
 
-Before using, please familiarize yourself with SmartUSBHub. For details, see the  [smartusbhub_user_guide](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/smartusbhub_user_guide.md)
+- Before using, please familiarize yourself with the details of SmartUSBHub. For more information, read the  [smartusbhub_user_guide](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/smartusbhub_user_guide.md)
 
-## **Overview**
+- If you prefer direct software control, download the software suit here: [software suit](https://github.com/MrzhangF1ghter/smartusbhub_app).
+
+- This is a Python library for controlling SmartUSBHub. If you do not wish to use the Python library, you can refer to the simplest control demo: [simple_serial.py](./examples/simple_serial.py).
+
+  
+
+## Overview
 
 The SmartUSBHub is a 4-port, software-programmable USB 2.0 (480 Mbps) hub that offers per-port power and data control, as well as voltage and current sensing. It is designed for development, testing, and device management applications.
 
@@ -67,7 +73,7 @@ SmartUSBHub is now used by **20+ global industry leaders**, Representative use c
 
 
 
-## **Deployment**
+## Deployment
 
 > [!NOTE]
 >
@@ -190,9 +196,9 @@ You can integrate this library into your project by importing the smartusbhub mo
 
 
 
-## **User Interface**
+## User Interface
 
-### **Device Connection**
+### Device Connection
 
 #### `scan_and_connect()`
 
@@ -223,7 +229,7 @@ You can integrate this library into your project by importing the smartusbhub mo
 
 
 
-### **Device Disconnection**
+### Device Disconnection
 
 #### `disconnect()`
 
@@ -237,7 +243,7 @@ You can integrate this library into your project by importing the smartusbhub mo
 
 
 
-### **Channel Power Control**
+### Channel Power Control
 
 #### `set_channel_power(*channels, state)`
 

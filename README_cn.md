@@ -6,13 +6,16 @@
 
 **本文档适用型号**：`SmartUSBHub_V1.3a`
 
-**本文档更新日期**：2024年6月26日
+**本文档更新日期**：2025年9月24日
 
 
 
 ## 简介
-这是一个控制SmartUSBHub的Python库，如果不想用python库，则可参考最简单的控制demo：[simple_serial.py](./examples/simple_serial.py)
-使用前请先了解SmartUSBHub详细信息，详情请阅读[智能USB集线器_使用指南](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/智能USB集线器_使用指南.md)
+- 使用前请先了解SmartUSBHub详细信息，详情请阅读[智能USB集线器_使用指南](https://github.com/MrzhangF1ghter/smartusbhub/blob/main/document/智能USB集线器_使用指南.md)
+
+- 如果想直接用软件控制，则请下载配套的控制软件：[配套控制软件](https://github.com/MrzhangF1ghter/smartusbhub_app)
+
+- 这是一个控制SmartUSBHub的Python库，如果不想用python库，则可参考最简单的控制demo：[simple_serial.py](./examples/simple_serial.py)
 
 
 
@@ -46,11 +49,11 @@ SmartUSBHub是一个4端口的可编程USB2.0(480Mbps)集线器，每个下游�
 
 SmartUSBHub 目前已被**全球 20+ 家行业头部企业**广泛采用，其客户涵盖以下代表性领域：
 
-- **汽车行业：** 全球 Tier 1 前五大供应商中，超三家在使用
-- **智能手机行业：** 全球出货量前五的终端品牌中，超三家在使用
-- **半导体与芯片设计：** 全球领先芯片设计公司中，超五家在使用
-- **人工智能与大模型平台：** 全球领先企业中，超两家在使用
-- **通信与物联网设备制造：** 全球/区域多家龙头企业在使用
+- **汽车行业**
+- **智能手机行业 **
+- **半导体与芯片设计** 
+- **人工智能与大模型平台**
+- **通信与物联网设备制造**
 
 
 
